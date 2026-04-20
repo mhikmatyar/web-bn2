@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jimpitan Bumi Neikarta 2</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- PapaParse -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Top Header -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="header-title">
+                <h1><i class="fas fa-wallet"></i> Jimpitan Bumi Neikarta 2</h1>
+                <p>Rekap Jimpitan Harian Bumi Neikarta 2</p>
+            </div>
+            <div class="header-actions">
+                <a href="../" class="btn-portal"><i class="fas fa-arrow-left"></i> Kembali ke Portal</a>
+                <button id="settingsBtn" class="btn-login">Login Admin</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <!-- Settings Modal (Hidden by Default) -->
+        <div id="settingsPanel" class="settings-panel hidden">
+            <div class="settings-card">
+                <h3><i class="fas fa-cog"></i> Pengaturan Sumber Data</h3>
+                <p>Masukkan URL Google Sheet format CSV (Tabel: Tanggal | Tipe | Nominal | Keterangan | Pelapor)</p>
+                <div class="input-group">
+                    <input type="text" id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/.../pub?output=csv">
+                    <button class="btn-primary" id="connectBtn">Simpan</button>
+                    <button class="btn-outline" id="disconnectBtn" style="display:none;">Hapus</button>
+                </div>
+                <div id="connectionStatus" class="status-msg"></div>
+            </div>
+        </div>
+
+        <!-- Filter Controls -->
+        <div class="filter-controls">
+            <div class="select-wrapper">
+                <select id="monthSelect"></select>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="select-wrapper">
+                <select id="yearSelect"></select>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs-container">
+            <button class="tab-btn active" data-tab="jimpitan">
+                <span>💰</span> Jimpitan
+            </button>
+            <button class="tab-btn" data-tab="pengeluaran">
+                <span>🧾</span> Pengeluaran
+            </button>
+        </div>
+
+        <!-- JIMPITAN VIEW -->
+        <div id="view-jimpitan" class="tab-content active">
+            <!-- Summary Cards -->
+            <div class="summary-card hero-card">
+                <div>
+                    <h4>Saldo Kas Bulan Ini</h4>
+                    <h2 id="saldoTotalMonth">Rp 0</h2>
+                </div>
+                <div class="hero-stats">
+                    <p>Jimpitan: <span id="jimpitanMonth">Rp 0</span></p>
+                    <p>Pengeluaran: <span id="pengeluaranMonth">-Rp 0</span></p>
+                </div>
+            </div>
+
+            <div class="twin-cards">
+                <div class="summary-card outline-card">
+                    <h4>Total Tahun Ini</h4>
+                    <h2 id="saldoTotalYear" class="text-green">Rp 0</h2>
+                </div>
+                <div class="summary-card outline-card">
+                    <h4>Entri Data</h4>
+                    <h2><span id="entriDays">0</span> hari</h2>
+                </div>
+            </div>
+
+            <!-- Chart Section -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h4>📊 Tren Harian — <span id="chartMonthLabel">Bulan</span></h4>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="jimpitanChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Data Table Section -->
+            <div class="table-card">
+                <div class="table-header">
+                    <h4>📑 Rekap <span id="tableMonthLabel">Bulan</span></h4>
+                    <button id="exportJimpitanBtn" class="btn-export"><i class="fas fa-download"></i> Export CSV</button>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th class="text-right">Nominal</th>
+                                <th class="text-center" style="width: 50px;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="jimpitanTbody">
+                            <!-- Rows will be populated here -->
+                            <tr><td colspan="4" class="empty-state">Belum ada data jimpitan untuk periode ini</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div> <!-- End Jimpitan View -->
+
+        <!-- PENGELUARAN VIEW -->
+        <div id="view-pengeluaran" class="tab-content">
+            <div class="summary-card danger-card">
+                <div>
+                    <h4>Total Pengeluaran</h4>
+                    <h2 id="pengeluaranTotalMonthRp">Rp 0</h2>
+                </div>
+                <div class="hero-stats text-right">
+                    <p id="pengeluaranMonthLabelInfo">Bulan</p>
+                    <p><span id="pengeluaranTransaksi">0</span> transaksi</p>
+                </div>
+            </div>
+
+            <div class="table-card">
+                <div class="table-header">
+                    <h4>🧾 Pengeluaran <span id="tablePengeMonthLabel">Bulan</span></h4>
+                    <button id="exportPengeluaranBtn" class="btn-export"><i class="fas fa-download"></i> Export CSV</button>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th class="text-right">Nominal</th>
+                                <th class="text-center" style="width: 50px;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pengeluaranTbody">
+                            <!-- Rows will be populated here -->
+                            <tr><td colspan="4" class="empty-state">Belum ada data pengeluaran untuk periode ini</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div> <!-- End Pengeluaran View -->
+
+        <div class="footer-note">
+            <i class="fas fa-eye"></i> Mode Publik — Hanya bisa melihat data. <span id="lastSyncTxt">Terhubung</span>
+        </div>
+        
+        <!-- Detail Modal -->
+        <div id="detailModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-file-invoice"></i> Rincian Data</h3>
+                    <button id="closeDetailBtn" class="btn-close"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div class="detail-row"><span class="detail-label">Tanggal</span> <span id="detailTanggal">-</span></div>
+                    <div class="detail-row"><span class="detail-label">Tipe</span> <span id="detailTipe">-</span></div>
+                    <div class="detail-row"><span class="detail-label">Pelapor</span> <span id="detailPelapor">-</span></div>
+                    <div class="detail-row"><span class="detail-label">Keterangan</span> <span id="detailKeterangan">-</span></div>
+                    <div class="detail-row detail-total"><span class="detail-label">Nominal</span> <span class="val-jimpitan" id="detailNominal">-</span></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
