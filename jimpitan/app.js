@@ -49,7 +49,18 @@
 
     function bindSettings() {
         $('#settingsBtn').addEventListener('click', () => {
-            $('#settingsPanel').classList.toggle('hidden');
+            const panel = $('#settingsPanel');
+            if (panel.classList.contains('hidden')) {
+                const password = prompt("PENGAMANAN: Masukkan password Admin untuk mengakses pengaturan:");
+                // Anda bisa mengubah password ini sesuai keinginan
+                if (password === "adminbn2") { 
+                    panel.classList.remove('hidden');
+                } else if (password !== null) {
+                    alert("Password salah! Akses ditolak.");
+                }
+            } else {
+                panel.classList.add('hidden');
+            }
         });
 
         $('#connectBtn').addEventListener('click', async () => {

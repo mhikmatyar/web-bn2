@@ -51,6 +51,15 @@
             item.addEventListener('click', e => {
                 e.preventDefault();
                 const page = item.dataset.page;
+
+                if (page === 'settings') {
+                    const password = prompt("PENGAMANAN: Masukkan password Admin untuk mengakses pengaturan:");
+                    if (password !== "adminbn2") {
+                        if (password !== null) showToast("Password salah! Akses ditolak.", "error");
+                        return;
+                    }
+                }
+
                 navigateTo(page);
             });
         });
