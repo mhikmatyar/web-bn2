@@ -314,6 +314,15 @@ body {
     color: var(--text-dark);
 }
 
+.small-select {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    font-size: 13px;
+    background: var(--card-bg);
+    cursor: pointer;
+}
+
 .chart-wrapper {
     height: 250px;
     position: relative;

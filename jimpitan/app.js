@@ -13,6 +13,7 @@
         currentTab: 'jimpitan',
         selectedMonth: new Date().getMonth() + 1, // 1-12
         selectedYear: new Date().getFullYear(),
+        selectedWeek: 'all',
         chart: null,
         refreshInterval: 5,
         refreshTimer: null
@@ -272,6 +273,12 @@
             state.selectedYear = parseInt(e.target.value);
             renderAll();
         });
+
+        // WEEK CHART FILTER
+        $('#weekFilter').addEventListener('change', (e) => {
+            state.selectedWeek = e.target.value;
+            renderChart();
+        });
     }
 
     function updateDateSelectorsOptions() {
@@ -411,7 +418,16 @@
 
         // 1 to 31
         const daysInMonth = new Date(state.selectedYear, state.selectedMonth, 0).getDate();
-        const labels = Array.from({length: daysInMonth}, (_, i) => i + 1);
+        let labels = Array.from({length: daysInMonth}, (_, i) => i + 1);
+
+        // Filter label by Selection
+        if (state.selectedWeek !== 'all') {
+            const w = parseInt(state.selectedWeek);
+            const startDay = (w - 1) * 7 + 1;
+            const endDay = Math.min(w * 7, daysInMonth);
+            labels = labels.filter(l => l >= startDay && l <= endDay);
+        }
+
         const dataJ = labels.map(l => daily[l] ? daily[l].j : 0);
         const dataP = labels.map(l => daily[l] ? daily[l].p : 0);
 

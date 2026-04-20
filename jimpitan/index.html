@@ -95,8 +95,16 @@
 
             <!-- Chart Section -->
             <div class="chart-card">
-                <div class="chart-header">
+                <div class="chart-header" style="display: flex; justify-content: space-between; align-items: center;">
                     <h4>📊 Tren Harian — <span id="chartMonthLabel">Bulan</span></h4>
+                    <select id="weekFilter" class="small-select">
+                        <option value="all">Satu Bulan Penuh</option>
+                        <option value="1">Minggu 1 (1-7)</option>
+                        <option value="2">Minggu 2 (8-14)</option>
+                        <option value="3">Minggu 3 (15-21)</option>
+                        <option value="4">Minggu 4 (22-28)</option>
+                        <option value="5">Minggu 5 (29+)</option>
+                    </select>
                 </div>
                 <div class="chart-wrapper">
                     <canvas id="jimpitanChart"></canvas>
