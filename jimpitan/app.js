@@ -105,7 +105,21 @@
     }
 
     // =================== FETCH DATA ===================
+    function normalizeSheetUrl(url) {
+        const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+        if (match) {
+            let csvUrl = `https://docs.google.com/spreadsheets/d/${match[1]}/export?format=csv`;
+            const gidMatch = url.match(/[#&?]gid=([0-9]+)/);
+            if (gidMatch) {
+                csvUrl += `&gid=${gidMatch[1]}`;
+            }
+            return csvUrl;
+        }
+        return url;
+    }
+
     async function fetchCSV(url) {
+        url = normalizeSheetUrl(url);
         const methods = [
             () => fetch(url).then(r => { if (!r.ok) throw new Error(); return r.text(); }),
             () => fetch('https://corsproxy.io/?' + encodeURIComponent(url)).then(r => { if (!r.ok) throw new Error(); return r.text(); }),
@@ -115,7 +129,8 @@
         for (const method of methods) {
             try {
                 const csv = await method();
-                if (csv && csv.trim().length > 0) {
+                // Basic check to ensure it's not HTML
+                if (csv && csv.trim().length > 0 && !csv.trim().toLowerCase().startsWith('<!doctype html>')) {
                     parseCSVData(csv);
                     setupAutoRefresh();
                     return;
@@ -124,7 +139,7 @@
                 lastError = err;
             }
         }
-        throw lastError || new Error('Gagal fetch');
+        throw lastError || new Error('Gagal fetch atau URL bukan CSV');
     }
 
     async function fetchData() {

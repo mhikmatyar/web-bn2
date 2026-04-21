@@ -246,7 +246,21 @@
     }
 
     // =================== DATA FETCHING ===================
+    function normalizeSheetUrl(url) {
+        const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+        if (match) {
+            let csvUrl = `https://docs.google.com/spreadsheets/d/${match[1]}/export?format=csv`;
+            const gidMatch = url.match(/[#&?]gid=([0-9]+)/);
+            if (gidMatch) {
+                csvUrl += `&gid=${gidMatch[1]}`;
+            }
+            return csvUrl;
+        }
+        return url;
+    }
+
     async function fetchCSV(url) {
+        url = normalizeSheetUrl(url);
         // Try multiple methods to handle CORS (especially for file:// protocol)
         const methods = [
             // Method 1: Direct fetch
@@ -261,7 +275,8 @@
         for (const method of methods) {
             try {
                 const csv = await method();
-                if (csv && csv.trim().length > 0) {
+                // Basic check to ensure it's not HTML
+                if (csv && csv.trim().length > 0 && !csv.trim().toLowerCase().startsWith('<!doctype html>')) {
                     parseCSVData(csv);
                     return;
                 }
@@ -270,7 +285,7 @@
                 continue;
             }
         }
-        throw lastError || new Error('Semua metode koneksi gagal');
+        throw lastError || new Error('Semua metode koneksi gagal atau URL bukan CSV');
     }
 
     async function fetchData() {
