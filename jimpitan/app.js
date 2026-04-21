@@ -5,6 +5,8 @@
 (function () {
     'use strict';
 
+    const DEFAULT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQfPsk4L2qxshegLjX6zTdY4mPv0e4xYFqbzYFKgqwHJrMuSXAeDJuIFAhdyK2vi4SwyJ2HXZX4h0un/pubhtml?gid=0&single=true';
+
     // State
     const state = {
         data: [], // all raw data
@@ -35,9 +37,8 @@
         }
     }
 
-    // =================== SETTINGS ===================
     function loadSettings() {
-        state.sheetUrl = localStorage.getItem('bn2-jimpitanUrl') || '';
+        state.sheetUrl = localStorage.getItem('bn2-jimpitanUrl') || DEFAULT_SHEET_URL;
         if (state.sheetUrl) {
             $('#sheetUrl').value = state.sheetUrl;
             $('#disconnectBtn').style.display = 'inline-block';
