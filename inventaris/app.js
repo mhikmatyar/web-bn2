@@ -247,7 +247,13 @@
 
     // =================== DATA FETCHING ===================
     function normalizeSheetUrl(url) {
-        const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+        // Handle "Publish to the web" links
+        if (url.includes('/pubhtml')) {
+            return url.replace(/\/pubhtml([?#]?)/, '/pub$1') + (url.includes('?') ? '&output=csv' : '?output=csv');
+        }
+        
+        // Handle regular editing links
+        const match = url.match(/\/d\/(?!e\/)([a-zA-Z0-9-_]+)/);
         if (match) {
             let csvUrl = `https://docs.google.com/spreadsheets/d/${match[1]}/export?format=csv`;
             const gidMatch = url.match(/[#&?]gid=([0-9]+)/);
