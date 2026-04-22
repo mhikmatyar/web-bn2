@@ -394,6 +394,11 @@
         return 'Rp ' + num.toLocaleString('id-ID');
     }
 
+    function getWeekOfMonth(date) {
+        const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+        return Math.ceil((date.getDate() + firstDay) / 7);
+    }
+
     function renderTables() {
         const tJimpitan = $('#jimpitanTbody');
         const tPenge = $('#pengeluaranTbody');
@@ -404,25 +409,65 @@
         if (dataJimpitan.length === 0) {
             tJimpitan.innerHTML = '<tr><td colspan="4" class="empty-state">Belum ada data jimpitan untuk periode ini</td></tr>';
         } else {
-            tJimpitan.innerHTML = dataJimpitan.map(d => `
-                <tr>
-                    <td>${d.tanggal}</td>
-                    <td class="text-right val-jimpitan">${formatRp(d.nominal)}</td>
-                    <td class="text-center"><button class="btn-icon view-btn" data-idx="${state.data.indexOf(d)}" title="Lihat Detail"><i class="fas fa-eye"></i></button></td>
+            const groupJimpitan = {};
+            dataJimpitan.forEach(d => {
+                const week = getWeekOfMonth(d.dateObj);
+                if(!groupJimpitan[week]) groupJimpitan[week] = [];
+                groupJimpitan[week].push(d);
+            });
+
+            let html = '';
+            const weeks = Object.keys(groupJimpitan).sort((a,b) => a - b);
+            weeks.forEach(w => {
+                const total = sumData(groupJimpitan[w], 'JIMPITAN');
+                html += `
+                <tr class="bg-slate-50 font-bold text-slate-800">
+                    <td colspan="1" style="border-radius: 6px 0 0 6px;">Minggu ${w}</td>
+                    <td class="text-right">${formatRp(total)}</td>
+                    <td style="border-radius: 0 6px 6px 0;"></td>
                 </tr>
-            `).join('');
+                `;
+                html += groupJimpitan[w].map(d => `
+                    <tr>
+                        <td>${d.dateObj.toLocaleString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })}</td>
+                        <td class="text-right val-jimpitan">${formatRp(d.nominal)}</td>
+                        <td class="text-center"><button class="btn-icon view-btn" data-idx="${state.data.indexOf(d)}" title="Lihat Detail"><i class="fas fa-eye"></i></button></td>
+                    </tr>
+                `).join('');
+            });
+            tJimpitan.innerHTML = html;
         }
 
         if (dataPenge.length === 0) {
             tPenge.innerHTML = '<tr><td colspan="4" class="empty-state">Belum ada pengeluaran untuk periode ini</td></tr>';
         } else {
-            tPenge.innerHTML = dataPenge.map(d => `
-                <tr>
-                    <td>${d.tanggal}</td>
-                    <td class="text-right val-pengeluaran">-${formatRp(d.nominal)}</td>
-                    <td class="text-center"><button class="btn-icon view-btn" data-idx="${state.data.indexOf(d)}" title="Lihat Detail"><i class="fas fa-eye"></i></button></td>
+            const groupPenge = {};
+            dataPenge.forEach(d => {
+                const week = getWeekOfMonth(d.dateObj);
+                if(!groupPenge[week]) groupPenge[week] = [];
+                groupPenge[week].push(d);
+            });
+
+            let html = '';
+            const weeks = Object.keys(groupPenge).sort((a,b) => a - b);
+            weeks.forEach(w => {
+                const total = sumData(groupPenge[w], 'PENGELUARAN');
+                html += `
+                <tr class="bg-slate-50 font-bold text-slate-800">
+                    <td colspan="1" style="border-radius: 6px 0 0 6px;">Minggu ${w}</td>
+                    <td class="text-right val-pengeluaran">-${formatRp(total)}</td>
+                    <td style="border-radius: 0 6px 6px 0;"></td>
                 </tr>
-            `).join('');
+                `;
+                html += groupPenge[w].map(d => `
+                    <tr>
+                        <td>${d.dateObj.toLocaleString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })}</td>
+                        <td class="text-right val-pengeluaran">-${formatRp(d.nominal)}</td>
+                        <td class="text-center"><button class="btn-icon view-btn" data-idx="${state.data.indexOf(d)}" title="Lihat Detail"><i class="fas fa-eye"></i></button></td>
+                    </tr>
+                `).join('');
+            });
+            tPenge.innerHTML = html;
         }
     }
 
@@ -456,9 +501,10 @@
         // Filter label by Selection
         if (state.selectedWeek !== 'all') {
             const w = parseInt(state.selectedWeek);
-            const startDay = (w - 1) * 7 + 1;
-            const endDay = Math.min(w * 7, daysInMonth);
-            labels = labels.filter(l => l >= startDay && l <= endDay);
+            labels = labels.filter(l => {
+                const d = new Date(state.selectedYear, state.selectedMonth - 1, l);
+                return getWeekOfMonth(d) === w;
+            });
         }
 
         const dataJ = labels.map(l => daily[l] ? daily[l].j : 0);
