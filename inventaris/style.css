@@ -1420,6 +1420,9 @@ body {
         padding: 10px 16px 10px 40%;
         position: relative;
         border-bottom: 1px dashed var(--border-light);
+        max-width: 100%;
+        white-space: normal;
+        word-break: break-word;
     }
     .data-table td::before {
         content: attr(data-label);
