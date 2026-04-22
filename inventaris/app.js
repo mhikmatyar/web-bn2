@@ -182,7 +182,7 @@
         }
 
         if (!url.includes('/pub') || !url.includes('output=csv')) {
-            showConnectionResult('Format URL salah. Pastikan format mengandung "pub" dan "output=csv".', 'error');
+            showConnectionResult('Format URL Google Sheet (KOLOM PERTAMA) salah. Pastikan link di kolom pertama berakhiran "output=csv".', 'error');
             return;
         }
 
