@@ -44,7 +44,25 @@
         updateLocalStorageInfo();
 
         if (state.sheetUrl) {
-            fetchData();
+            fetchData().then(() => {
+                checkUrlParams(); // QR code deep linking
+            });
+        }
+    }
+
+    function checkUrlParams() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const itemId = urlParams.get('id');
+        if (itemId) {
+            const item = state.items.find(i => i.noInventaris === itemId);
+            if (item) {
+                showDetailModal(item);
+                // Clear the param without refreshing to keep URL clean
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, newUrl);
+            } else {
+                showToast(`Barang dengan No Inventaris ${itemId} tidak ditemukan`, 'error');
+            }
         }
     }
 
@@ -854,6 +872,9 @@
                             <button title="Lihat Detail" class="detail-action" data-no-inv="${escapeHtml(item.noInventaris)}">
                                 <i class="fas fa-eye"></i>
                             </button>
+                            <button title="Edit Barang" class="edit-action" data-no-inv="${escapeHtml(item.noInventaris)}" style="color: var(--blue); background: rgba(59, 130, 246, 0.1);">
+                                <i class="fas fa-edit"></i>
+                            </button>
                             <button title="Upload/Lihat Foto" class="photo-action" data-no-inv="${escapeHtml(item.noInventaris)}">
                                 <i class="fas fa-camera${hasPhoto ? '' : '-retro'}"></i>
                             </button>
@@ -874,6 +895,13 @@
             btn.addEventListener('click', () => {
                 const item = state.items.find(i => i.noInventaris === btn.dataset.noInv);
                 if (item) showDetailModal(item);
+            });
+        });
+
+        tbody.querySelectorAll('.edit-action').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const item = state.items.find(i => i.noInventaris === btn.dataset.noInv);
+                if (item) handleEditItem(item);
             });
         });
 
@@ -972,9 +1000,9 @@
         $('#photoModalClose').addEventListener('click', () => closeModal('photoModal'));
         $('#photoModalCloseBtn').addEventListener('click', () => closeModal('photoModal'));
 
-        // Add Item modal close
-        $('#addItemModalClose').addEventListener('click', () => closeModal('addItemModal'));
-        $('#addItemModalCancel').addEventListener('click', () => closeModal('addItemModal'));
+        // Item modal close (Add/Edit)
+        $('#itemModalClose').addEventListener('click', () => closeModal('itemModal'));
+        $('#itemModalCancel').addEventListener('click', () => closeModal('itemModal'));
 
         // Close on overlay click
         $$('.modal-overlay').forEach(overlay => {
@@ -1278,24 +1306,70 @@
             btnCamera.innerHTML = originalHtml;
         }
     }
-
     function bindAddItem() {
         $('#addBtn').addEventListener('click', () => {
             if (!state.sheetUrl || !state.scriptUrl) {
                 showToast('Hubungkan Google Sheet & Apps Script di Pengaturan terlebih dahulu', 'error');
                 return;
             }
-            openModal('addItemModal');
+            
+            // Reset form for ADD mode
+            $('#itemForm').reset();
+            $('#itemFormMode').value = 'add';
+            $('#itemFormNo').value = '';
+            $('#itemFormNoInv').value = '';
+            $('#itemModalTitle').innerHTML = '<i class="fas fa-plus-circle"></i> Tambah Barang Baru';
+            $('#submitItemBtn').innerHTML = '<i class="fas fa-save"></i> Simpan';
+            
+            openModal('itemModal');
         });
 
-        $('#addItemForm').addEventListener('submit', async (e) => {
+        $('#itemForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            await submitAddItem();
+            
+            const mode = $('#itemFormMode').value;
+            if (mode === 'edit') {
+                const password = prompt("PENGAMANAN: Masukkan password Admin untuk menyimpan perubahan:");
+                if (password !== "adminbn2") {
+                    if (password !== null) showToast("Password salah! Akses ditolak.", "error");
+                    return;
+                }
+            }
+            
+            await submitItemForm();
         });
     }
 
-    async function submitAddItem() {
-        const btn = $('#submitAddBtn');
+    function handleEditItem(item) {
+        if (!state.sheetUrl || !state.scriptUrl) {
+            showToast('Hubungkan Google Sheet & Apps Script di Pengaturan terlebih dahulu', 'error');
+            return;
+        }
+
+        // Fill form for EDIT mode
+        $('#itemFormMode').value = 'edit';
+        $('#itemFormNo').value = item.no;
+        $('#itemFormNoInv').value = item.noInventaris;
+        
+        $('#addNamaBarang').value = item.namaBarang;
+        $('#addKategori').value = item.kategori;
+        $('#addMerkType').value = item.merkType;
+        $('#addTahun').value = item.tahunPerolehan;
+        $('#addJumlah').value = item.jumlah;
+        $('#addHarga').value = item.hargaSatuan;
+        $('#addKondisi').value = item.kondisi;
+        $('#addLokasi').value = item.lokasi;
+        $('#addKeterangan').value = item.keterangan;
+
+        $('#itemModalTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Barang';
+        $('#submitItemBtn').innerHTML = '<i class="fas fa-save"></i> Update Data';
+
+        openModal('itemModal');
+    }
+
+    async function submitItemForm() {
+        const mode = $('#itemFormMode').value;
+        const btn = $('#submitItemBtn');
         const originalHtml = btn.innerHTML;
         
         btn.disabled = true;
@@ -1310,31 +1384,12 @@
                 jumlah: $('#addJumlah').value || 1,
                 harga: $('#addHarga').value || 0,
                 kondisi: $('#addKondisi').value,
-                lokasi: $('#addLokasi').value.trim(),
+                lokasi: $('#addLokasi').value,
                 keterangan: $('#addKeterangan').value.trim()
             };
 
-            // Calculate next No (sequential)
-            const nextNo = state.items.length > 0 ? Math.max(...state.items.map(i => parseInt(i.no) || 0)) + 1 : 1;
-            
-            // Generate No Inventaris
-            const katCode = getCategoryCode(formData.kategori);
-            const yearShort = formData.tahun.toString().slice(-2);
-            
-            let maxSeq = 0;
-            state.items.forEach(item => {
-                if (item.noInventaris) {
-                    const match = item.noInventaris.match(new RegExp(`^INVBN2\\/${katCode}\\/${yearShort}\\/(\\d+)$`));
-                    if (match) maxSeq = Math.max(maxSeq, parseInt(match[1]));
-                }
-            });
-            const seq = String(maxSeq + 1).padStart(3, '0');
-            const noInv = `INVBN2/${katCode}/${yearShort}/${seq}`;
-
-            const payload = {
-                action: 'addItem',
-                no: nextNo,
-                noInventaris: noInv,
+            let payload = {
+                action: mode === 'edit' ? 'editItem' : 'addItem',
                 namaBarang: formData.namaBarang,
                 kategori: formData.kategori,
                 merkType: formData.merkType,
@@ -1343,8 +1398,32 @@
                 harga: formData.harga,
                 kondisi: formData.kondisi,
                 lokasi: formData.lokasi,
-                keterangan: formData.keterangan
+                keterangan: formData.keterangan,
+                password: "adminbn2" // Password server
             };
+
+            if (mode === 'edit') {
+                payload.no = $('#itemFormNo').value;
+                payload.noInventaris = $('#itemFormNoInv').value;
+            } else {
+                // ADD logic
+                const nextNo = state.items.length > 0 ? Math.max(...state.items.map(i => parseInt(i.no) || 0)) + 1 : 1;
+                const katCode = getCategoryCode(formData.kategori);
+                const yearShort = formData.tahun.toString().slice(-2);
+                
+                let maxSeq = 0;
+                state.items.forEach(item => {
+                    if (item.noInventaris) {
+                        const match = item.noInventaris.match(new RegExp(`^INVBN2\\/${katCode}\\/${yearShort}\\/(\\d+)$`));
+                        if (match) maxSeq = Math.max(maxSeq, parseInt(match[1]));
+                    }
+                });
+                const seq = String(maxSeq + 1).padStart(3, '0');
+                const noInv = `INVBN2/${katCode}/${yearShort}/${seq}`;
+                
+                payload.no = nextNo;
+                payload.noInventaris = noInv;
+            }
 
             const response = await fetch(state.scriptUrl, {
                 method: 'POST',
@@ -1355,37 +1434,42 @@
             const result = await response.json();
 
             if (result.success) {
-                showToast('Barang berhasil ditambahkan!', 'success');
+                showToast(mode === 'edit' ? 'Data berhasil di-update!' : 'Barang berhasil ditambahkan!', 'success');
                 
-                // Tambahkan ke state lokal segera karena Google CSV butuh waktu untuk sinkronisasi
-                const newItem = {
-                    no: nextNo,
-                    namaBarang: formData.namaBarang,
-                    noInventaris: noInv,
-                    kategori: formData.kategori,
-                    merkType: formData.merkType,
-                    tahunPerolehan: formData.tahun,
-                    jumlah: formData.jumlah,
-                    hargaSatuan: formData.harga,
-                    kondisi: formData.kondisi,
-                    lokasi: formData.lokasi,
-                    keterangan: formData.keterangan,
-                    dokumentasi: ""
-                };
-                state.items.push(newItem);
+                if (mode === 'edit') {
+                    // Update lokal segera
+                    const idx = state.items.findIndex(i => i.noInventaris === payload.noInventaris);
+                    if (idx !== -1) {
+                        state.items[idx] = { 
+                            ...state.items[idx], 
+                            ...formData, 
+                            tahunPerolehan: formData.tahun,
+                            hargaSatuan: formData.harga
+                        };
+                    }
+                } else {
+                    const newItem = {
+                        no: payload.no,
+                        ...formData,
+                        tahunPerolehan: formData.tahun,
+                        hargaSatuan: formData.harga,
+                        noInventaris: payload.noInventaris,
+                        dokumentasi: ""
+                    };
+                    state.items.push(newItem);
+                }
+                
                 renderAll();
-
-                closeModal('addItemModal');
-                $('#addItemForm').reset();
+                closeModal('itemModal');
                 
-                // Tetap panggil fetchData setelah jeda untuk sinkronisasi final
+                // Refresh data final
                 setTimeout(() => fetchData(), 3000);
             } else {
-                throw new Error(result.error || 'Gagal menambah barang');
+                throw new Error(result.error || 'Gagal menyimpan data');
             }
         } catch (err) {
-            console.error('Add Item Error:', err);
-            showToast('Gagal menambah barang: ' + err.message, 'error');
+            console.error('Submit Error:', err);
+            showToast('Gagal menyimpan data: ' + err.message, 'error');
         } finally {
             btn.disabled = false;
             btn.innerHTML = originalHtml;

@@ -392,14 +392,17 @@
     </div>
 
         <!-- =================== ADD ITEM MODAL =================== -->
-        <div class="modal-overlay" id="addItemModal">
+        <div class="modal-overlay" id="itemModal">
             <div class="modal">
                 <div class="modal-header">
-                    <h2><i class="fas fa-plus-circle"></i> Tambah Barang Baru</h2>
-                    <button class="btn btn-icon modal-close" id="addItemModalClose"><i class="fas fa-times"></i></button>
+                    <h2 id="itemModalTitle"><i class="fas fa-plus-circle"></i> Tambah Barang Baru</h2>
+                    <button class="btn btn-icon modal-close" id="itemModalClose"><i class="fas fa-times"></i></button>
                 </div>
                 <div class="modal-body">
-                    <form id="addItemForm">
+                    <form id="itemForm">
+                        <input type="hidden" id="itemFormMode" value="add">
+                        <input type="hidden" id="itemFormNo" value="">
+                        <input type="hidden" id="itemFormNoInv" value="">
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="addNamaBarang">Nama Barang *</label>
@@ -470,8 +473,8 @@
                             <textarea id="addKeterangan" class="form-input" rows="2" placeholder="Catatan tambahan..."></textarea>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-outline" id="addItemModalCancel">Batal</button>
-                            <button type="submit" class="btn btn-primary" id="submitAddBtn">
+                            <button type="button" class="btn btn-outline" id="itemModalCancel">Batal</button>
+                            <button type="submit" class="btn btn-primary" id="submitItemBtn">
                                 <i class="fas fa-save"></i> Simpan
                             </button>
                         </div>
