@@ -849,6 +849,9 @@
                             <button title="Upload/Lihat Foto" class="photo-action" data-no-inv="${escapeHtml(item.noInventaris)}">
                                 <i class="fas fa-camera${hasPhoto ? '' : '-retro'}"></i>
                             </button>
+                            <button title="Hapus Barang" class="delete-action" data-no-inv="${escapeHtml(item.noInventaris)}" style="color: #ef4444; background: rgba(239, 68, 68, 0.1);">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </div>
                     </td>
                 </tr>
@@ -870,6 +873,13 @@
             btn.addEventListener('click', () => {
                 const item = state.items.find(i => i.noInventaris === btn.dataset.noInv);
                 if (item) showPhotoModal(item);
+            });
+        });
+
+        tbody.querySelectorAll('.delete-action').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const item = state.items.find(i => i.noInventaris === btn.dataset.noInv);
+                if (item) handleDeleteItem(item);
             });
         });
     }
@@ -1058,6 +1068,22 @@
         `;
 
         $('#modalTitle').textContent = item.namaBarang;
+        
+        // Update footer to include Delete button
+        const footer = $('#detailModalFooter');
+        footer.innerHTML = `
+            <button class="btn btn-outline" id="modalCloseBtnDetail">Tutup</button>
+            <button class="btn btn-danger-outline" id="modalDeleteBtn">
+                <i class="fas fa-trash"></i> Hapus Barang
+            </button>
+        `;
+        
+        $('#modalCloseBtnDetail').onclick = () => closeModal('detailModal');
+        $('#modalDeleteBtn').onclick = () => {
+            closeModal('detailModal');
+            handleDeleteItem(item);
+        };
+
         openModal('detailModal');
     }
 
@@ -1355,6 +1381,64 @@
         } finally {
             btn.disabled = false;
             btn.innerHTML = originalHtml;
+        }
+    }
+
+    async function handleDeleteItem(item) {
+        if (!state.scriptUrl) {
+            showToast('Fitur hapus membutuhkan koneksi Google Apps Script', 'error');
+            return;
+        }
+
+        const password = prompt("PENGAMANAN: Masukkan password Admin untuk menghapus barang:");
+        if (password !== "adminbn2") {
+            if (password !== null) showToast("Password salah! Akses ditolak.", "error");
+            return;
+        }
+
+        if (!confirm(`Yakin ingin menghapus barang "${item.namaBarang}"? Tindakan ini akan menghapus data dari Google Sheet secara permanen.`)) {
+            return;
+        }
+
+        const btn = document.querySelector(`.delete-action[data-no-inv="${item.noInventaris}"]`);
+        if (btn) btn.innerHTML = '<i class="fas fa-spinner spinner"></i>';
+
+        try {
+            const payload = {
+                action: 'deleteItem',
+                noInventaris: item.noInventaris,
+                password: password // Mengirim password ke server untuk keamanan ekstra (jika diterapkan di Apps Script)
+            };
+
+            const response = await fetch(state.scriptUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showToast('Barang berhasil dihapus!', 'success');
+                
+                // Hapus dari state lokal
+                state.items = state.items.filter(i => i.noInventaris !== item.noInventaris);
+                
+                // Hapus foto lokal jika ada
+                if (state.localPhotos[item.noInventaris]) {
+                    delete state.localPhotos[item.noInventaris];
+                    saveLocalPhotos();
+                    updateLocalStorageInfo();
+                }
+
+                renderAll();
+            } else {
+                throw new Error(result.error || 'Gagal menghapus barang');
+            }
+        } catch (err) {
+            console.error('Delete Item Error:', err);
+            showToast('Gagal menghapus barang: ' + err.message, 'error');
+            if (btn) btn.innerHTML = '<i class="fas fa-trash"></i>';
         }
     }
 
