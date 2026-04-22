@@ -524,14 +524,18 @@
                     {
                         label: 'Jimpitan',
                         data: dataJ,
-                        backgroundColor: '#10b981',
-                        borderRadius: 4
+                        backgroundColor: 'rgba(99, 102, 241, 0.7)',
+                        borderColor: '#6366f1',
+                        borderWidth: 1,
+                        borderRadius: 6
                     },
                     {
                         label: 'Pengeluaran',
                         data: dataP,
-                        backgroundColor: '#ef4444',
-                        borderRadius: 4
+                        backgroundColor: 'rgba(236, 72, 153, 0.7)',
+                        borderColor: '#ec4899',
+                        borderWidth: 1,
+                        borderRadius: 6
                     }
                 ]
             },
