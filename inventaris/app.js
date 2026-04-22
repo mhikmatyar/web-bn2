@@ -780,6 +780,17 @@
             applyFilters();
             renderTable();
         });
+
+        $('#resetFilterBtn').addEventListener('click', () => {
+            $('#searchInput').value = '';
+            $('#filterKategori').value = '';
+            $('#filterKondisi').value = '';
+            $('#filterLokasi').value = '';
+            state.currentPage = 1;
+            applyFilters();
+            renderTable();
+            showToast('Filter telah direset', 'info');
+        });
     }
 
     function applyFilters() {
@@ -959,6 +970,7 @@
 
         // Photo modal
         $('#photoModalClose').addEventListener('click', () => closeModal('photoModal'));
+        $('#photoModalCloseBtn').addEventListener('click', () => closeModal('photoModal'));
 
         // Close on overlay click
         $$('.modal-overlay').forEach(overlay => {
@@ -1470,6 +1482,12 @@
     }
 
     function exportCSV() {
+        const password = prompt("PENGAMANAN: Masukkan password Admin untuk export data:");
+        if (password !== "adminbn2") {
+            if (password !== null) showToast("Password salah! Akses ditolak.", "error");
+            return;
+        }
+
         if (state.filteredItems.length === 0) {
             showToast('Tidak ada data untuk di-export', 'error');
             return;
