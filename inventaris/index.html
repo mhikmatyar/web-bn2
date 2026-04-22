@@ -160,6 +160,9 @@
                     </select>
                 </div>
                 <div class="toolbar-actions">
+                    <button class="btn btn-primary" id="addBtn">
+                        <i class="fas fa-plus"></i> Tambah Barang
+                    </button>
                     <button class="btn btn-outline" id="exportCsvBtn">
                         <i class="fas fa-download"></i> Export CSV
                     </button>
@@ -384,6 +387,83 @@
             </div>
         </div>
     </div>
+
+        <!-- =================== ADD ITEM MODAL =================== -->
+        <div class="modal-overlay" id="addItemModal">
+            <div class="modal">
+                <div class="modal-header">
+                    <h2><i class="fas fa-plus-circle"></i> Tambah Barang Baru</h2>
+                    <button class="modal-close" onclick="closeModal('addItemModal')"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addItemForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="addNamaBarang">Nama Barang *</label>
+                                <input type="text" id="addNamaBarang" class="form-input" required placeholder="Contoh: Kursi Lipat">
+                            </div>
+                            <div class="form-group">
+                                <label for="addKategori">Kategori *</label>
+                                <select id="addKategori" class="form-input" required>
+                                    <option value="">Pilih Kategori</option>
+                                    <option value="Aset">Aset</option>
+                                    <option value="Elektronik">Elektronik</option>
+                                    <option value="Mebel">Mebel</option>
+                                    <option value="Peralatan">Peralatan</option>
+                                    <option value="Perlengkapan">Perlengkapan</option>
+                                    <option value="Kendaraan">Kendaraan</option>
+                                    <option value="Lain-lain">Lain-lain</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="addMerkType">Merk/Type</label>
+                                <input type="text" id="addMerkType" class="form-input" placeholder="Contoh: Chitose / Folding">
+                            </div>
+                            <div class="form-group">
+                                <label for="addTahun">Tahun Perolehan</label>
+                                <input type="number" id="addTahun" class="form-input" value="2026">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="addJumlah">Jumlah *</label>
+                                <input type="number" id="addJumlah" class="form-input" value="1" required min="1">
+                            </div>
+                            <div class="form-group">
+                                <label for="addHarga">Harga Satuan (Rp)</label>
+                                <input type="number" id="addHarga" class="form-input" value="0">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="addKondisi">Kondisi *</label>
+                                <select id="addKondisi" class="form-input" required>
+                                    <option value="Baik" selected>Baik</option>
+                                    <option value="Rusak Ringan">Rusak Ringan</option>
+                                    <option value="Rusak Berat">Rusak Berat</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="addLokasi">Lokasi *</label>
+                                <input type="text" id="addLokasi" class="form-input" required placeholder="Contoh: Gudang">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="addKeterangan">Keterangan</label>
+                            <textarea id="addKeterangan" class="form-input" rows="2" placeholder="Catatan tambahan..."></textarea>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline" onclick="closeModal('addItemModal')">Batal</button>
+                            <button type="submit" class="btn btn-primary" id="submitAddBtn">
+                                <i class="fas fa-save"></i> Simpan ke Google Sheet
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
 
     <!-- Toast Notification -->
     <div class="toast-container" id="toastContainer"></div>

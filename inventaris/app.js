@@ -40,6 +40,7 @@
         bindTableSort();
         bindModals();
         bindExport();
+        bindAddItem();
         updateLocalStorageInfo();
 
         if (state.sheetUrl) {
@@ -1236,6 +1237,103 @@
             btnCamera.style.pointerEvents = 'auto';
             btnGallery.style.pointerEvents = 'auto';
             btnCamera.innerHTML = originalHtml;
+        }
+    }
+
+    function bindAddItem() {
+        $('#addBtn').addEventListener('click', () => {
+            if (!state.sheetUrl || !state.scriptUrl) {
+                showToast('Hubungkan Google Sheet & Apps Script di Pengaturan terlebih dahulu', 'error');
+                return;
+            }
+            openModal('addItemModal');
+        });
+
+        $('#addItemForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const password = prompt("PENGAMANAN: Masukkan password Admin untuk menambah barang:");
+            if (password !== "adminbn2") {
+                if (password !== null) showToast("Password salah! Akses ditolak.", "error");
+                return;
+            }
+            await submitAddItem();
+        });
+    }
+
+    async function submitAddItem() {
+        const btn = $('#submitAddBtn');
+        const originalHtml = btn.innerHTML;
+        
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner spinner"></i> Menyimpan...';
+
+        try {
+            const formData = {
+                namaBarang: $('#addNamaBarang').value.trim(),
+                kategori: $('#addKategori').value,
+                merkType: $('#addMerkType').value.trim(),
+                tahun: $('#addTahun').value || new Date().getFullYear(),
+                jumlah: $('#addJumlah').value || 1,
+                harga: $('#addHarga').value || 0,
+                kondisi: $('#addKondisi').value,
+                lokasi: $('#addLokasi').value.trim(),
+                keterangan: $('#addKeterangan').value.trim()
+            };
+
+            // Calculate next No (sequential)
+            const nextNo = state.items.length > 0 ? Math.max(...state.items.map(i => parseInt(i.no) || 0)) + 1 : 1;
+            
+            // Generate No Inventaris
+            const katCode = getCategoryCode(formData.kategori);
+            const yearShort = formData.tahun.toString().slice(-2);
+            
+            let maxSeq = 0;
+            state.items.forEach(item => {
+                if (item.noInventaris) {
+                    const match = item.noInventaris.match(new RegExp(`^INVBN2\\/${katCode}\\/${yearShort}\\/(\\d+)$`));
+                    if (match) maxSeq = Math.max(maxSeq, parseInt(match[1]));
+                }
+            });
+            const seq = String(maxSeq + 1).padStart(3, '0');
+            const noInv = `INVBN2/${katCode}/${yearShort}/${seq}`;
+
+            const payload = {
+                action: 'addItem',
+                no: nextNo,
+                noInventaris: noInv,
+                namaBarang: formData.namaBarang,
+                kategori: formData.kategori,
+                merkType: formData.merkType,
+                tahun: formData.tahun,
+                jumlah: formData.jumlah,
+                harga: formData.harga,
+                kondisi: formData.kondisi,
+                lokasi: formData.lokasi,
+                keterangan: formData.keterangan
+            };
+
+            const response = await fetch(state.scriptUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showToast('Barang berhasil ditambahkan!', 'success');
+                closeModal('addItemModal');
+                $('#addItemForm').reset();
+                fetchData(); // Refresh data from sheet
+            } else {
+                throw new Error(result.error || 'Gagal menambah barang');
+            }
+        } catch (err) {
+            console.error('Add Item Error:', err);
+            showToast('Gagal menambah barang: ' + err.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
         }
     }
 
