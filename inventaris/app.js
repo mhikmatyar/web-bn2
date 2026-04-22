@@ -972,6 +972,10 @@
         $('#photoModalClose').addEventListener('click', () => closeModal('photoModal'));
         $('#photoModalCloseBtn').addEventListener('click', () => closeModal('photoModal'));
 
+        // Add Item modal close
+        $('#addItemModalClose').addEventListener('click', () => closeModal('addItemModal'));
+        $('#addItemModalCancel').addEventListener('click', () => closeModal('addItemModal'));
+
         // Close on overlay click
         $$('.modal-overlay').forEach(overlay => {
             overlay.addEventListener('click', e => {

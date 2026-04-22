@@ -396,7 +396,7 @@
             <div class="modal">
                 <div class="modal-header">
                     <h2><i class="fas fa-plus-circle"></i> Tambah Barang Baru</h2>
-                    <button class="modal-close" onclick="closeModal('addItemModal')"><i class="fas fa-times"></i></button>
+                    <button class="modal-close" id="addItemModalClose"><i class="fas fa-times"></i></button>
                 </div>
                 <div class="modal-body">
                     <form id="addItemForm">
@@ -470,9 +470,9 @@
                             <textarea id="addKeterangan" class="form-input" rows="2" placeholder="Catatan tambahan..."></textarea>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-outline" onclick="closeModal('addItemModal')">Batal</button>
+                            <button type="button" class="btn btn-outline" id="addItemModalCancel">Batal</button>
                             <button type="submit" class="btn btn-primary" id="submitAddBtn">
-                                <i class="fas fa-plus"></i> Simpan
+                                <i class="fas fa-save"></i> Simpan
                             </button>
                         </div>
                     </form>
