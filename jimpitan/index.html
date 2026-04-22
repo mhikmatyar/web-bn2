@@ -17,21 +17,54 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Top Header -->
-    <header class="app-header">
-        <div class="header-container">
-            <div class="header-title">
-                <h1><i class="fas fa-wallet"></i> Jimpitan Bumi Neikarta 2</h1>
-                <p>Rekap Jimpitan Harian Bumi Neikarta 2</p>
+    <div class="app-layout">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-logo"><i class="fas fa-wallet"></i></div>
+                <span>BN2 Pay</span>
             </div>
-            <div class="header-actions">
-                <a href="../" class="btn-portal"><i class="fas fa-arrow-left"></i> Kembali ke Portal</a>
-                <button id="settingsBtn" class="btn-login">Login Admin</button>
-            </div>
-        </div>
-    </header>
+            
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-tab="jimpitan">
+                    <i class="fas fa-th-large"></i> Dashboard
+                </button>
+                <button class="nav-item" data-tab="jimpitan-list">
+                    <i class="fas fa-money-bill-wave"></i> Pemasukan
+                </button>
+                <button class="nav-item" data-tab="pengeluaran">
+                    <i class="fas fa-receipt"></i> Pengeluaran
+                </button>
+                <button class="nav-item" id="settingsBtn">
+                    <i class="fas fa-cog"></i> Pengaturan
+                </button>
+            </nav>
 
-    <main class="main-container">
+            <div class="sidebar-footer">
+                <div class="user-card">
+                    <div class="user-avatar"><i class="fas fa-user-shield"></i></div>
+                    <div class="user-info">
+                        <span class="user-name">Admin BN2</span>
+                        <span class="user-role">Bendahara</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-wrapper">
+            <header class="top-bar">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Cari transaksi...">
+                </div>
+                <div class="top-bar-actions">
+                    <a href="../" class="btn-icon-top" title="Kembali ke Portal"><i class="fas fa-home"></i></a>
+                    <div class="notification-btn"><i class="fas fa-bell"></i><span class="dot"></span></div>
+                </div>
+            </header>
+
+            <main class="content-area">
         <!-- Settings Modal (Hidden by Default) -->
         <div id="settingsPanel" class="settings-panel hidden">
             <div class="settings-card">
@@ -46,137 +79,136 @@
             </div>
         </div>
 
-        <!-- Filter Controls -->
-        <div class="filter-controls">
-            <div class="select-wrapper">
-                <select id="monthSelect"></select>
-                <i class="fas fa-chevron-down"></i>
-            </div>
-            <div class="select-wrapper">
-                <select id="yearSelect"></select>
-                <i class="fas fa-chevron-down"></i>
-            </div>
+                <!-- Filter Controls -->
+                <div class="dashboard-header">
+                    <h2>Ringkasan Kas</h2>
+                    <div class="filter-controls">
+                        <div class="select-wrapper">
+                            <select id="monthSelect"></select>
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div class="select-wrapper">
+                            <select id="yearSelect"></select>
+                            <i class="fas fa-history"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs (Visual only now, logic handled by sidebar) -->
+                <div class="tabs-container" style="display:none;">
+                    <button class="tab-btn active" data-tab="jimpitan">Pemasukan</button>
+                    <button class="tab-btn" data-tab="pengeluaran">Pengeluaran</button>
+                </div>
+
+                <!-- JIMPITAN VIEW (DASHBOARD) -->
+                <div id="view-jimpitan" class="tab-content active">
+                    <div class="cards-grid">
+                        <!-- Main Balance Card (Credit Card Style) -->
+                        <div class="card-balance">
+                            <div class="card-header">
+                                <div class="card-label">Total Saldo Kas</div>
+                                <div class="card-chip"></div>
+                            </div>
+                            <h2 id="saldoTotalMonth">Rp 0</h2>
+                            <div class="card-footer">
+                                <div class="card-number">BN2 COMMUNITY FUND</div>
+                                <div class="card-valid" id="chartMonthLabel">APR 2024</div>
+                            </div>
+                        </div>
+
+                        <!-- Info Cards -->
+                        <div class="info-card-small">
+                            <div class="info-icon income"><i class="fas fa-arrow-up"></i></div>
+                            <div class="info-content">
+                                <span class="info-label">Pemasukan</span>
+                                <h3 id="jimpitanMonth">Rp 0</h3>
+                            </div>
+                        </div>
+
+                        <div class="info-card-small">
+                            <div class="info-icon expense"><i class="fas fa-arrow-down"></i></div>
+                            <div class="info-content">
+                                <span class="info-label">Pengeluaran</span>
+                                <h3 id="pengeluaranMonth">Rp 0</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h4>Tren Harian</h4>
+                                <select id="weekFilter" class="small-select">
+                                    <option value="all">Satu Bulan</option>
+                                    <option value="1">Minggu 1</option>
+                                    <option value="2">Minggu 2</option>
+                                </select>
+                            </div>
+                            <div class="chart-wrapper">
+                                <canvas id="jimpitanChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="summary-list-card">
+                            <h4>Statistik Cepat</h4>
+                            <div class="stat-item">
+                                <span class="stat-label">Total Tahun Ini</span>
+                                <span class="stat-value text-green" id="saldoTotalYear">Rp 0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Hari Terisi</span>
+                                <span class="stat-value" id="entriDays">0 Hari</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- JIMPITAN LIST VIEW (NEW) -->
+                <div id="view-jimpitan-list" class="tab-content">
+                    <div class="table-card">
+                        <div class="table-header">
+                            <h4>Rekap Pemasukan</h4>
+                            <button id="exportJimpitanBtn" class="btn-export"><i class="fas fa-download"></i> Export</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tanggal</th>
+                                        <th class="text-right">Nominal</th>
+                                        <th class="text-center">Detail</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="jimpitanTbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PENGELUARAN VIEW -->
+                <div id="view-pengeluaran" class="tab-content">
+                    <div class="table-card">
+                        <div class="table-header">
+                            <h4>Rekap Pengeluaran</h4>
+                            <button id="exportPengeluaranBtn" class="btn-export"><i class="fas fa-download"></i> Export</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tanggal</th>
+                                        <th class="text-right">Nominal</th>
+                                        <th class="text-center">Detail</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pengeluaranTbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
         </div>
-
-        <!-- Tabs -->
-        <div class="tabs-container">
-            <button class="tab-btn active" data-tab="jimpitan">
-                <span>💰</span> Jimpitan
-            </button>
-            <button class="tab-btn" data-tab="pengeluaran">
-                <span>🧾</span> Pengeluaran
-            </button>
-        </div>
-
-        <!-- JIMPITAN VIEW -->
-        <div id="view-jimpitan" class="tab-content active">
-            <!-- Summary Cards -->
-            <div class="summary-card hero-card">
-                <div>
-                    <h4>Saldo Kas Bulan Ini</h4>
-                    <h2 id="saldoTotalMonth">Rp 0</h2>
-                </div>
-                <div class="hero-stats">
-                    <p>Jimpitan: <span id="jimpitanMonth">Rp 0</span></p>
-                    <p>Pengeluaran: <span id="pengeluaranMonth">-Rp 0</span></p>
-                </div>
-            </div>
-
-            <div class="twin-cards">
-                <div class="summary-card outline-card">
-                    <h4>Total Tahun Ini</h4>
-                    <h2 id="saldoTotalYear" class="text-green">Rp 0</h2>
-                </div>
-                <div class="summary-card outline-card">
-                    <h4>Entri Data</h4>
-                    <h2><span id="entriDays">0</span> hari</h2>
-                </div>
-            </div>
-
-            <!-- Chart Section -->
-            <div class="chart-card">
-                <div class="chart-header" style="display: flex; justify-content: space-between; align-items: center;">
-                    <h4>📊 Tren Harian — <span id="chartMonthLabel">Bulan</span></h4>
-                    <select id="weekFilter" class="small-select">
-                        <option value="all">Satu Bulan Penuh</option>
-                        <option value="1">Minggu 1</option>
-                        <option value="2">Minggu 2</option>
-                        <option value="3">Minggu 3</option>
-                        <option value="4">Minggu 4</option>
-                        <option value="5">Minggu 5</option>
-                        <option value="6">Minggu 6</option>
-                    </select>
-                </div>
-                <div class="chart-wrapper">
-                    <canvas id="jimpitanChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Data Table Section -->
-            <div class="table-card">
-                <div class="table-header">
-                    <h4>📑 Rekap <span id="tableMonthLabel">Bulan</span></h4>
-                    <button id="exportJimpitanBtn" class="btn-export"><i class="fas fa-download"></i> Export CSV</button>
-                </div>
-                
-                <div class="table-responsive">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Tanggal</th>
-                                <th class="text-right">Nominal</th>
-                                <th class="text-center" style="width: 50px;">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="jimpitanTbody">
-                            <!-- Rows will be populated here -->
-                            <tr><td colspan="4" class="empty-state">Belum ada data jimpitan untuk periode ini</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div> <!-- End Jimpitan View -->
-
-        <!-- PENGELUARAN VIEW -->
-        <div id="view-pengeluaran" class="tab-content">
-            <div class="summary-card danger-card">
-                <div>
-                    <h4>Total Pengeluaran</h4>
-                    <h2 id="pengeluaranTotalMonthRp">Rp 0</h2>
-                </div>
-                <div class="hero-stats text-right">
-                    <p id="pengeluaranMonthLabelInfo">Bulan</p>
-                    <p><span id="pengeluaranTransaksi">0</span> transaksi</p>
-                </div>
-            </div>
-
-            <div class="table-card">
-                <div class="table-header">
-                    <h4>🧾 Pengeluaran <span id="tablePengeMonthLabel">Bulan</span></h4>
-                    <button id="exportPengeluaranBtn" class="btn-export"><i class="fas fa-download"></i> Export CSV</button>
-                </div>
-                
-                <div class="table-responsive">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Tanggal</th>
-                                <th class="text-right">Nominal</th>
-                                <th class="text-center" style="width: 50px;">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="pengeluaranTbody">
-                            <!-- Rows will be populated here -->
-                            <tr><td colspan="4" class="empty-state">Belum ada data pengeluaran untuk periode ini</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div> <!-- End Pengeluaran View -->
-
-        <div class="footer-note">
-            <i class="fas fa-eye"></i> Mode Publik — Hanya bisa melihat data. <span id="lastSyncTxt">Terhubung</span>
-        </div>
+    </div>
         
         <!-- Detail Modal -->
         <div id="detailModal" class="modal hidden">

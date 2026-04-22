@@ -358,14 +358,26 @@
 
     // =================== TABS ===================
     function bindTabs() {
-        $$('.tab-btn').forEach(btn => {
+        $$('.nav-item').forEach(btn => {
             btn.addEventListener('click', () => {
-                $$('.tab-btn').forEach(b => b.classList.remove('active'));
+                if (btn.id === 'settingsBtn') return; // Handled by bindSettings
+                
+                $$('.nav-item').forEach(b => b.classList.remove('active'));
                 $$('.tab-content').forEach(c => c.classList.remove('active'));
                 
                 btn.classList.add('active');
                 state.currentTab = btn.dataset.tab;
                 $(`#view-${state.currentTab}`).classList.add('active');
+            });
+        });
+
+        // Sync old tab-btn just in case
+        $$('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                $$('.tab-btn').forEach(b => b.classList.remove('active'));
+                $$('.tab-content').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                $(`#view-${btn.dataset.tab}`).classList.add('active');
             });
         });
     }
@@ -552,10 +564,10 @@
                     {
                         label: 'Jimpitan',
                         data: dataJ,
-                        backgroundColor: 'rgba(99, 102, 241, 0.7)',
-                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(79, 70, 229, 0.7)',
+                        borderColor: '#4f46e5',
                         borderWidth: 1,
-                        borderRadius: 6
+                        borderRadius: 4
                     },
                     {
                         label: 'Pengeluaran',
@@ -563,7 +575,7 @@
                         backgroundColor: 'rgba(236, 72, 153, 0.7)',
                         borderColor: '#ec4899',
                         borderWidth: 1,
-                        borderRadius: 6
+                        borderRadius: 4
                     }
                 ]
             },
