@@ -219,7 +219,7 @@
         const recent = state.data.slice(0, 5);
         
         if (recent.length === 0) {
-            container.innerHTML = '<div class="empty-state">Tidak ada transaksi</div>';
+            container.innerHTML = '<div class="empty-state" style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 13px;">Belum ada transaksi</div>';
             return;
         }
 
@@ -230,31 +230,106 @@
         const container = $(`#${targetId}`);
         const data = state.filteredData.filter(d => d.tipe === type);
         
-        if (data.length === 0) {
-            container.innerHTML = '<div class="empty-state">Tidak ada data</div>';
+        // If it's the combined history view, we might want to show all
+        const isHistoryView = targetId === 'jimpitanTbody';
+        const displayData = isHistoryView ? state.filteredData : data;
+
+        if (displayData.length === 0) {
+            container.innerHTML = '<div class="empty-state" style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 13px;">Tidak ada data untuk periode ini</div>';
             return;
         }
 
-        container.innerHTML = data.map(item => createTrxElement(item)).join('');
+        container.innerHTML = displayData.map(item => createTrxElement(item)).join('');
     }
 
     function createTrxElement(item) {
         const isIncome = item.tipe === 'JIMPITAN';
         return `
             <div class="trx-item" data-idx="${item.idx}">
-                <div class="trx-icon ${isIncome ? 'income' : 'expense'}">
+                <div class="trx-icon ${isIncome ? 'plus' : 'minus'}">
                     <i class="fas ${isIncome ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down'}"></i>
                 </div>
                 <div class="trx-info">
-                    <span class="trx-name">${item.keterangan !== '-' ? item.keterangan : (isIncome ? 'Jimpitan Warga' : 'Pengeluaran')}</span>
-                    <span class="trx-date">${item.tanggal}</span>
+                    <span class="name">${item.keterangan !== '-' ? item.keterangan : (isIncome ? 'Jimpitan Warga' : 'Pengeluaran')}</span>
+                    <span class="date">${item.tanggal}</span>
                 </div>
-                <div class="trx-amount ${isIncome ? 'plus' : 'minus'}">
+                <div class="trx-val ${isIncome ? 'plus' : 'minus'}">
                     ${isIncome ? '+' : '-'}${formatRp(item.nominal)}
                 </div>
             </div>
         `;
     }
+
+    function renderChart() {
+        const ctx = $('#jimpitanChart').getContext('2d');
+        if (state.chart) state.chart.destroy();
+
+        const daily = {};
+        state.filteredData.forEach(d => {
+            const tgl = d.dateObj.getDate();
+            if (!daily[tgl]) daily[tgl] = { j: 0, p: 0 };
+            if (d.tipe === 'JIMPITAN') daily[tgl].j += d.nominal;
+            else daily[tgl].p += d.nominal;
+        });
+
+        const daysInMonth = new Date(state.selectedYear, state.selectedMonth, 0).getDate();
+        let labels = Array.from({length: daysInMonth}, (_, i) => i + 1);
+
+        if ($('#weekFilter').value !== 'all') {
+            const w = parseInt($('#weekFilter').value);
+            labels = labels.filter(l => {
+                const d = new Date(state.selectedYear, state.selectedMonth - 1, l);
+                const firstDay = new Date(d.getFullYear(), d.getMonth(), 1).getDay();
+                const week = Math.ceil((d.getDate() + firstDay) / 7);
+                return week === w;
+            });
+        }
+
+        const dataJ = labels.map(l => daily[l] ? daily[l].j : 0);
+        const dataP = labels.map(l => daily[l] ? daily[l].p : 0);
+
+        state.chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: 'Masuk',
+                        data: dataJ,
+                        backgroundColor: 'rgba(79, 70, 229, 0.7)',
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Keluar',
+                        data: dataP,
+                        backgroundColor: 'rgba(236, 72, 153, 0.7)',
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+                    y: { beginAtZero: true, ticks: { font: { size: 10 } } }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+
+    // Update renderAll to include chart
+    const originalRenderAll = renderAll;
+    renderAll = function() {
+        originalRenderAll();
+        renderChart();
+    };
+    
+    // Add event listener for weekFilter
+    $('#weekFilter').addEventListener('change', renderChart);
 
     // =================== DATE CONTROLS ===================
     function initDateSelectors() {
