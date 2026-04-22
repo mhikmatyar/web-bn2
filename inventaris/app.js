@@ -1192,6 +1192,7 @@
             
             const payload = {
                 action: 'uploadPhoto',
+                no: item.no,
                 noInventaris: item.noInventaris,
                 namaBarang: item.namaBarang,
                 mimeType: 'image/jpeg',
