@@ -132,12 +132,16 @@
 
     function loadSettings() {
         state.sheetUrl = localStorage.getItem('inv-sheetUrl') || DEFAULT_SHEET_URL;
+        state.scriptUrl = localStorage.getItem('inv-scriptUrl') || '';
         state.refreshInterval = parseInt(localStorage.getItem('inv-refreshInterval')) || 5;
 
         if (state.sheetUrl) {
             $('#sheetUrl').value = state.sheetUrl;
             $('#disconnectBtn').style.display = 'inline-flex';
             updateSyncStatus('connected', 'Terhubung');
+        }
+        if (state.scriptUrl) {
+            $('#scriptUrl').value = state.scriptUrl;
         }
         $('#refreshInterval').value = state.refreshInterval;
     }
@@ -169,25 +173,46 @@
 
     async function connectSheet() {
         const url = $('#sheetUrl').value.trim();
+        const scriptUrl = $('#scriptUrl').value.trim();
+        const btn = $('#connectSheetBtn');
+
         if (!url) {
-            showConnectionResult('Masukkan URL Google Sheet terlebih dahulu', 'error');
+            showConnectionResult('URL Google Sheet tidak boleh kosong.', 'error');
             return;
         }
 
-        showConnectionResult('Menghubungkan...', 'success');
+        if (!url.includes('pub?output=csv')) {
+            showConnectionResult('Format URL salah. Pastikan format berakhiran "pub?output=csv".', 'error');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner spinner"></i> Menghubungkan...';
+
         try {
             await fetchCSV(url);
             state.sheetUrl = url;
             localStorage.setItem('inv-sheetUrl', url);
-            showConnectionResult(`Berhasil terhubung! ${state.items.length} barang ditemukan.`, 'success');
+            
+            if (scriptUrl) {
+                state.scriptUrl = scriptUrl;
+                localStorage.setItem('inv-scriptUrl', scriptUrl);
+            } else {
+                state.scriptUrl = '';
+                localStorage.removeItem('inv-scriptUrl');
+            }
+
             $('#disconnectBtn').style.display = 'inline-flex';
+            showConnectionResult('Berhasil terhubung ke Google Sheet!', 'success');
+            showToast('Koneksi berhasil', 'success');
             updateSyncStatus('connected', 'Terhubung');
             setupAutoRefresh();
             renderAll();
-            showToast(`Data berhasil dimuat: ${state.items.length} barang`, 'success');
         } catch (err) {
-            showConnectionResult('Gagal terhubung. Pastikan URL benar dan sheet sudah di-publish. Coba refresh halaman dan ulangi.', 'error');
-            updateSyncStatus('error', 'Gagal');
+            showConnectionResult('Gagal terhubung. Pastikan URL benar.', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Hubungkan';
         }
     }
 
@@ -207,17 +232,22 @@
     }
 
     function disconnectSheet() {
-        state.sheetUrl = '';
-        state.items = [];
-        state.filteredItems = [];
-        localStorage.removeItem('inv-sheetUrl');
-        $('#sheetUrl').value = '';
-        $('#disconnectBtn').style.display = 'none';
-        updateSyncStatus('', 'Belum terhubung');
-        if (state.refreshTimer) clearInterval(state.refreshTimer);
-        renderAll();
-        showToast('Koneksi diputus', 'info');
-        showConnectionResult('', '');
+        if (confirm('Yakin ingin memutus koneksi? Data tabel akan dikosongkan.')) {
+            state.sheetUrl = '';
+            state.scriptUrl = '';
+            localStorage.removeItem('inv-sheetUrl');
+            localStorage.removeItem('inv-scriptUrl');
+            state.items = [];
+            state.filteredItems = [];
+            $('#sheetUrl').value = '';
+            $('#scriptUrl').value = '';
+            $('#disconnectBtn').style.display = 'none';
+            $('#connectionResult').style.display = 'none';
+            updateSyncStatus('', 'Belum terhubung');
+            if (state.refreshTimer) clearInterval(state.refreshTimer);
+            renderAll();
+            showToast('Koneksi diputus', 'info');
+        }
     }
 
     function showConnectionResult(msg, type) {
@@ -1070,12 +1100,12 @@
         // Format: https://drive.google.com/file/d/FILE_ID/view
         const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
         if (match) {
-            return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w800`;
+            return `https://lh3.googleusercontent.com/d/${match[1]}=w800`;
         }
         // Format: https://drive.google.com/open?id=FILE_ID
         const match2 = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
         if (match2) {
-            return `https://drive.google.com/thumbnail?id=${match2[1]}&sz=w800`;
+            return `https://lh3.googleusercontent.com/d/${match2[1]}=w800`;
         }
         // Already a direct URL
         return url;
@@ -1129,17 +1159,83 @@
                 ctx.drawImage(img, 0, 0, w, h);
 
                 const compressed = canvas.toDataURL('image/jpeg', 0.7);
-                state.localPhotos[state.currentPhotoItem.noInventaris] = compressed;
-                saveLocalPhotos();
-                updateLocalStorageInfo();
-                showPhotoPreview(state.currentPhotoItem);
-                renderTable();
-                showToast('Foto berhasil disimpan!', 'success');
+
+                if (state.scriptUrl) {
+                    uploadPhotoToAPI(compressed, state.currentPhotoItem);
+                } else {
+                    state.localPhotos[state.currentPhotoItem.noInventaris] = compressed;
+                    saveLocalPhotos();
+                    updateLocalStorageInfo();
+                    showPhotoPreview(state.currentPhotoItem);
+                    renderTable();
+                    showToast('Foto berhasil disimpan secara lokal!', 'success');
+                }
             };
             img.src = ev.target.result;
         };
         reader.readAsDataURL(file);
         e.target.value = '';
+    }
+
+    async function uploadPhotoToAPI(base64Data, item) {
+        const btnCamera = $('#cameraBtnLabel');
+        const btnGallery = $('#galleryBtnLabel');
+        const originalHtml = btnCamera.innerHTML;
+        
+        btnCamera.style.pointerEvents = 'none';
+        btnGallery.style.pointerEvents = 'none';
+        btnCamera.innerHTML = '<i class="fas fa-spinner spinner"></i> Mengunggah...';
+
+        try {
+            // Remove the data:image/jpeg;base64, prefix
+            const base64String = base64Data.split(',')[1];
+            
+            const payload = {
+                action: 'uploadPhoto',
+                noInventaris: item.noInventaris,
+                namaBarang: item.namaBarang,
+                mimeType: 'image/jpeg',
+                filename: `${item.noInventaris.replace(/[\/\\]/g, '_')}_${Date.now()}.jpg`,
+                base64: base64String
+            };
+
+            const response = await fetch(state.scriptUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showToast('Foto berhasil diunggah dan disimpan ke Sheet!', 'success');
+                // Store local as cache so UI updates instantly
+                state.localPhotos[item.noInventaris] = base64Data;
+                saveLocalPhotos();
+                showPhotoPreview(item);
+                renderTable();
+                
+                // Fetch new data to ensure link is mapped
+                if (state.sheetUrl) fetchData();
+            } else {
+                throw new Error(result.error || 'Gagal mengunggah foto');
+            }
+        } catch (err) {
+            console.error('Upload Error:', err);
+            showToast('Gagal mengunggah foto ke server: ' + err.message, 'error');
+            // Fallback to local
+            state.localPhotos[item.noInventaris] = base64Data;
+            saveLocalPhotos();
+            showPhotoPreview(item);
+            renderTable();
+            showToast('Foto hanya tersimpan secara lokal di perangkat ini.', 'info');
+        } finally {
+            btnCamera.style.pointerEvents = 'auto';
+            btnGallery.style.pointerEvents = 'auto';
+            btnCamera.innerHTML = originalHtml;
+        }
     }
 
     function loadLocalPhotos() {

@@ -207,11 +207,15 @@
         <!-- =================== SETTINGS PAGE =================== -->
         <section class="page" id="page-settings">
             <div class="settings-card">
-                <h2><i class="fas fa-link"></i> Koneksi Google Sheets</h2>
-                <p class="settings-desc">Masukkan URL Google Sheets yang sudah di-publish ke web. Lihat halaman <strong>Panduan</strong> untuk cara lengkapnya.</p>
+                <h2><i class="fas fa-link"></i> Koneksi Sistem</h2>
+                <p class="settings-desc">Masukkan URL Google Sheets (untuk baca data) dan URL Google Apps Script (opsional, untuk upload foto otomatis). Lihat halaman <strong>Panduan</strong> untuk cara lengkapnya.</p>
                 <div class="form-group">
                     <label for="sheetUrl">URL Google Sheet (Published CSV)</label>
                     <input type="url" id="sheetUrl" class="form-input" placeholder="https://docs.google.com/spreadsheets/d/e/2PACX-.../pub?output=csv">
+                </div>
+                <div class="form-group">
+                    <label for="scriptUrl">URL Google Apps Script (Auto-Upload API)</label>
+                    <input type="url" id="scriptUrl" class="form-input" placeholder="https://script.google.com/macros/s/.../exec">
                 </div>
                 <div class="form-row">
                     <button class="btn btn-primary" id="connectSheetBtn">
@@ -303,12 +307,12 @@
                             <h3>Menambah Foto Barang</h3>
                             <p>Ada 2 cara menambah foto:</p>
                             <div class="guide-method">
-                                <h4>📱 Cara 1: Upload dari HP (Mudah)</h4>
+                                <h4>📱 Cara 1: Upload Otomatis (Google Apps Script)</h4>
                                 <ol>
-                                    <li>Buka halaman <strong>Data Inventaris</strong></li>
-                                    <li>Klik tombol <strong>📷</strong> di kolom Aksi barang yang diinginkan</li>
-                                    <li>Pilih <strong>Ambil Foto</strong> (buka kamera) atau <strong>Pilih dari Galeri</strong></li>
-                                    <li>Foto otomatis tersimpan!</li>
+                                    <li>Pastikan URL Google Apps Script sudah diisi di Pengaturan.</li>
+                                    <li>Klik tombol <strong>📷</strong> di kolom Aksi barang.</li>
+                                    <li>Pilih <strong>Ambil Foto</strong> atau <strong>Pilih dari Galeri</strong>, lalu masukkan password Admin.</li>
+                                    <li>Tunggu proses loading. Foto akan otomatis masuk ke Google Drive & tautannya tersimpan di Google Sheet!</li>
                                 </ol>
                             </div>
                             <div class="guide-method">
