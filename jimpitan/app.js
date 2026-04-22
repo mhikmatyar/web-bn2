@@ -710,7 +710,9 @@
                         backgroundColor: themeColor,
                         borderRadius: 8,
                         borderSkipped: false,
-                        barThickness: 12
+                        barThickness: 8,
+                        barPercentage: 0.5,
+                        categoryPercentage: 0.5
                     }]
                 },
                 options: {
