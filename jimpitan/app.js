@@ -1,5 +1,6 @@
 /* ========================================
-   JIMPITAN BUMI NEIKARTA 2 - APP.JS (MOBILE VERSION)
+   JIMPITAN BUMI NEIKARTA 2 - APP.JS
+   Exact Duplicate Version
    ======================================== */
 
 (function () {
@@ -12,25 +13,57 @@
         data: [], 
         filteredData: [],
         sheetUrl: '',
-        currentTab: 'jimpitan',
+        activeTab: 'jimpitan',
         selectedMonth: new Date().getMonth() + 1,
         selectedYear: new Date().getFullYear(),
-        isAdmin: false
+        chartRange: 'harian',
+        currentWeekPage: 0, // 0 is latest week
+        isAdmin: false,
+        chart: null,
+        monthsNames: ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'],
+        dayNames: ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
     };
 
     const $ = (sel) => document.querySelector(sel);
     const $$ = (sel) => document.querySelectorAll(sel);
 
-    function init() {
-        bindNavigation();
-        bindSettings();
-        initDateSelectors();
-        loadSettings();
-        bindModals();
-        bindRefresh();
+    function showLoading() {
+        const loader = $('#loadingOverlay');
+        if (loader) {
+            loader.classList.remove('opacity-0', 'pointer-events-none');
+            loader.classList.add('opacity-100');
+        }
+    }
 
-        if (state.sheetUrl) {
-            fetchData();
+    function hideLoading() {
+        const loader = $('#loadingOverlay');
+        if (loader) {
+            loader.classList.add('opacity-0', 'pointer-events-none');
+            loader.classList.remove('opacity-100');
+            // Remove from DOM after transition
+            setTimeout(() => { if (loader) loader.classList.add('hidden'); }, 500);
+        }
+    }
+
+    function init() {
+        try {
+            console.log("Jimpitan App: Initializing components...");
+            bindNavigation();
+            bindSettings();
+            initDateSelectors();
+            loadSettings();
+            bindModals();
+            bindChartFilters();
+            bindExport();
+            
+            if (window.lucide) lucide.createIcons();
+            
+            if (state.sheetUrl) {
+                console.log("Jimpitan App: Fetching data from", state.sheetUrl);
+                fetchData();
+            }
+        } catch (e) {
+            console.error("Jimpitan App: Initialization failed", e);
         }
     }
 
@@ -43,47 +76,73 @@
 
     // =================== NAVIGATION ===================
     function bindNavigation() {
-        // Bottom Nav & Action Buttons
-        document.addEventListener('click', (e) => {
-            const btn = e.target.closest('[data-tab]');
-            if (btn) {
-                const targetTab = btn.dataset.tab;
-                
-                if (targetTab === 'settings-auth') {
-                    if (state.isAdmin) {
-                        switchTab('view-settings');
-                    } else {
-                        $('#authModal').classList.remove('hidden');
-                        $('#adminPass').focus();
-                    }
-                } else {
-                    switchTab(`view-${targetTab}`);
-                }
+        $$('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                switchTab(btn.dataset.tab);
+            });
+        });
+
+        $('#adminBtn').addEventListener('click', () => {
+            if (state.isAdmin) {
+                switchTab('settings');
+            } else {
+                $('#authModal').classList.remove('hidden');
+                $('#adminPass').focus();
             }
         });
 
-        // Back buttons
-        $$('.back-btn').forEach(btn => {
-            btn.addEventListener('click', () => switchTab('view-jimpitan'));
+        $('#backFromSettings').addEventListener('click', () => {
+            switchTab('jimpitan');
         });
     }
 
-    function switchTab(viewId) {
-        // Remove all active views
-        $$('.tab-content').forEach(c => c.classList.remove('active'));
-        // Hide modal just in case
-        $('#authModal').classList.add('hidden');
+    function switchTab(tabName) {
+        state.activeTab = tabName;
         
-        const target = $(`#${viewId}`);
-        if (target) {
-            target.classList.add('active');
-            
-            // Sync bottom nav
-            const tabName = viewId.replace('view-', '');
-            $$('.nav-btn').forEach(b => {
-                b.classList.toggle('active', b.dataset.tab === tabName);
-            });
+        if (tabName === 'settings') {
+            $('#view-settings').classList.remove('hidden');
+        } else {
+            $('#view-settings').classList.add('hidden');
+            renderAll();
         }
+    }
+
+    function bindChartFilters() {
+        $$('.chart-filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                state.chartRange = btn.dataset.range;
+                
+                $$('.chart-filter-btn').forEach(b => {
+                    const isActive = b.dataset.range === state.chartRange;
+                    if (isActive) {
+                        b.classList.add('bg-emerald-700', 'text-white', 'shadow-sm');
+                        b.classList.remove('bg-emerald-50', 'text-emerald-700');
+                    } else {
+                        b.classList.remove('bg-emerald-700', 'text-white', 'shadow-sm');
+                        b.classList.add('bg-emerald-50', 'text-emerald-700');
+                    }
+                });
+                
+                renderAll();
+            });
+        });
+    }
+
+    function bindExport() {
+        $('#exportBtn').addEventListener('click', () => {
+            if (state.filteredData.length === 0) return alert('Tidak ada data untuk diekspor');
+            
+            const csvContent = Papa.unparse(state.filteredData);
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `Rekap_Jimpitan_${state.selectedMonth}_${state.selectedYear}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
     }
 
     // =================== AUTHENTICATION ===================
@@ -93,7 +152,8 @@
             if (pass === 'adminbn2') {
                 state.isAdmin = true;
                 $('#adminPass').value = '';
-                switchTab('view-settings');
+                $('#authModal').classList.add('hidden');
+                switchTab('settings');
             } else {
                 alert('Password salah!');
             }
@@ -109,8 +169,14 @@
             
             localStorage.setItem('bn2-jimpitanUrl', url);
             state.sheetUrl = url;
-            showToast('Konfigurasi disimpan!', 'success');
-            fetchData();
+            $('#connectionStatus').textContent = 'Menghubungkan...';
+            try {
+                await fetchData();
+                $('#connectionStatus').textContent = 'Terhubung & Data diperbarui!';
+                setTimeout(() => $('#connectionStatus').textContent = '', 3000);
+            } catch (err) {
+                $('#connectionStatus').textContent = 'Gagal terhubung!';
+            }
         });
 
         $('#disconnectBtn').addEventListener('click', () => {
@@ -124,49 +190,143 @@
     }
 
     // =================== FETCH DATA ===================
-    async function fetchData() {
-        if (!state.sheetUrl) return;
-        updateSyncStatus('Memuat...');
-        
-        try {
-            const url = normalizeSheetUrl(state.sheetUrl);
-            const response = await fetch(url);
-            const csv = await response.text();
-            
-            parseCSVData(csv);
-            updateSyncStatus('Terhubung');
-        } catch (err) {
-            updateSyncStatus('Gagal');
-            console.error(err);
-        }
-    }
-
     function normalizeSheetUrl(url) {
-        if (url.includes('/pubhtml')) return url.replace(/\/pubhtml([?#]?)/, '/pub$1') + (url.includes('?') ? '&output=csv' : '?output=csv');
+        // Handle "Publish to the web" links (both /pub and /pubhtml)
+        if (url.includes('/pubhtml') || url.includes('/pub')) {
+            let baseUrl = url.split(/[?#]/)[0].replace('/pubhtml', '/pub');
+            const gidMatch = url.match(/[#&?]gid=([0-9]+)/);
+            const gid = gidMatch ? gidMatch[1] : '0';
+            return `${baseUrl}?gid=${gid}&single=true&output=csv`;
+        }
+        
+        // Handle regular editing links (NOT published /e/ links)
+        const match = url.match(/\/d\/([a-zA-Z0-9-_]{20,})/); // Regular IDs are usually long
+        if (match && !url.includes('/d/e/')) {
+            const sheetId = match[1];
+            let csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
+            const gidMatch = url.match(/[#&?]gid=([0-9]+)/);
+            if (gidMatch) {
+                csvUrl += `&gid=${gidMatch[1]}`;
+            }
+            return csvUrl;
+        }
+        
+        // If it's a published link in /d/e/ format but not yet using /pub
+        if (url.includes('/d/e/')) {
+            const matchPub = url.match(/\/d\/e\/([a-zA-Z0-9-_]+)/);
+            if (matchPub) {
+                const pubId = matchPub[1];
+                const gidMatch = url.match(/[#&?]gid=([0-9]+)/);
+                const gid = gidMatch ? gidMatch[1] : '0';
+                return `https://docs.google.com/spreadsheets/d/e/${pubId}/pub?gid=${gid}&single=true&output=csv`;
+            }
+        }
+
         return url;
     }
 
+    async function fetchCSV(url) {
+        url = normalizeSheetUrl(url);
+        // Try multiple methods to handle CORS
+        const methods = [
+            // Method 1: Direct fetch
+            () => fetch(url).then(r => { if (!r.ok) throw new Error('Direct fetch failed'); return r.text(); }),
+            // Method 2: CORS proxy via corsproxy.io
+            () => fetch('https://corsproxy.io/?' + encodeURIComponent(url)).then(r => { if (!r.ok) throw new Error('Proxy 1 failed'); return r.text(); }),
+            // Method 3: CORS proxy via codetabs
+            () => fetch('https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url)).then(r => { if (!r.ok) throw new Error('Proxy 2 failed'); return r.text(); }),
+            // Method 4: AllOrigins (JSON wrapper)
+            () => fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(url)).then(r => r.json()).then(data => { if (!data.contents) throw new Error('Proxy 3 failed'); return data.contents; }),
+        ];
+
+        let lastError;
+        for (const method of methods) {
+            try {
+                const csv = await method();
+                if (csv && csv.trim().length > 0 && !csv.trim().toLowerCase().startsWith('<!doctype html>')) {
+                    return csv;
+                }
+            } catch (err) {
+                lastError = err;
+                continue;
+            }
+        }
+        throw lastError || new Error('Gagal memuat data CSV');
+    }
+
+    async function fetchData() {
+        if (!state.sheetUrl) {
+            hideLoading();
+            return;
+        }
+        
+        showLoading();
+        try {
+            const csv = await fetchCSV(state.sheetUrl);
+            parseCSVData(csv);
+        } catch (err) {
+            console.error('Fetch error:', err);
+            hideLoading();
+            // Show error message to user
+            alert('Gagal memuat data dari Google Sheets. Pastikan URL benar dan Spreadsheet sudah dipublikasikan.');
+        }
+    }
+
     function parseCSVData(csv) {
-        const result = Papa.parse(csv, { header: true, skipEmptyLines: true });
+        const result = Papa.parse(csv, { header: true, skipEmptyLines: true, transformHeader: h => h.trim() });
+        const monthNamesMap = {
+            'jan': 0, 'feb': 1, 'mar': 2, 'apr': 3, 'mei': 4, 'jun': 5,
+            'jul': 6, 'agu': 7, 'sep': 8, 'okt': 9, 'nov': 10, 'des': 11,
+            'january': 0, 'february': 1, 'march': 2, 'april': 3, 'may': 4, 'june': 5,
+            'july': 6, 'august': 7, 'september': 8, 'october': 9, 'november': 10, 'december': 11
+        };
+
         state.data = result.data.map((row, idx) => {
             const get = (...keys) => {
                 for (const k of keys) {
                     const cleanK = k.toUpperCase();
-                    const foundKey = Object.keys(row).find(rk => rk.toUpperCase() === cleanK);
+                    const foundKey = Object.keys(row).find(rk => rk.trim().toUpperCase() === cleanK);
                     if (foundKey) return row[foundKey].toString().trim();
                 }
                 return '';
             };
 
-            const typeRaw = (get('TIPE', 'JENIS', 'KATEGORI') || '').toLowerCase();
+            const typeRaw = (get('TIPE', 'JENIS', 'KATEGORI', 'KATEGORY') || '').toLowerCase();
             const isPengeluaran = typeRaw.includes('keluar') || typeRaw.includes('pengeluaran');
             
             let dateObj = new Date();
             const tglStr = get('TANGGAL', 'DATE', 'WAKTU');
             if (tglStr) {
-                const parts = tglStr.split(/[-/]/);
-                if (parts.length === 3) dateObj = new Date(parts[2], parts[1]-1, parts[0]);
+                const parts = tglStr.split(/[-/ ]/);
+                if (parts.length === 3) {
+                    let d = parseInt(parts[0]);
+                    let m = parseInt(parts[1]) - 1;
+                    let y = parseInt(parts[2]);
+
+                    // Handle string months
+                    if (isNaN(m)) {
+                        const mLower = parts[1].toLowerCase();
+                        if (monthNamesMap[mLower] !== undefined) {
+                            m = monthNamesMap[mLower];
+                        } else {
+                            // Try searching partial match
+                            for (let key in monthNamesMap) {
+                                if (mLower.startsWith(key)) {
+                                    m = monthNamesMap[key];
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if (y < 100) y += 2000; // Handle 2-digit years
+                    dateObj = new Date(y, m, d);
+                } else {
+                    dateObj = new Date(tglStr);
+                }
             }
+
+            if (isNaN(dateObj.getTime())) dateObj = new Date();
 
             return {
                 idx,
@@ -184,215 +344,508 @@
     }
 
     function parseUang(str) {
-        if (!str) return 0;
-        return parseInt(str.replace(/[Rp.\s,]/g, '')) || 0;
+        if (!str || str.trim() === '-' || str.trim() === '') return 0;
+        const cleaned = str.replace(/[Rp.\s,]/g, '');
+        return parseInt(cleaned) || 0;
     }
 
     function formatRp(num) {
-        return 'Rp ' + num.toLocaleString('id-ID');
+        return 'Rp ' + Math.abs(num).toLocaleString('id-ID');
+    }
+
+    function getStartOfWeek(date) {
+        const d = new Date(date);
+        const day = d.getDay(); // 0 is Sunday
+        d.setDate(d.getDate() - day);
+        d.setHours(0, 0, 0, 0);
+        return d;
+    }
+
+    function getWeekOfMonth(date) {
+        const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+        const firstSunday = new Date(firstDay);
+        firstSunday.setDate(firstDay.getDate() - firstDay.getDay());
+        
+        const diff = date.getTime() - firstSunday.getTime();
+        return Math.floor(diff / (7 * 24 * 60 * 60 * 1000)) + 1;
     }
 
     // =================== RENDER ===================
     function renderAll() {
-        const monthName = $('#monthSelect').options[$('#monthSelect').selectedIndex].text;
-        $('#chartMonthLabel').textContent = `Periode ${monthName} ${state.selectedYear}`;
+        try {
+            console.log("Jimpitan App: Rendering view...");
+            const periodText = `${state.monthsNames[state.selectedMonth - 1]} ${state.selectedYear}`;
+            
+            const rangeText = state.chartRange.charAt(0).toUpperCase() + state.chartRange.slice(1);
+            const chartTitle = $('#chartRangeTitle');
+            if (chartTitle) chartTitle.textContent = `Tren ${rangeText} — ${periodText}`;
+            
+            const rekapLbl = $('#rekapPeriodLabel');
+            if (rekapLbl) rekapLbl.textContent = periodText;
 
-        state.filteredData = state.data.filter(d => 
-            d.dateObj.getMonth() + 1 === state.selectedMonth && 
-            d.dateObj.getFullYear() === state.selectedYear
-        );
+            // Filter data
+            state.filteredData = state.data.filter(d => 
+                d.dateObj.getMonth() + 1 === state.selectedMonth && 
+                d.dateObj.getFullYear() === state.selectedYear
+            );
 
-        const totalJimpitan = state.filteredData.filter(d => d.tipe === 'JIMPITAN').reduce((s, i) => s + i.nominal, 0);
-        const totalPenge = state.filteredData.filter(d => d.tipe === 'PENGELUARAN').reduce((s, i) => s + i.nominal, 0);
-        
-        $('#saldoTotalMonth').textContent = formatRp(totalJimpitan - totalPenge);
-        $('#jimpitanMonth').textContent = formatRp(totalJimpitan);
-        $('#pengeluaranMonth').textContent = formatRp(totalPenge);
+            const currentViewData = state.filteredData.filter(d => d.tipe === state.activeTab.toUpperCase());
 
-        renderRecentList();
-        renderTableList('jimpitanTbody', 'JIMPITAN');
-        renderTableList('pengeluaranTbody', 'PENGELUARAN');
-    }
+            // Calculations
+            const monthIn = state.filteredData.filter(d => d.tipe === 'JIMPITAN').reduce((s, i) => s + i.nominal, 0);
+            const monthOut = state.filteredData.filter(d => d.tipe === 'PENGELUARAN').reduce((s, i) => s + i.nominal, 0);
+            
+            const yearData = state.data.filter(d => d.dateObj.getFullYear() === state.selectedYear);
+            const yearIn = yearData.filter(d => d.tipe === 'JIMPITAN').reduce((s, i) => s + i.nominal, 0);
+            const yearOut = yearData.filter(d => d.tipe === 'PENGELUARAN').reduce((s, i) => s + i.nominal, 0);
 
-    function renderRecentList() {
-        const container = $('#recentList');
-        const recent = state.data.slice(0, 5);
-        
-        if (recent.length === 0) {
-            container.innerHTML = '<div class="empty-state" style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 13px;">Belum ada transaksi</div>';
-            return;
+            const daysWithData = new Set(state.filteredData.map(d => d.dateObj.toDateString())).size;
+
+            // Update UI
+            if ($('#summaryJimpitan')) $('#summaryJimpitan').textContent = formatRp(monthIn);
+            if ($('#summaryPengeluaran')) $('#summaryPengeluaran').textContent = `-${formatRp(monthOut)}`;
+            if ($('#saldoBulanIni')) $('#saldoBulanIni').textContent = formatRp(monthIn - monthOut);
+            
+            if ($('#totalTahunIni')) $('#totalTahunIni').textContent = formatRp(state.activeTab === 'jimpitan' ? yearIn : yearOut);
+            if ($('#entriDataCount')) $('#entriDataCount').textContent = `${daysWithData} hari`;
+
+            renderRekapList(currentViewData);
+            renderChart();
+            
+            const isJimpitan = state.activeTab === 'jimpitan';
+            const themeColor = isJimpitan ? 'emerald' : 'rose';
+            const themeBg = isJimpitan ? 'bg-emerald-700' : 'bg-rose-700';
+            const themeBgLight = isJimpitan ? 'bg-emerald-50' : 'bg-rose-50';
+            const themeText = isJimpitan ? 'text-emerald-700' : 'text-rose-700';
+
+            // Update UI Colors
+            const header = $('header');
+            if (header) {
+                header.classList.remove('bg-emerald-700', 'bg-rose-700');
+                header.classList.add(themeBg);
+            }
+            
+            const statusCard = $('#statusCard'); 
+            if (statusCard) {
+                statusCard.classList.remove('bg-emerald-700', 'bg-rose-700');
+                statusCard.classList.add(themeBg);
+                statusCard.classList.remove('shadow-emerald-700/20', 'shadow-rose-700/20');
+                statusCard.classList.add(`shadow-${themeColor}-700/20`);
+            }
+
+            // Update Tab Buttons theme
+            $$('.tab-btn').forEach(b => {
+                const isActive = b.dataset.tab === state.activeTab;
+                b.classList.remove('active', 'bg-emerald-700', 'bg-rose-700', 'text-white', 'shadow-sm', 'text-slate-500', 'bg-white', 'text-emerald-700', 'text-rose-700');
+                
+                if (isActive) {
+                    b.classList.add(themeBg, 'text-white', 'shadow-sm');
+                } else {
+                    b.classList.add('bg-white', themeText);
+                }
+            });
+
+            // Update Chart Filter Buttons
+            $$('.chart-filter-btn').forEach(b => {
+                const isActive = b.dataset.range === state.chartRange;
+                b.classList.remove('bg-emerald-700', 'text-white', 'shadow-sm', 'bg-emerald-50', 'text-emerald-700', 'bg-rose-700', 'bg-rose-50', 'text-rose-700');
+                
+                if (isActive) {
+                    b.classList.add(themeBg, 'text-white', 'shadow-sm');
+                } else {
+                    b.classList.add(themeBgLight, themeText);
+                }
+            });
+
+            // Update Section Icons
+            $$('[data-lucide="history"], [data-lucide="line-chart"], [data-lucide="trending-up"]').forEach(icon => {
+                icon.classList.remove('text-emerald-600', 'text-rose-600');
+                icon.classList.add(isJimpitan ? 'text-emerald-600' : 'text-rose-600');
+            });
+
+            // Update Export Button
+            const exportBtn = $('#exportBtn');
+            if (exportBtn) {
+                exportBtn.classList.remove('bg-emerald-50', 'text-emerald-600', 'bg-rose-50', 'text-rose-600');
+                exportBtn.classList.add(themeBgLight, themeText);
+            }
+
+            if (window.lucide) lucide.createIcons();
+            
+            // Hide loading overlay
+            hideLoading();
+        } catch (e) {
+            console.error("Jimpitan App: Render failed", e);
+            hideLoading();
         }
-
-        container.innerHTML = recent.map(item => createTrxElement(item)).join('');
     }
 
-    function renderTableList(targetId, type) {
-        const container = $(`#${targetId}`);
-        const data = state.filteredData.filter(d => d.tipe === type);
-        
-        // If it's the combined history view, we might want to show all
-        const isHistoryView = targetId === 'jimpitanTbody';
-        const displayData = isHistoryView ? state.filteredData : data;
+    function renderRekapList(items) {
+        try {
+            const container = $('#rekapList');
+            if (!container) return;
+            const monthIdx = state.selectedMonth - 1;
+            const year = state.selectedYear;
+            
+            // Get all days in month
+            const daysInMonth = new Date(year, monthIdx + 1, 0).getDate();
+            const allDates = [];
+            for (let d = 1; d <= daysInMonth; d++) {
+                allDates.push(new Date(year, monthIdx, d));
+            }
 
-        if (displayData.length === 0) {
-            container.innerHTML = '<div class="empty-state" style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 13px;">Tidak ada data untuk periode ini</div>';
-            return;
+            // Map data items to dates
+            const dataMap = {};
+            items.forEach(item => {
+                const dStr = item.dateObj.toDateString();
+                if (!dataMap[dStr]) dataMap[dStr] = [];
+                dataMap[dStr].push(item);
+            });
+
+            // Group dates by week (Sunday start)
+            const weeks = [];
+            let currentWeek = [];
+            
+            allDates.forEach((date, i) => {
+                currentWeek.push(date);
+                // If it's Saturday or the last day of the month, end the week
+                if (date.getDay() === 6 || i === allDates.length - 1) {
+                    weeks.push(currentWeek);
+                    currentWeek = [];
+                }
+            });
+
+            let html = '';
+            const totalWeeks = weeks.length;
+            
+            // Reset page if out of bounds
+            if (state.currentWeekPage >= totalWeeks) state.currentWeekPage = 0;
+            if (state.currentWeekPage < 0) state.currentWeekPage = 0;
+            
+            // Render current week (from latest)
+            const reversedWeeks = [...weeks].reverse();
+            const week = reversedWeeks[state.currentWeekPage];
+            
+            if (week) {
+                const start = week[0];
+                const end = week[week.length - 1];
+                const weekNum = getWeekOfMonth(start);
+                
+                let weekTotal = 0;
+                let weekHtml = '';
+
+                week.forEach(date => {
+                    const dStr = date.toDateString();
+                    const dayItems = dataMap[dStr] || [];
+                    const dayName = state.dayNames[date.getDay()];
+                    const monthNameShort = (state.monthsNames[monthIdx] || '').substring(0,3);
+                    const dateDisplay = `${date.getDate()} ${monthNameShort}`;
+                    const isJimpitan = state.activeTab === 'jimpitan';
+
+                    if (dayItems.length > 0) {
+                        dayItems.forEach(item => {
+                            weekTotal += item.nominal;
+                            weekHtml += `
+                                <div class="bg-white border border-slate-50 p-4 rounded-lg flex items-center gap-4 hover:border-emerald-100 transition-all active:scale-[0.99] cursor-pointer shadow-sm shadow-slate-200/20" onclick="window.showDetailById(${item.idx})">
+                                    <div class="w-10 h-10 rounded-lg flex items-center justify-center ${isJimpitan ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}">
+                                        <i data-lucide="${isJimpitan ? 'trending-up' : 'receipt'}" class="w-5 h-5"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="text-xs font-bold text-slate-800 line-clamp-1">${item.keterangan !== '-' ? item.keterangan : (isJimpitan ? 'Jimpitan Warga' : 'Pengeluaran')}</div>
+                                        <div class="text-[10px] text-slate-400 font-medium">${dayName}, ${dateDisplay}</div>
+                                    </div>
+                                    <div class="text-xs font-bold ${isJimpitan ? 'text-emerald-600' : 'text-rose-600'}">
+                                        ${isJimpitan ? '+' : '-'}${formatRp(item.nominal)}
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        weekHtml += `
+                            <div class="bg-slate-50/50 border border-dashed border-slate-100 p-3 rounded-lg flex items-center gap-4 opacity-60">
+                                <div class="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-100 text-slate-300">
+                                    <i data-lucide="minus" class="w-4 h-4"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="text-[10px] font-bold text-slate-400">Tidak ada data</div>
+                                    <div class="text-[9px] text-slate-300 font-medium">${dayName}, ${dateDisplay}</div>
+                                </div>
+                                <div class="text-[10px] font-bold text-slate-300">Rp 0</div>
+                            </div>
+                        `;
+                    }
+                });
+
+                const isJimpitan = state.activeTab === 'jimpitan';
+                html = `
+                    <div class="space-y-3 pb-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-2">
+                                 <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Minggu ${weekNum}</span>
+                                 <span class="text-[9px] font-medium text-slate-300">(${start.getDate()} - ${end.getDate()} ${(state.monthsNames[monthIdx] || '').substring(0,3)})</span>
+                            </div>
+                            <div class="flex gap-1">
+                                <button class="p-1.5 rounded-lg bg-slate-100 text-slate-400 disabled:opacity-30 hover:bg-slate-200 transition-colors" id="prevWeekBtn" ${state.currentWeekPage >= totalWeeks - 1 ? 'disabled' : ''}>
+                                    <i data-lucide="chevron-left" class="w-3 h-3"></i>
+                                </button>
+                                <button class="p-1.5 rounded-lg bg-slate-100 text-slate-400 disabled:opacity-30 hover:bg-slate-200 transition-colors" id="nextWeekBtn" ${state.currentWeekPage === 0 ? 'disabled' : ''}>
+                                    <i data-lucide="chevron-right" class="w-3 h-3"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- WEEKLY SUMMARY -->
+                        <div class="${isJimpitan ? 'bg-emerald-700' : 'bg-rose-700'} text-white p-4 rounded-lg flex justify-between items-center shadow-lg ${isJimpitan ? 'shadow-emerald-700/20' : 'shadow-rose-700/20'}">
+                            <div class="flex items-center gap-3">
+                                <div class="bg-white/20 p-2 rounded-lg">
+                                    <i data-lucide="${isJimpitan ? 'wallet' : 'receipt'}" class="w-4 h-4 text-white"></i>
+                                </div>
+                                <span class="text-[10px] font-bold uppercase tracking-wider">Total Minggu Ini</span>
+                            </div>
+                            <span class="text-sm font-extrabold">${formatRp(weekTotal)}</span>
+                        </div>
+
+                        <div class="space-y-2">
+                            ${weekHtml}
+                        </div>
+                    </div>
+                `;
+            } else {
+                html = `<div class="py-12 text-center text-slate-400 text-xs italic">Tidak ada data untuk periode ini</div>`;
+            }
+
+            container.innerHTML = html;
+            
+            // Bind pagination
+            if ($('#prevWeekBtn')) {
+                $('#prevWeekBtn').addEventListener('click', () => {
+                    state.currentWeekPage++;
+                    renderRekapList(items);
+                });
+            }
+            if ($('#nextWeekBtn')) {
+                $('#nextWeekBtn').addEventListener('click', () => {
+                    state.currentWeekPage--;
+                    renderRekapList(items);
+                });
+            }
+
+            lucide.createIcons();
+        } catch (e) {
+            console.error("Rekap List Error:", e);
+            const container = $('#rekapList');
+            if (container) container.innerHTML = `<div class="py-12 text-center text-rose-500 text-xs font-bold">Terjadi kesalahan saat memuat data</div>`;
         }
-
-        container.innerHTML = displayData.map(item => createTrxElement(item)).join('');
-    }
-
-    function createTrxElement(item) {
-        const isIncome = item.tipe === 'JIMPITAN';
-        return `
-            <div class="trx-item" data-idx="${item.idx}">
-                <div class="trx-icon ${isIncome ? 'plus' : 'minus'}">
-                    <i class="fas ${isIncome ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down'}"></i>
-                </div>
-                <div class="trx-info">
-                    <span class="name">${item.keterangan !== '-' ? item.keterangan : (isIncome ? 'Jimpitan Warga' : 'Pengeluaran')}</span>
-                    <span class="date">${item.tanggal}</span>
-                </div>
-                <div class="trx-val ${isIncome ? 'plus' : 'minus'}">
-                    ${isIncome ? '+' : '-'}${formatRp(item.nominal)}
-                </div>
-            </div>
-        `;
     }
 
     function renderChart() {
-        const ctx = $('#jimpitanChart').getContext('2d');
-        if (state.chart) state.chart.destroy();
+        try {
+            const canvas = $('#jimpitanChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            if (state.chart) state.chart.destroy();
 
-        const daily = {};
-        state.filteredData.forEach(d => {
-            const tgl = d.dateObj.getDate();
-            if (!daily[tgl]) daily[tgl] = { j: 0, p: 0 };
-            if (d.tipe === 'JIMPITAN') daily[tgl].j += d.nominal;
-            else daily[tgl].p += d.nominal;
-        });
+            let labels = [];
+            let values = [];
+            const type = state.activeTab.toUpperCase();
 
-        const daysInMonth = new Date(state.selectedYear, state.selectedMonth, 0).getDate();
-        let labels = Array.from({length: daysInMonth}, (_, i) => i + 1);
-
-        if ($('#weekFilter').value !== 'all') {
-            const w = parseInt($('#weekFilter').value);
-            labels = labels.filter(l => {
-                const d = new Date(state.selectedYear, state.selectedMonth - 1, l);
-                const firstDay = new Date(d.getFullYear(), d.getMonth(), 1).getDay();
-                const week = Math.ceil((d.getDate() + firstDay) / 7);
-                return week === w;
-            });
-        }
-
-        const dataJ = labels.map(l => daily[l] ? daily[l].j : 0);
-        const dataP = labels.map(l => daily[l] ? daily[l].p : 0);
-
-        state.chart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels,
-                datasets: [
-                    {
-                        label: 'Masuk',
-                        data: dataJ,
-                        backgroundColor: 'rgba(79, 70, 229, 0.7)',
-                        borderRadius: 4
-                    },
-                    {
-                        label: 'Keluar',
-                        data: dataP,
-                        backgroundColor: 'rgba(236, 72, 153, 0.7)',
-                        borderRadius: 4
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: { grid: { display: false }, ticks: { font: { size: 10 } } },
-                    y: { beginAtZero: true, ticks: { font: { size: 10 } } }
-                },
-                plugins: {
-                    legend: { display: false }
-                }
+            if (state.chartRange === 'harian') {
+                const daysInMonth = new Date(state.selectedYear, state.selectedMonth, 0).getDate();
+                labels = Array.from({length: daysInMonth}, (_, i) => i + 1);
+                const daily = {};
+                state.filteredData.filter(d => d.tipe === type).forEach(d => {
+                    const day = d.dateObj.getDate();
+                    daily[day] = (daily[day] || 0) + d.nominal;
+                });
+                values = labels.map(day => daily[day] || 0);
+            } 
+            else if (state.chartRange === 'mingguan') {
+                labels = ['Minggu 1', 'Minggu 2', 'Minggu 3', 'Minggu 4', 'Minggu 5'];
+                const weekly = {};
+                state.filteredData.filter(d => d.tipe === type).forEach(d => {
+                    const w = getWeekOfMonth(d.dateObj);
+                    weekly[w] = (weekly[w] || 0) + d.nominal;
+                });
+                values = [1, 2, 3, 4, 5].map(w => weekly[w] || 0);
             }
-        });
+            else if (state.chartRange === 'bulanan') {
+                labels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+                const monthly = {};
+                state.data.filter(d => d.tipe === type && d.dateObj.getFullYear() === state.selectedYear).forEach(d => {
+                    const m = d.dateObj.getMonth();
+                    monthly[m] = (monthly[m] || 0) + d.nominal;
+                });
+                values = Array.from({length: 12}, (_, i) => monthly[i] || 0);
+            }
+            else if (state.chartRange === 'tahunan') {
+                const years = [...new Set(state.data.map(d => d.dateObj.getFullYear()))].sort();
+                labels = years;
+                const yearly = {};
+                state.data.filter(d => d.tipe === type).forEach(d => {
+                    const y = d.dateObj.getFullYear();
+                    yearly[y] = (yearly[y] || 0) + d.nominal;
+                });
+                values = years.map(y => yearly[y] || 0);
+            }
+
+            if (values.every(v => v === 0)) {
+                $('#chartEmptyMessage').classList.remove('hidden');
+                $('#jimpitanChart').classList.add('hidden');
+                return;
+            }
+
+            $('#chartEmptyMessage').classList.add('hidden');
+            $('#jimpitanChart').classList.remove('hidden');
+
+            const isJimpitan = state.activeTab === 'jimpitan';
+            const themeColor = isJimpitan ? '#059669' : '#e11d48';
+
+            state.chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: isJimpitan ? 'Pemasukan' : 'Pengeluaran',
+                        data: values,
+                        backgroundColor: themeColor,
+                        borderRadius: 8,
+                        borderSkipped: false,
+                        barThickness: 12
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { 
+                            display: true, 
+                            grid: { display: false },
+                            title: {
+                                display: true,
+                                text: state.chartRange === 'harian' ? 'Tanggal' : 'Periode',
+                                font: { size: 10, weight: '600', family: 'Plus Jakarta Sans' },
+                                color: '#94a3b8'
+                            },
+                            ticks: {
+                                font: { size: 9, family: 'Plus Jakarta Sans' },
+                                color: '#94a3b8',
+                                maxRotation: 0
+                            }
+                        },
+                        y: { 
+                            display: true, 
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Nominal (Rp)',
+                                font: { size: 10, weight: '600', family: 'Plus Jakarta Sans' },
+                                color: '#94a3b8'
+                            },
+                            ticks: {
+                                font: { size: 9, family: 'Plus Jakarta Sans' },
+                                color: '#94a3b8',
+                                callback: function(value) {
+                                    if (value >= 1000000) return (value / 1000000) + 'jt';
+                                    if (value >= 1000) return (value / 1000) + 'rb';
+                                    return value;
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#0f172a',
+                            titleFont: { family: 'Plus Jakarta Sans', size: 12, weight: 'bold' },
+                            bodyFont: { family: 'Plus Jakarta Sans', size: 12 },
+                            padding: 12,
+                            cornerRadius: 8,
+                            displayColors: false,
+                            callbacks: {
+                                title: (items) => {
+                                    const i = items[0];
+                                    if (state.chartRange === 'harian') {
+                                        const d = new Date(state.selectedYear, state.selectedMonth - 1, i.label);
+                                        return `${state.dayNames[d.getDay()]}, ${i.label} ${state.monthsNames[state.selectedMonth-1]} ${state.selectedYear}`;
+                                    }
+                                    if (state.chartRange === 'mingguan') {
+                                        return i.label;
+                                    }
+                                    if (state.chartRange === 'bulanan') {
+                                        return `${state.monthsNames[i.dataIndex]} ${state.selectedYear}`;
+                                    }
+                                    return i.label;
+                                },
+                                label: (context) => {
+                                    return ` Total: ${formatRp(context.raw)}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        } catch (e) {
+            console.error("Chart Render Error:", e);
+        }
     }
 
-    // Update renderAll to include chart
-    const originalRenderAll = renderAll;
-    renderAll = function() {
-        originalRenderAll();
-        renderChart();
-    };
-    
-    // Add event listener for weekFilter
-    $('#weekFilter').addEventListener('change', renderChart);
-
-    // =================== DATE CONTROLS ===================
+    // =================== DATE SELECTORS ===================
     function initDateSelectors() {
         const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
         const mSel = $('#monthSelect');
+        const ySel = $('#yearSelect');
+
         mSel.innerHTML = months.map((m, i) => `<option value="${i+1}">${m}</option>`).join('');
         mSel.value = state.selectedMonth;
 
-        mSel.addEventListener('change', (e) => {
-            state.selectedMonth = parseInt(e.target.value);
-            renderAll();
-        });
+        ySel.innerHTML = [2024, 2025, 2026].map(y => `<option value="${y}">${y}</option>`).join('');
+        ySel.value = state.selectedYear;
 
-        const ySel = $('#yearSelect');
-        ySel.innerHTML = `<option value="${state.selectedYear}">${state.selectedYear}</option>`;
+        const onDateChange = () => {
+            state.selectedMonth = parseInt(mSel.value);
+            state.selectedYear = parseInt(ySel.value);
+            renderAll();
+        };
+
+        mSel.addEventListener('change', onDateChange);
+        ySel.addEventListener('change', onDateChange);
     }
 
     // =================== MODALS & UTILS ===================
     function bindModals() {
-        document.addEventListener('click', (e) => {
-            const trx = e.target.closest('.trx-item');
-            if (trx) {
-                const idx = parseInt(trx.dataset.idx);
-                const item = state.data.find(d => d.idx === idx);
-                if (item) showDetail(item);
+        $('#closeDetailBtn').addEventListener('click', () => {
+            $('#detailModal').classList.add('hidden');
+            $('#detailModal').classList.remove('flex');
+        });
+        
+        window.showDetailById = (idx) => {
+            const item = state.data.find(d => d.idx === idx);
+            if (item) {
+                const isJimpitan = item.tipe === 'JIMPITAN';
+                const header = $('#detailHeaderColor');
+                const icon = $('#detailIcon');
+                const badge = $('#detailTipe');
+
+                header.className = `h-32 flex items-end justify-center pb-6 ${isJimpitan ? 'bg-emerald-600' : 'bg-rose-600'}`;
+                icon.setAttribute('data-lucide', isJimpitan ? 'trending-up' : 'receipt');
+                icon.className = `w-8 h-8 ${isJimpitan ? 'text-emerald-600' : 'text-rose-600'}`;
+                badge.className = `inline-block px-4 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-widest mb-4 ${isJimpitan ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`;
+                badge.textContent = isJimpitan ? 'Pemasukan' : 'Pengeluaran';
+
+                $('#detailTanggal').textContent = `${state.dayNames[item.dateObj.getDay()]}, ${item.tanggal}`;
+                $('#detailPelapor').textContent = item.pelapor;
+                $('#detailKeterangan').textContent = item.keterangan;
+                $('#detailNominal').textContent = formatRp(item.nominal);
+                
+                $('#detailModal').classList.remove('hidden');
+                $('#detailModal').classList.add('flex');
+                
+                lucide.createIcons();
             }
-        });
-
-        $('#closeDetailBtn').addEventListener('click', () => $('#detailModal').classList.add('hidden'));
+        };
     }
 
-    function showDetail(item) {
-        $('#detailTipe').textContent = item.tipe;
-        $('#detailTanggal').textContent = item.tanggal;
-        $('#detailPelapor').textContent = item.pelapor;
-        $('#detailKeterangan').textContent = item.keterangan;
-        $('#detailNominal').textContent = formatRp(item.nominal);
-        $('#detailNominal').className = item.tipe === 'JIMPITAN' ? 'green' : 'red';
-        $('#detailModal').classList.remove('hidden');
-    }
-
-    function bindRefresh() {
-        $('#refreshBtn').addEventListener('click', () => {
-            showToast('Memperbarui data...', 'info');
-            fetchData();
-        });
-    }
-
-    function updateSyncStatus(msg) {
-        // Just for console or hidden status in this version
-        console.log('Status:', msg);
-    }
-
-    function showToast(msg, type) {
-        const toast = document.createElement('div');
-        toast.className = `toast show ${type}`;
-        toast.innerHTML = msg;
-        document.body.appendChild(toast);
-        setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 500);
-        }, 3000);
-    }
-
-    document.addEventListener('DOMContentLoaded', init);
+    // Start the app
+    init();
+    console.log("Jimpitan App: Initialized");
 })();

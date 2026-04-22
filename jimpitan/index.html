@@ -4,149 +4,235 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jimpitan BN2 - Dashboard</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Scripts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link rel="stylesheet" href="index.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#15803d',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        .chart-container { height: 200px; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
 </head>
-<body>
-    <div class="app-container">
+<body class="bg-slate-50 text-slate-900 font-sans min-h-screen pb-12">
+
+    <div class="max-w-md mx-auto relative min-h-screen shadow-2xl bg-white lg:rounded-lg lg:my-8 lg:overflow-hidden">
+        
         <!-- HEADER -->
-        <header class="app-header">
-            <h1>Jimpitan BN2</h1>
-            <p id="chartMonthLabel">Bulan Ini</p>
+        <header class="bg-emerald-700 text-white p-6 rounded-b-lg" style="padding-bottom: 4rem;">
+            <div class="flex justify-between items-center mb-2">
+                <div class="flex items-center gap-3">
+                    <div class="bg-white/20 p-2 rounded-lg">
+                        <i data-lucide="home" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-base font-bold leading-none tracking-tight">Jimpitan BN2</h1>
+                        <p class="text-[10px] opacity-70 font-medium">Bumi Neikarta 2</p>
+                    </div>
+                </div>
+                <button id="adminBtn" class="text-xs font-semibold bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full transition-all">
+                    Admin
+                </button>
+            </div>
         </header>
 
-        <main id="main-content">
-            <!-- VIEW: HOME -->
-            <div id="view-jimpitan" class="tab-content active">
-                <!-- HERO CARD -->
-                <div class="glass-card hero-card">
-                    <div class="label">Total Saldo Kas</div>
-                    <div class="amount" id="saldoTotalMonth">Rp 0</div>
+        <!-- MAIN CONTENT (Floating Up) -->
+        <main class="-mt-14 px-5 space-y-6" style="padding-top: 32px;">
+            
+            <!-- DATE & TAB FILTERS -->
+            <div class="space-y-4">
+                <div class="flex gap-2">
+                    <select id="monthSelect" class="flex-1 bg-white border border-slate-100 rounded-lg px-4 py-3 text-xs font-semibold outline-none shadow-sm appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%2364748b%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-[length:14px] bg-[right_1rem_center] bg-no-repeat"></select>
+                    <select id="yearSelect" class="w-24 bg-white border border-slate-100 rounded-lg px-4 py-3 text-xs font-semibold outline-none shadow-sm appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke%3D%22%2364748b%22%3E%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%222%22%20d%3D%22M19%209l-7%207-7-7%22%2F%3E%3C%2Fsvg%3E')] bg-[length:14px] bg-[right_1rem_center] bg-no-repeat"></select>
                 </div>
 
-                <!-- STATS GRID -->
-                <div class="stats-grid">
-                    <div class="glass-card stat-box">
-                        <span class="label">Pemasukan</span>
-                        <span class="val green" id="jimpitanMonth">Rp 0</span>
-                    </div>
-                    <div class="glass-card stat-box">
-                        <span class="label">Pengeluaran</span>
-                        <span class="val red" id="pengeluaranMonth">Rp 0</span>
-                    </div>
-                </div>
-
-                <!-- CHART CARD -->
-                <div class="glass-card">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <h3 style="font-size: 16px; font-weight: 800;">Grafik Jimpitan</h3>
-                        <select id="weekFilter" style="border: none; background: transparent; font-size: 12px; font-weight: 700; color: var(--primary);">
-                            <option value="all">Satu Bulan</option>
-                            <option value="1">Minggu 1</option>
-                            <option value="2">Minggu 2</option>
-                        </select>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="jimpitanChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- TRANSACTIONS -->
-                <div class="section-title">
-                    <h3>Daftar Transaksi</h3>
-                    <span class="btn-link" data-tab="jimpitan-list">Lihat Semua</span>
-                </div>
-                <div class="transaction-list" id="recentList">
-                    <!-- Dynamic -->
+                <div class="bg-slate-100 p-1 rounded-lg flex gap-1">
+                    <button class="tab-btn flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold transition-all" data-tab="jimpitan">
+                        <i data-lucide="coins" class="w-3.5 h-3.5"></i> Jimpitan
+                    </button>
+                    <button class="tab-btn flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold transition-all text-slate-500" data-tab="pengeluaran">
+                        <i data-lucide="receipt" class="w-3.5 h-3.5"></i> Pengeluaran
+                    </button>
                 </div>
             </div>
 
-            <!-- VIEW: HISTORY -->
-            <div id="view-jimpitan-list" class="tab-content">
-                <div class="section-title">
-                    <h3 id="historyTitle">Semua Transaksi</h3>
-                    <div style="display: flex; gap: 8px;">
-                        <select id="monthSelect" style="border: none; background: var(--bg-glass); padding: 4px 8px; border-radius: 8px; font-size: 12px;"></select>
-                        <select id="yearSelect" style="border: none; background: var(--bg-glass); padding: 4px 8px; border-radius: 8px; font-size: 12px;"></select>
+            <!-- STATUS CARD -->
+            <div id="statusCard" class="bg-emerald-700 text-white p-6 rounded-lg shadow-xl shadow-emerald-700/20 relative overflow-hidden transition-all duration-500">
+                <div class="relative z-10">
+                    <div class="flex justify-between items-start mb-6">
+                        <span class="text-sm font-medium opacity-80">Saldo Kas Bulan Ini</span>
+                        <div class="text-right text-[10px] opacity-70 leading-tight">
+                            <div>Jimpitan: <span id="summaryJimpitan">Rp 0</span></div>
+                            <div>Pengeluaran: <span id="summaryPengeluaran">-Rp 0</span></div>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-extrabold mb-6" id="saldoBulanIni">Rp 0</div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-white/10 p-3 rounded-lg">
+                            <span class="block text-[10px] opacity-70 mb-1">Total Tahun Ini</span>
+                            <span class="text-sm font-bold" id="totalTahunIni">Rp 0</span>
+                        </div>
+                        <div class="bg-white/10 p-3 rounded-lg">
+                            <span class="block text-[10px] opacity-70 mb-1">Entri Data</span>
+                            <span class="text-sm font-bold" id="entriDataCount">0 hari</span>
+                        </div>
                     </div>
                 </div>
-                <div class="transaction-list" id="jimpitanTbody">
-                    <!-- Populated by JS -->
+                <!-- Abstract Background circles -->
+                <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+                <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-black/10 rounded-full blur-2xl"></div>
+            </div>
+
+            <!-- CHART CARD -->
+            <div class="bg-white border border-slate-100 rounded-lg p-6 shadow-sm">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                        <i data-lucide="bar-chart-3" class="w-4 h-4 text-emerald-600"></i>
+                        <span id="chartRangeTitle">Tren Harian</span>
+                    </h3>
+                </div>
+                
+                <div class="flex gap-2 mb-6 overflow-x-auto no-scrollbar pb-1">
+                    <button class="chart-filter-btn whitespace-nowrap px-4 py-1.5 rounded-lg text-xs font-bold transition-all" data-range="harian">Harian</button>
+                    <button class="chart-filter-btn whitespace-nowrap px-4 py-1.5 rounded-lg text-xs font-bold transition-all" data-range="mingguan">Mingguan</button>
+                    <button class="chart-filter-btn whitespace-nowrap px-4 py-1.5 rounded-lg text-xs font-bold transition-all" data-range="bulanan">Bulanan</button>
+                    <button class="chart-filter-btn whitespace-nowrap px-4 py-1.5 rounded-lg text-xs font-bold transition-all" data-range="tahunan">Tahunan</button>
+                </div>
+
+                <div class="chart-container relative">
+                    <canvas id="jimpitanChart"></canvas>
+                    <div id="chartEmptyMessage" class="absolute inset-0 flex items-center justify-center text-slate-400 text-sm italic hidden">Belum ada data</div>
                 </div>
             </div>
 
-            <!-- VIEW: SETTINGS -->
-            <div id="view-settings" class="tab-content">
-                <div class="section-title">
-                    <h3>Pengaturan Data</h3>
+            <!-- REKAP LIST -->
+            <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                        <i data-lucide="history" class="w-4 h-4 text-emerald-600"></i>
+                        <span>Rekap <span id="rekapPeriodLabel">April 2026</span></span>
+                    </h3>
+                    <button id="exportBtn" class="text-[10px] font-bold text-emerald-700 flex items-center gap-1 bg-emerald-50 px-3 py-1.5 rounded-full hover:bg-emerald-100 transition-colors">
+                        <i data-lucide="download" class="w-3 h-3"></i> Export
+                    </button>
                 </div>
-                <div class="glass-card settings-list">
-                    <div class="input-group">
-                        <label style="font-size: 12px; font-weight: 700;">Google Sheet CSV URL</label>
-                        <input type="text" id="sheetUrl" placeholder="https://docs.google.com/...">
+
+                <div id="rekapList" class="space-y-6">
+                    <!-- Dynamic content -->
+                    <div class="flex flex-col items-center justify-center py-12 text-slate-400 animate-pulse">
+                        <i data-lucide="loader-2" class="w-8 h-8 mb-2 animate-spin"></i>
+                        <p class="text-xs italic">Memuat data...</p>
                     </div>
-                    <button class="btn-primary" id="connectBtn">Simpan Konfigurasi</button>
-                    <div id="connectionStatus" style="font-size: 12px; text-align: center; margin-top: 8px;"></div>
-                    <hr style="border: none; border-top: 1px solid var(--border-glass); margin: 12px 0;">
-                    <button id="disconnectBtn" style="background: transparent; border: none; color: var(--danger); font-size: 14px; font-weight: 700; cursor: pointer;">Putuskan Koneksi</button>
                 </div>
             </div>
         </main>
 
-        <!-- BOTTOM NAV -->
-        <nav class="bottom-nav">
-            <div class="nav-item active" data-tab="jimpitan">
-                <i class="fas fa-home"></i>
-                <span>Home</span>
-            </div>
-            <div class="nav-item" data-tab="jimpitan-list">
-                <i class="fas fa-history"></i>
-                <span>Riwayat</span>
-            </div>
-            <div class="nav-item" data-tab="settings-auth">
-                <i class="fas fa-cog"></i>
-                <span>Admin</span>
-            </div>
-        </nav>
+        <!-- FOOTER INFO -->
+        <footer class="mt-12 px-6 py-8 border-t border-slate-50 text-center">
+            <p class="text-[10px] text-slate-400">© 2026 Jimpitan Bumi Neikarta 2</p>
+            <p class="text-[9px] text-slate-300 mt-1 uppercase tracking-widest font-bold">Smart Neighborhood Tracker</p>
+        </footer>
     </div>
 
-    <!-- AUTH MODAL -->
-    <div id="authModal" class="modal hidden">
-        <div class="modal-content">
-            <h3 style="margin-bottom: 12px;">Akses Admin</h3>
-            <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 20px;">Masukkan password untuk mengelola data.</p>
-            <input type="password" id="adminPass" placeholder="Password..." style="width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #eee; margin-bottom: 20px; text-align: center;">
-            <div style="display: flex; gap: 12px;">
-                <button id="closeAuthBtn" style="flex: 1; padding: 14px; border: none; border-radius: 12px; background: #eee; font-weight: 700;">Batal</button>
-                <button id="confirmAuthBtn" style="flex: 1; padding: 14px; border: none; border-radius: 12px; background: var(--primary); color: white; font-weight: 700;">Masuk</button>
+    <!-- MODAL: AUTH -->
+    <div id="authModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6 hidden">
+        <div class="bg-white w-full max-w-xs rounded-lg p-8 shadow-2xl scale-95 transition-all duration-300">
+            <div class="text-center mb-6">
+                <div class="bg-emerald-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="lock" class="w-8 h-8 text-emerald-700"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800">Akses Admin</h3>
+                <p class="text-xs text-slate-500 mt-1">Masukkan kata sandi untuk masuk ke pengaturan</p>
+            </div>
+            <input type="password" id="adminPass" class="w-full bg-slate-50 border border-slate-100 rounded-lg px-5 py-4 text-center text-lg outline-none focus:ring-2 focus:ring-emerald-500/20 mb-6 transition-all" placeholder="······">
+            <div class="flex flex-col gap-3">
+                <button id="confirmAuthBtn" class="w-full bg-emerald-700 text-white font-bold py-4 rounded-lg shadow-lg shadow-emerald-700/20 hover:bg-emerald-800 active:scale-[0.98] transition-all">Masuk</button>
+                <button id="closeAuthBtn" class="w-full text-slate-400 text-xs font-bold py-2">Batal</button>
             </div>
         </div>
     </div>
 
-    <!-- DETAIL MODAL -->
-    <div id="detailModal" class="modal hidden">
-        <div class="modal-content">
-            <div style="text-align: center; margin-bottom: 24px;">
-                <div id="detailIcon" style="width: 60px; height: 60px; border-radius: 20px; background: #f0fdf4; color: var(--success); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; font-size: 24px;">
-                    <i class="fas fa-receipt"></i>
+    <!-- MODAL: SETTINGS (Inline with dashboard for simplicity) -->
+    <div id="view-settings" class="fixed inset-0 bg-white z-[150] overflow-y-auto no-scrollbar hidden">
+        <div class="max-w-md mx-auto p-6 space-y-8">
+            <div class="flex items-center justify-between">
+                <button id="backFromSettings" class="bg-slate-100 p-3 rounded-lg text-slate-600 hover:bg-slate-200 transition-all">
+                    <i data-lucide="chevron-left" class="w-6 h-6"></i>
+                </button>
+                <h2 class="text-lg font-bold">Pengaturan</h2>
+                <div class="w-12 h-12"></div>
+            </div>
+
+            <div class="space-y-6">
+                <div class="bg-slate-50 p-6 rounded-lg border border-slate-100">
+                    <h3 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i data-lucide="link" class="w-4 h-4 text-emerald-600"></i> Sumber Data
+                    </h3>
+                    <p class="text-[11px] text-slate-500 mb-4">Pastikan spreadsheet Google Anda sudah di-publish ke web dalam format CSV.</p>
+                    <textarea id="sheetUrl" class="w-full bg-white border border-slate-100 rounded-lg p-4 text-xs font-mono text-slate-600 outline-none focus:ring-2 focus:ring-emerald-500/20 mb-4 no-scrollbar h-32" placeholder="Link Google Sheets CSV..."></textarea>
+                    <button id="connectBtn" class="w-full bg-emerald-700 text-white font-bold py-4 rounded-lg shadow-lg shadow-emerald-700/20 hover:bg-emerald-800 transition-all">Simpan Konfigurasi</button>
+                    <div id="connectionStatus" class="mt-4 text-center text-xs font-bold"></div>
                 </div>
-                <h3 id="detailTipe">Transaksi</h3>
+
+                <div class="bg-rose-50 p-6 rounded-lg border border-rose-100">
+                    <h3 class="text-sm font-bold text-rose-800 mb-2">Hapus Data</h3>
+                    <p class="text-[10px] text-rose-600 mb-4 opacity-70">Tindakan ini akan menghapus URL spreadsheet yang tersimpan dan memutus koneksi data.</p>
+                    <button id="disconnectBtn" class="w-full bg-white text-rose-600 border border-rose-100 font-bold py-3 rounded-lg hover:bg-rose-100 transition-all">Putuskan Koneksi</button>
+                </div>
             </div>
-            <div style="display: flex; flex-direction: column; gap: 12px; font-size: 14px;">
-                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted);">Tanggal</span><span id="detailTanggal">-</span></div>
-                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted);">Pelapor</span><span id="detailPelapor">-</span></div>
-                <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted);">Keterangan</span><span id="detailKeterangan">-</span></div>
+        </div>
+    </div>
+
+    <!-- MODAL: DETAIL -->
+    <div id="detailModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-6 hidden">
+        <div class="bg-white w-full max-w-sm rounded-[2.5rem] overflow-hidden shadow-2xl scale-95 transition-all duration-300">
+            <div id="detailHeaderColor" class="h-32 flex items-end justify-center pb-6">
+                <div class="bg-white p-4 rounded-full shadow-lg -mb-12">
+                    <i id="detailIcon" data-lucide="coins" class="w-8 h-8"></i>
+                </div>
             </div>
-            <div style="margin-top: 24px; padding: 20px; background: #f8fafc; border-radius: 16px; text-align: center;">
-                <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">NOMINAL</div>
-                <h2 id="detailNominal" style="font-size: 28px; font-weight: 800;">Rp 0</h2>
+            <div class="p-8 pt-16 text-center">
+                <span id="detailTipe" class="inline-block px-4 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-widest mb-4">JIMPITAN</span>
+                <h4 id="detailNominal" class="text-4xl font-extrabold text-slate-900 mb-6">Rp 0</h4>
+                
+                <div class="space-y-4 text-left bg-slate-50 p-6 rounded-lg mb-8">
+                    <div class="flex justify-between items-center border-b border-slate-200/50 pb-2">
+                        <span class="text-[10px] text-slate-400 font-bold uppercase">Tanggal</span>
+                        <span id="detailTanggal" class="text-xs font-bold text-slate-700">-</span>
+                    </div>
+                    <div class="flex justify-between items-center border-b border-slate-200/50 pb-2">
+                        <span class="text-[10px] text-slate-400 font-bold uppercase">Pelapor</span>
+                        <span id="detailPelapor" class="text-xs font-bold text-slate-700">-</span>
+                    </div>
+                    <div class="pt-1">
+                        <span class="text-[10px] text-slate-400 font-bold uppercase block mb-1">Keterangan</span>
+                        <p id="detailKeterangan" class="text-xs text-slate-600 italic">-</p>
+                    </div>
+                </div>
+                
+                <button id="closeDetailBtn" class="w-full bg-slate-900 text-white font-bold py-4 rounded-lg hover:bg-slate-800 transition-all active:scale-[0.98]">Tutup</button>
             </div>
-            <button id="closeDetailBtn" style="width: 100%; margin-top: 24px; padding: 14px; border-radius: 12px; border: none; background: var(--primary); color: white; font-weight: 700;">Tutup</button>
         </div>
     </div>
 
