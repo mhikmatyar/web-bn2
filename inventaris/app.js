@@ -181,8 +181,8 @@
             return;
         }
 
-        if (!url.includes('pub?output=csv')) {
-            showConnectionResult('Format URL salah. Pastikan format berakhiran "pub?output=csv".', 'error');
+        if (!url.includes('/pub') || !url.includes('output=csv')) {
+            showConnectionResult('Format URL salah. Pastikan format mengandung "pub" dan "output=csv".', 'error');
             return;
         }
 
