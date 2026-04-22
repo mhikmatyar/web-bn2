@@ -809,6 +809,21 @@
             renderTable();
             showToast('Filter telah direset', 'info');
         });
+
+        $('#printAllQRBtn').addEventListener('click', () => {
+            if (state.filteredItems.length === 0) {
+                showToast('Tidak ada data untuk dicetak', 'error');
+                return;
+            }
+            
+            const password = prompt("PENGAMANAN: Masukkan password Admin untuk cetak massal:");
+            if (password !== "adminbn2") {
+                if (password !== null) showToast("Password salah! Akses ditolak.", "error");
+                return;
+            }
+
+            printLabels(state.filteredItems);
+        });
     }
 
     function applyFilters() {
@@ -1124,6 +1139,13 @@
             closeModal('detailModal');
             handleDeleteItem(item);
         };
+        
+        // Add Print QR button
+        const printBtn = document.createElement('button');
+        printBtn.className = 'btn btn-outline';
+        printBtn.innerHTML = '<i class="fas fa-print"></i> Cetak Label QR';
+        printBtn.onclick = () => printLabels([item]);
+        footer.insertBefore(printBtn, $('#modalCloseBtnDetail').nextSibling);
 
         openModal('detailModal');
     }
@@ -1474,6 +1496,115 @@
             btn.disabled = false;
             btn.innerHTML = originalHtml;
         }
+    }
+
+    function printLabels(items) {
+        if (items.length === 0) return;
+
+        const printWindow = window.open('', '_blank');
+        const labelsHtml = items.map(item => {
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.origin + window.location.pathname + '?id=' + item.noInventaris)}`;
+            
+            return `
+                <div class="label-card">
+                    <div class="label-header">INVENTARIS PERUMAHAN BN2</div>
+                    <div class="label-body">
+                        <div class="qr-code">
+                            <img src="${qrUrl}" alt="QR">
+                        </div>
+                        <div class="item-info">
+                            <div class="item-name">${item.namaBarang}</div>
+                            <div class="item-no">${item.noInventaris}</div>
+                            <div class="item-loc">Lokasi: ${item.lokasi}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>Cetak Label Inventaris BN2</title>
+                <style>
+                    body { font-family: 'Inter', sans-serif; margin: 0; padding: 20px; background: #f0f0f0; }
+                    .print-grid { 
+                        display: grid; 
+                        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
+                        gap: 15px; 
+                    }
+                    .label-card {
+                        background: white;
+                        border: 2px solid #000;
+                        border-radius: 8px;
+                        padding: 12px;
+                        width: 300px;
+                        box-sizing: border-box;
+                        display: flex;
+                        flex-direction: column;
+                        page-break-inside: avoid;
+                    }
+                    .label-header {
+                        font-size: 10px;
+                        font-weight: 800;
+                        text-align: center;
+                        border-bottom: 1px solid #000;
+                        padding-bottom: 5px;
+                        margin-bottom: 8px;
+                        letter-spacing: 1px;
+                    }
+                    .label-body {
+                        display: flex;
+                        gap: 10px;
+                        align-items: center;
+                    }
+                    .qr-code img {
+                        width: 80px;
+                        height: 80px;
+                    }
+                    .item-info {
+                        flex: 1;
+                    }
+                    .item-name {
+                        font-size: 14px;
+                        font-weight: 700;
+                        margin-bottom: 4px;
+                        color: #000;
+                        text-transform: uppercase;
+                    }
+                    .item-no {
+                        font-size: 11px;
+                        font-family: monospace;
+                        margin-bottom: 4px;
+                        color: #444;
+                    }
+                    .item-loc {
+                        font-size: 10px;
+                        color: #666;
+                        font-style: italic;
+                    }
+                    @media print {
+                        body { background: white; padding: 0; }
+                        .print-grid { gap: 10px; }
+                        .label-card { border: 1px solid #ddd; } /* Thinner border for print */
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="print-grid">
+                    ${labelsHtml}
+                </div>
+                <script>
+                    window.onload = () => {
+                        setTimeout(() => {
+                            window.print();
+                        }, 500);
+                    };
+                </script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
     }
 
     async function handleDeleteItem(item) {
