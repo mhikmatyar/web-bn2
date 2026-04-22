@@ -479,6 +479,11 @@ body::after {
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    transition: opacity 0.3s ease;
+}
+
+.modal.hidden {
+    display: none !important;
 }
 
 .modal-content {
