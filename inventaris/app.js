@@ -1322,9 +1322,30 @@
 
             if (result.success) {
                 showToast('Barang berhasil ditambahkan!', 'success');
+                
+                // Tambahkan ke state lokal segera karena Google CSV butuh waktu untuk sinkronisasi
+                const newItem = {
+                    no: nextNo,
+                    namaBarang: formData.namaBarang,
+                    noInventaris: noInv,
+                    kategori: formData.kategori,
+                    merkType: formData.merkType,
+                    tahunPerolehan: formData.tahun,
+                    jumlah: formData.jumlah,
+                    hargaSatuan: formData.harga,
+                    kondisi: formData.kondisi,
+                    lokasi: formData.lokasi,
+                    keterangan: formData.keterangan,
+                    dokumentasi: ""
+                };
+                state.items.push(newItem);
+                renderAll();
+
                 closeModal('addItemModal');
                 $('#addItemForm').reset();
-                fetchData(); // Refresh data from sheet
+                
+                // Tetap panggil fetchData setelah jeda untuk sinkronisasi final
+                setTimeout(() => fetchData(), 3000);
             } else {
                 throw new Error(result.error || 'Gagal menambah barang');
             }
