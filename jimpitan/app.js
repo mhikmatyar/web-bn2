@@ -102,7 +102,28 @@
     }
 
     function updateSyncStatus(msg) {
-        $('#lastSyncTxt').textContent = msg;
+        $('#lastSyncTxt').innerHTML = msg;
+    }
+
+    function showToast(msg, type = 'info') {
+        const existing = $('.toast');
+        if (existing) existing.remove();
+
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        
+        let icon = 'info-circle';
+        if (type === 'success') icon = 'check-circle';
+        if (type === 'error') icon = 'exclamation-circle';
+        
+        toast.innerHTML = `<i class="fas fa-${icon}"></i> ${msg}`;
+        document.body.appendChild(toast);
+
+        setTimeout(() => toast.classList.add('show'), 100);
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 500);
+        }, 4000);
     }
 
     // =================== FETCH DATA ===================
@@ -151,11 +172,14 @@
 
     async function fetchData() {
         if (!state.sheetUrl) return;
+        updateSyncStatus('<i class="fas fa-spinner fa-spin"></i> Memuat data...');
         try {
             await fetchCSV(state.sheetUrl);
             updateSyncStatus(`Update terakhir: ${new Date().toLocaleTimeString('id-ID')}`);
-        } catch {
-            updateSyncStatus('Gagal update data');
+        } catch (err) {
+            console.error('Fetch error:', err);
+            updateSyncStatus('<i class="fas fa-exclamation-triangle"></i> Gagal memuat data');
+            showToast('Gagal mengambil data dari Google Sheets. Pastikan link sudah benar.', 'error');
         }
     }
 
@@ -241,37 +265,41 @@
             state.data = result.data.map(row => {
                 const get = (...keys) => {
                     for (const k of keys) {
-                        if (row[k]) return row[k].toString().trim();
+                        if (row[k] !== undefined && row[k] !== null && row[k].toString().trim() !== '') {
+                            return row[k].toString().trim();
+                        }
                     }
                     return '';
                 };
 
-                const typeRaw = get('TIPE', 'JENIS', 'KATEGORI').toLowerCase();
-                const isPengeluaran = typeRaw.includes('keluar') || typeRaw.includes('pengeluaran');
+                const typeRaw = (get('TIPE', 'JENIS', 'KATEGORI', 'STATUS') || '').toLowerCase();
+                const isPengeluaran = typeRaw.includes('keluar') || typeRaw.includes('pengeluaran') || typeRaw.includes('out');
 
                 let dateObj = null;
-                const tglStr = get('TANGGAL', 'DATE', 'WAKTU');
+                const tglStr = get('TANGGAL', 'DATE', 'WAKTU', 'TGL');
                 if (tglStr) {
                     const parts = tglStr.split(/[-/]/);
-                    if (parts.length === 3 && !isNaN(parts[1])) {
+                    if (parts.length === 3) {
+                        // Handle DD-MM-YYYY or YYYY-MM-DD
                         if (parts[2].length === 4) dateObj = new Date(parts[2], parts[1]-1, parts[0]);
-                        else dateObj = new Date(parts[0], parts[1]-1, parts[2]);
-                    } else {
+                        else if (parts[0].length === 4) dateObj = new Date(parts[0], parts[1]-1, parts[2]);
+                    } 
+                    
+                    if (!dateObj || isNaN(dateObj.getTime())) {
                         const cleanStr = tglStr.replace(/-/g, ' '); 
                         dateObj = new Date(cleanStr);
                     }
-                    if (isNaN(dateObj.getTime())) dateObj = new Date();
-                } else {
-                    dateObj = new Date();
                 }
+                
+                if (!dateObj || isNaN(dateObj.getTime())) dateObj = new Date();
 
                 return {
-                    tanggal: tglStr || 'Tidak ada tanggal',
+                    tanggal: tglStr || dateObj.toLocaleDateString('id-ID'),
                     dateObj: dateObj,
                     tipe: isPengeluaran ? 'PENGELUARAN' : 'JIMPITAN',
-                    nominal: parseUang(get('NOMINAL', 'JUMLAH', 'UANG')),
-                    keterangan: get('KETERANGAN', 'CATATAN', 'DESKRIPSI'),
-                    pelapor: get('PELAPOR', 'NAMA', 'PENGINPUT')
+                    nominal: parseUang(get('NOMINAL', 'JUMLAH', 'UANG', 'RUPIAH', 'TOTAL')),
+                    keterangan: get('KETERANGAN', 'CATATAN', 'DESKRIPSI', 'KET'),
+                    pelapor: get('PELAPOR', 'NAMA', 'PENGINPUT', 'USER') || '-'
                 };
             }).filter(item => item.nominal > 0 || item.keterangan);
         }
@@ -597,12 +625,13 @@
         // Close modal event
         const closeBtn = $('#closeDetailBtn');
         if(closeBtn) {
-            closeBtn.addEventListener('click', () => {
+            closeBtn.addEventListener('click', (e) => {
+                e.preventDefault();
                 $('#detailModal').classList.add('hidden');
             });
         }
         
-        // Klik di luar modal wrapper nutup
+        // Klik di luar modal content untuk menutup
         const modal = $('#detailModal');
         if(modal) {
             modal.addEventListener('click', (e) => {
