@@ -391,6 +391,23 @@ body {
 
 .data-table tbody tr:last-child td { border-bottom: none; }
 .data-table tbody tr:hover { background-color: #f9fafb; }
+.data-table tbody tr.week-header:hover { background-color: #f1f5f9; }
+.data-table tbody tr.week-spacer:hover { background-color: transparent; }
+
+.week-spacer td {
+    height: 24px !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+}
+
+.week-header td {
+    background-color: #f1f5f9 !important;
+    font-weight: 600 !important;
+    color: var(--text-dark) !important;
+    border-top: 2px solid var(--border-color) !important;
+    border-bottom: 2px solid var(--border-color) !important;
+}
 
 .text-right { text-align: right !important; }
 

@@ -418,13 +418,16 @@
 
             let html = '';
             const weeks = Object.keys(groupJimpitan).sort((a,b) => a - b);
-            weeks.forEach(w => {
+            weeks.forEach((w, index) => {
                 const total = sumData(groupJimpitan[w], 'JIMPITAN');
+                if (index > 0) {
+                    html += `<tr class="week-spacer"><td colspan="3"></td></tr>`;
+                }
                 html += `
-                <tr class="bg-slate-50 font-bold text-slate-800">
-                    <td colspan="1" style="border-radius: 6px 0 0 6px;">Minggu ${w}</td>
+                <tr class="week-header">
+                    <td>Minggu ${w}</td>
                     <td class="text-right">${formatRp(total)}</td>
-                    <td style="border-radius: 0 6px 6px 0;"></td>
+                    <td></td>
                 </tr>
                 `;
                 html += groupJimpitan[w].map(d => `
@@ -450,13 +453,16 @@
 
             let html = '';
             const weeks = Object.keys(groupPenge).sort((a,b) => a - b);
-            weeks.forEach(w => {
+            weeks.forEach((w, index) => {
                 const total = sumData(groupPenge[w], 'PENGELUARAN');
+                if (index > 0) {
+                    html += `<tr class="week-spacer"><td colspan="3"></td></tr>`;
+                }
                 html += `
-                <tr class="bg-slate-50 font-bold text-slate-800">
-                    <td colspan="1" style="border-radius: 6px 0 0 6px;">Minggu ${w}</td>
+                <tr class="week-header">
+                    <td>Minggu ${w}</td>
                     <td class="text-right val-pengeluaran">-${formatRp(total)}</td>
-                    <td style="border-radius: 0 6px 6px 0;"></td>
+                    <td></td>
                 </tr>
                 `;
                 html += groupPenge[w].map(d => `
