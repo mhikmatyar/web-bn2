@@ -56,6 +56,8 @@
             bindChartFilters();
             bindExport();
             
+            switchTab(state.activeTab);
+            
             if (window.lucide) lucide.createIcons();
             
             if (state.sheetUrl) {
