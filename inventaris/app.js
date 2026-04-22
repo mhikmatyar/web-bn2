@@ -935,6 +935,12 @@
 
         // Delete photo
         $('#deletePhotoBtn').addEventListener('click', () => {
+            const password = prompt("PENGAMANAN: Masukkan password Admin untuk menghapus foto:");
+            if (password !== "adminbn2") {
+                if (password !== null) showToast("Password salah! Akses ditolak.", "error");
+                return;
+            }
+
             if (state.currentPhotoItem) {
                 delete state.localPhotos[state.currentPhotoItem.noInventaris];
                 saveLocalPhotos();
@@ -1087,6 +1093,13 @@
 
     // =================== PHOTO UPLOAD ===================
     function handlePhotoUpload(e) {
+        const password = prompt("PENGAMANAN: Masukkan password Admin untuk mengunggah foto:");
+        if (password !== "adminbn2") {
+            if (password !== null) showToast("Password salah! Akses ditolak.", "error");
+            e.target.value = '';
+            return;
+        }
+
         const file = e.target.files[0];
         if (!file || !state.currentPhotoItem) return;
 
