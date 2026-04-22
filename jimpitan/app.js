@@ -450,7 +450,7 @@
             // Update Chart Filter Buttons
             $$('.chart-filter-btn').forEach(b => {
                 const isActive = b.dataset.range === state.chartRange;
-                b.classList.remove('bg-emerald-700', 'text-white', 'shadow-sm', 'bg-emerald-50', 'text-emerald-700', 'bg-rose-700', 'bg-rose-50', 'text-rose-700');
+                b.classList.remove('bg-emerald-700', 'text-white', 'shadow-sm', 'bg-emerald-50', 'text-emerald-600', 'text-emerald-700', 'bg-rose-700', 'bg-rose-50', 'text-rose-600', 'text-rose-700');
                 
                 if (isActive) {
                     b.classList.add(themeBg, 'text-white', 'shadow-sm');
@@ -468,7 +468,7 @@
             // Update Export Button
             const exportBtn = $('#exportBtn');
             if (exportBtn) {
-                exportBtn.classList.remove('bg-emerald-50', 'text-emerald-600', 'bg-rose-50', 'text-rose-600');
+                exportBtn.classList.remove('bg-emerald-50', 'text-emerald-600', 'text-emerald-700', 'bg-rose-50', 'text-rose-600', 'text-rose-700');
                 exportBtn.classList.add(themeBgLight, themeText);
             }
 
