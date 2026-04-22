@@ -1274,11 +1274,6 @@
 
         $('#addItemForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const password = prompt("PENGAMANAN: Masukkan password Admin untuk menambah barang:");
-            if (password !== "adminbn2") {
-                if (password !== null) showToast("Password salah! Akses ditolak.", "error");
-                return;
-            }
             await submitAddItem();
         });
     }
