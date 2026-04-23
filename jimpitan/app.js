@@ -481,8 +481,8 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
                     modal.classList.add('hidden');
                     form.reset();
                     state.editingIdx = null;
-                    // Refresh data
-                    fetchData();
+                    // Tunggu 1.5 detik agar Sheets sinkron, lalu refresh data
+                    setTimeout(() => fetchData(), 1500);
                 } else {
                     throw new Error(result.error || 'Gagal menyimpan data');
                 }
@@ -498,7 +498,6 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
     }
 
     async function deleteEntry(idx) {
-        if (!confirm('Yakin ingin menghapus data ini?')) return;
         if (!state.scriptUrl) return showToast('Script URL belum diatur', 'error');
 
         const btn = $('#deleteEntryBtn');
@@ -520,8 +519,9 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
             const result = await response.json();
             if (result.success) {
                 showToast('Data berhasil dihapus!', 'success');
-                $('#detailModal').classList.add('hidden');
-                fetchData();
+                if ($('#detailModal')) $('#detailModal').classList.add('hidden');
+                // Tunggu 1.5 detik agar Sheets sinkron, lalu refresh data
+                setTimeout(() => fetchData(), 1500);
             } else {
                 throw new Error(result.error);
             }
