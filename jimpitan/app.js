@@ -1319,13 +1319,14 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
 
             let labels = [];
             let values = [];
-            const type = state.activeTab.toUpperCase();
+            const isJimpitan = state.activeTab === 'jimpitan';
+            const targetType = isJimpitan ? 'Pemasukan' : 'Pengeluaran';
 
             if (state.chartRange === 'harian') {
                 const daysInMonth = new Date(state.selectedYear, state.selectedMonth, 0).getDate();
                 labels = Array.from({length: daysInMonth}, (_, i) => i + 1);
                 const daily = {};
-                state.filteredData.filter(d => d.tipe === type).forEach(d => {
+                state.filteredData.filter(d => d.tipe === targetType).forEach(d => {
                     const day = d.dateObj.getDate();
                     daily[day] = (daily[day] || 0) + d.nominal;
                 });
@@ -1334,7 +1335,7 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
             else if (state.chartRange === 'mingguan') {
                 labels = ['Minggu 1', 'Minggu 2', 'Minggu 3', 'Minggu 4', 'Minggu 5'];
                 const weekly = {};
-                state.filteredData.filter(d => d.tipe === type).forEach(d => {
+                state.filteredData.filter(d => d.tipe === targetType).forEach(d => {
                     const w = getWeekOfMonth(d.dateObj);
                     weekly[w] = (weekly[w] || 0) + d.nominal;
                 });
@@ -1343,7 +1344,7 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
             else if (state.chartRange === 'bulanan') {
                 labels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
                 const monthly = {};
-                state.data.filter(d => d.tipe === type && d.dateObj.getFullYear() === state.selectedYear).forEach(d => {
+                state.data.filter(d => d.tipe === targetType && d.dateObj.getFullYear() === state.selectedYear).forEach(d => {
                     const m = d.dateObj.getMonth();
                     monthly[m] = (monthly[m] || 0) + d.nominal;
                 });
@@ -1353,7 +1354,7 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
                 const years = [...new Set(state.data.map(d => d.dateObj.getFullYear()))].sort();
                 labels = years;
                 const yearly = {};
-                state.data.filter(d => d.tipe === type).forEach(d => {
+                state.data.filter(d => d.tipe === targetType).forEach(d => {
                     const y = d.dateObj.getFullYear();
                     yearly[y] = (yearly[y] || 0) + d.nominal;
                 });
