@@ -1037,6 +1037,8 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
             
             const isJimpitan = state.activeTab === 'jimpitan';
             const themeBg = isJimpitan ? 'bg-emerald-700' : 'bg-rose-700';
+            const themeBgLight = isJimpitan ? 'bg-emerald-50' : 'bg-rose-50';
+            const themeText = isJimpitan ? 'text-emerald-700' : 'text-rose-700';
 
             // Update UI Colors
             const header = $('header');
@@ -1058,7 +1060,7 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
                 if (isActive) {
                     b.classList.add(themeBg, 'text-white', 'shadow-sm');
                 } else {
-                    b.classList.add('bg-white', themeText);
+                    b.classList.add('text-slate-500');
                 }
             });
 
