@@ -313,17 +313,16 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
         const weekLines = weeks.map(({ weekNum, week, total }) => {
             const s = week[0].getDate();
             const e = week[week.length - 1].getDate();
-            const bar = total > 0 ? '▓'.repeat(Math.min(Math.round(total / 5000), 12)) : '░░';
-            return `  Minggu ${weekNum} (${s}–${e} ${monthShort}): ${formatRp(total)} ${bar}`;
+            return `  *Minggu ${weekNum}* (${s}–${e} ${monthShort}): ${formatRp(total)}`;
         }).join('\n');
 
         return `📊 *Rekap ${tipeLabel} — ${monthName} ${year}*
 🏡 Jimpitan Bumi Neikarta 2
 ${'─'.repeat(32)}
-💰 Total Jimpitan   : ${formatRp(monthIn)}
-💸 Total Pengeluaran: ${formatRp(monthOut)}
-📈 Saldo Bulan Ini  : ${formatRp(saldo)}
-📅 Entri Data       : ${entries} hari aktif
+💰 *Total Jimpitan*   : ${formatRp(monthIn)}
+💸 *Total Pengeluaran*: ${formatRp(monthOut)}
+📈 *Saldo Bulan Ini*  : ${formatRp(saldo)}
+📅 *Entri Data*       : ${entries} hari aktif
 ${'─'.repeat(32)}
 📆 *Breakdown Per Minggu (${tipeLabel}):*
 ${weekLines}
