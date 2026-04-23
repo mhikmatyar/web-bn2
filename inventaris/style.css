@@ -5,7 +5,7 @@
     /* Colors - Brand Custom */
     --brand-green: #34ab45;
     --brand-red: #ff3b2e;
-    
+
     /* Colors - Light Theme */
     --bg-primary: #f8fafc;
     --bg-secondary: #ffffff;
@@ -64,7 +64,9 @@
 }
 
 /* RESET & BASE */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
@@ -297,12 +299,12 @@ body {
     transition: all var(--transition);
 }
 
-.sidebar.collapsed ~ .main-content {
+.sidebar.collapsed~.main-content {
     margin-left: 80px;
 }
 
 .topbar {
-    height: 80px;
+    height: auto;
     background: var(--brand-green);
     display: flex;
     align-items: flex-start;
@@ -430,8 +432,15 @@ body {
 }
 
 @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
 }
 
 /* ========================================
@@ -451,8 +460,15 @@ body {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* ========================================
@@ -480,10 +496,25 @@ body {
 }
 
 /* Removed .stat-card::before for cleaner look */
-.stat-card--blue .stat-icon { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
-.stat-card--green .stat-icon { background: rgba(52, 171, 69, 0.1); color: var(--brand-green); }
-.stat-card--purple .stat-icon { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
-.stat-card--orange .stat-icon { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+.stat-card--blue .stat-icon {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.stat-card--green .stat-icon {
+    background: rgba(52, 171, 69, 0.1);
+    color: var(--brand-green);
+}
+
+.stat-card--purple .stat-icon {
+    background: rgba(139, 92, 246, 0.1);
+    color: #8b5cf6;
+}
+
+.stat-card--orange .stat-icon {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+}
 
 .stat-card:hover {
     transform: translateY(-2px);
@@ -501,10 +532,25 @@ body {
     flex-shrink: 0;
 }
 
-.stat-card--blue .stat-icon { background: var(--blue-light); color: var(--blue); }
-.stat-card--green .stat-icon { background: var(--green-light); color: var(--green); }
-.stat-card--purple .stat-icon { background: var(--purple-light); color: var(--purple); }
-.stat-card--orange .stat-icon { background: var(--orange-light); color: var(--orange); }
+.stat-card--blue .stat-icon {
+    background: var(--blue-light);
+    color: var(--blue);
+}
+
+.stat-card--green .stat-icon {
+    background: var(--green-light);
+    color: var(--green);
+}
+
+.stat-card--purple .stat-icon {
+    background: var(--purple-light);
+    color: var(--purple);
+}
+
+.stat-card--orange .stat-icon {
+    background: var(--orange-light);
+    color: var(--orange);
+}
 
 .stat-info {
     display: flex;
@@ -645,9 +691,20 @@ body {
     white-space: nowrap;
 }
 
-.badge-baik { background: var(--green-light); color: var(--green); }
-.badge-rusak-ringan { background: var(--orange-light); color: var(--orange); }
-.badge-rusak-berat { background: var(--red-light); color: var(--red); }
+.badge-baik {
+    background: var(--green-light);
+    color: var(--green);
+}
+
+.badge-rusak-ringan {
+    background: var(--orange-light);
+    color: var(--orange);
+}
+
+.badge-rusak-berat {
+    background: var(--red-light);
+    color: var(--red);
+}
 
 .auto-badge {
     display: inline-block;
@@ -1232,8 +1289,15 @@ body {
 }
 
 @keyframes slideUp {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 .modal-header {
@@ -1392,21 +1456,39 @@ body {
     min-width: 280px;
 }
 
-.toast.success { background: var(--green); }
-.toast.error { background: var(--red); }
-.toast.info { background: var(--blue); }
+.toast.success {
+    background: var(--green);
+}
+
+.toast.error {
+    background: var(--red);
+}
+
+.toast.info {
+    background: var(--blue);
+}
 
 .toast.hiding {
     animation: toastOut 0.3s ease forwards;
 }
 
 @keyframes toastIn {
-    from { transform: translateX(100px); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+    from {
+        transform: translateX(100px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
 
 @keyframes toastOut {
-    to { transform: translateX(100px); opacity: 0; }
+    to {
+        transform: translateX(100px);
+        opacity: 0;
+    }
 }
 
 /* ========================================
@@ -1427,7 +1509,9 @@ body {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* ========================================
@@ -1533,11 +1617,13 @@ body {
     .sidebar-toggle {
         display: none;
     }
+
     .topbar {
         padding: 0 16px;
         height: var(--topbar-height);
         align-items: center;
     }
+
     .page {
         margin-top: 0;
     }
@@ -1553,13 +1639,19 @@ body {
         box-shadow: none;
         overflow-x: visible;
     }
+
     .data-table thead {
         display: none;
     }
-    .data-table, .data-table tbody, .data-table tr, .data-table td {
+
+    .data-table,
+    .data-table tbody,
+    .data-table tr,
+    .data-table td {
         display: block;
         width: 100%;
     }
+
     .data-table tbody tr {
         margin-bottom: 16px;
         background: var(--bg-card);
@@ -1568,6 +1660,7 @@ body {
         box-shadow: var(--shadow-sm);
         padding: 8px 0;
     }
+
     .data-table td {
         text-align: right;
         padding: 10px 16px 10px 40%;
@@ -1577,6 +1670,7 @@ body {
         white-space: normal;
         word-break: break-word;
     }
+
     .data-table td::before {
         content: attr(data-label);
         position: absolute;
@@ -1588,17 +1682,21 @@ body {
         font-weight: 600;
         color: var(--text-secondary);
     }
+
     .data-table td:last-child {
         border-bottom: none;
         text-align: center;
         padding: 16px;
     }
+
     .data-table td:last-child::before {
         display: none;
     }
+
     .data-table .harga-col {
         text-align: right;
     }
+
     .action-btns {
         justify-content: center;
     }
