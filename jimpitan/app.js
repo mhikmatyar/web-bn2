@@ -1372,12 +1372,19 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
                 $('#detailNominal').textContent = formatRp(item.nominal);
                 
                 // Admin Actions
-                state.editingIdx = state.isAdmin ? item.idx : null;
                 const adminActions = $('#adminDetailActions');
                 if (adminActions) {
                     if (state.isAdmin) {
                         adminActions.style.setProperty('display', 'grid', 'important');
                         adminActions.classList.remove('hidden');
+                        
+                        // CARA MUDAH & PASTI: Pasang fungsi langsung ke tombolnya
+                        const editBtn = $('#editEntryBtn');
+                        const deleteBtn = $('#deleteEntryBtn');
+                        
+                        if (editBtn) editBtn.onclick = () => window.handleEdit(item);
+                        if (deleteBtn) deleteBtn.onclick = () => window.deleteEntry(item.idx);
+                        
                     } else {
                         adminActions.style.display = 'none';
                         adminActions.classList.add('hidden');
@@ -1391,44 +1398,42 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
             }
         };
 
-        $('#editEntryBtn').addEventListener('click', () => {
-            const item = state.data.find(d => d.idx === state.editingIdx);
-            if (item) {
-                $('#detailModal').classList.add('hidden');
-                const modal = $('#entryModal');
-                
-                // Konversi tanggal dari format Sheet (23-Apr-2026) kembali ke format Input (2026-04-23)
-                const t = item.tanggal;
-                if (t.includes('-') && t.split('-')[0].length !== 4) { 
-                    const monthShort = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-                    const p = t.split('-');
-                    const mIdx = monthShort.indexOf(p[1]);
-                    if (mIdx !== -1) {
-                        $('#entryDate').value = `${p[2]}-${(mIdx+1).toString().padStart(2,'0')}-${p[0].padStart(2,'0')}`;
-                    }
-                } else {
-                    $('#entryDate').value = t;
+        // Fungsi Global Edit agar bisa dipanggil dari mana saja
+        window.handleEdit = (item) => {
+            $('#detailModal').classList.add('hidden');
+            const modal = $('#entryModal');
+            
+            // Konversi tanggal
+            const t = item.tanggal;
+            if (t.includes('-') && t.split('-')[0].length !== 4) { 
+                const monthShort = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+                const p = t.split('-');
+                const mIdx = monthShort.indexOf(p[1]);
+                if (mIdx !== -1) {
+                    $('#entryDate').value = `${p[2]}-${(mIdx+1).toString().padStart(2,'0')}-${p[0].padStart(2,'0')}`;
                 }
-
-                $('#entryType').value = item.tipe === 'Pemasukan' ? 'JIMPITAN' : 'PENGELUARAN';
-                $('#entryNominal').value = item.nominal;
-                $('#entryKeterangan').value = item.keterangan === '-' ? '' : item.keterangan;
-                
-                $('#submitEntryBtn').innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> Update Data';
-                $('#entryModal h3').textContent = 'Edit Data';
-                
-                modal.classList.remove('hidden');
-                if (window.lucide) lucide.createIcons();
+            } else {
+                $('#entryDate').value = t;
             }
-        });
 
-        $('#deleteEntryBtn').addEventListener('click', () => {
-            if (state.editingIdx !== null) {
-                if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
-                    deleteEntry(state.editingIdx);
-                }
+            $('#entryType').value = item.tipe === 'Pemasukan' ? 'JIMPITAN' : 'PENGELUARAN';
+            $('#entryNominal').value = item.nominal;
+            $('#entryKeterangan').value = item.keterangan === '-' ? '' : item.keterangan;
+            
+            state.editingIdx = item.idx; // Set ID yang sedang diedit
+            $('#submitEntryBtn').innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> Update Data';
+            $('#entryModal h3').textContent = 'Edit Data';
+            
+            modal.classList.remove('hidden');
+            if (window.lucide) lucide.createIcons();
+        };
+
+        // Fungsi Global Delete
+        window.deleteEntry = (idx) => {
+            if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
+                deleteEntry(idx);
             }
-        });
+        };
     }
 
     // Start the app
