@@ -21,6 +21,7 @@
         currentWeekPage: 0, // 0 is latest week
         isAdmin: false,
         chart: null,
+        editingIdx: null,
         monthsNames: ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'],
         dayNames: ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
     };
@@ -410,10 +411,16 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
                 switchTab('settings');
                 return;
             }
+            state.editingIdx = null;
             // Set default date to today (local time)
             const today = new Date().toISOString().split('T')[0];
             $('#entryDate').value = today;
             $('#entryType').value = state.activeTab.toUpperCase();
+            $('#entryKeterangan').value = '';
+            $('#entryNominal').value = '';
+            
+            $('#submitEntryBtn').innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> Simpan Data';
+            $('#entryModal h3').textContent = 'Tambah Data Baru';
             
             modal.classList.remove('hidden');
             if (window.lucide) lucide.createIcons();
@@ -426,15 +433,20 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
             
             const btn = $('#submitEntryBtn');
             const originalHtml = btn.innerHTML;
+            const isEdit = state.editingIdx !== null;
             
             const payload = {
-                action: 'addItem',
+                action: isEdit ? 'editItem' : 'addItem',
                 tanggal: $('#entryDate').value,
                 tipe: $('#entryType').value,
                 nominal: parseInt($('#entryNominal').value),
                 keterangan: $('#entryKeterangan').value.trim() || '-',
-                password: 'adminbn2' // Default server password
+                password: 'adminbn2'
             };
+
+            if (isEdit) {
+                payload.row = state.editingIdx + 2; // Google Sheets row (1-indexed + header)
+            }
 
             if (isNaN(payload.nominal)) return showToast('Nominal tidak valid', 'error');
 
@@ -451,9 +463,10 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
                 const result = await response.json();
 
                 if (result.success) {
-                    showToast('Data berhasil disimpan ke Google Sheets!', 'success');
+                    showToast(isEdit ? 'Data berhasil diperbarui!' : 'Data berhasil disimpan!', 'success');
                     modal.classList.add('hidden');
                     form.reset();
+                    state.editingIdx = null;
                     // Refresh data
                     fetchData();
                 } else {
@@ -464,9 +477,46 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
                 showToast('Gagal: ' + err.message, 'error');
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = originalHtml;
+                btn.innerHTML = isEdit ? '<i data-lucide="save" class="w-4 h-4"></i> Update Data' : '<i data-lucide="save" class="w-4 h-4"></i> Simpan Data';
+                if (window.lucide) lucide.createIcons();
             }
         });
+    }
+
+    async function deleteEntry(idx) {
+        if (!confirm('Yakin ingin menghapus data ini?')) return;
+        if (!state.scriptUrl) return showToast('Script URL belum diatur', 'error');
+
+        const btn = $('#deleteEntryBtn');
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="w-3 h-3 animate-spin border-2 border-rose-600 border-t-transparent rounded-full"></i>';
+
+        try {
+            const response = await fetch(state.scriptUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({
+                    action: 'deleteItem',
+                    row: idx + 2,
+                    password: 'adminbn2'
+                })
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                showToast('Data berhasil dihapus!', 'success');
+                $('#detailModal').classList.add('hidden');
+                fetchData();
+            } else {
+                throw new Error(result.error);
+            }
+        } catch (err) {
+            showToast('Gagal menghapus: ' + err.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        }
     }
 
     // =================== PULL TO REFRESH ===================
@@ -1276,12 +1326,59 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
                 $('#detailKeterangan').textContent = item.keterangan;
                 $('#detailNominal').textContent = formatRp(item.nominal);
                 
+                // Admin Actions
+                const adminActions = $('#adminDetailActions');
+                if (adminActions) {
+                    if (state.isAdmin) {
+                        adminActions.classList.remove('hidden');
+                        state.editingIdx = item.idx;
+                    } else {
+                        adminActions.classList.add('hidden');
+                        state.editingIdx = null;
+                    }
+                }
+
                 $('#detailModal').classList.remove('hidden');
                 $('#detailModal').classList.add('flex');
                 
                 lucide.createIcons();
             }
         };
+
+        $('#editEntryBtn').addEventListener('click', () => {
+            const item = state.data.find(d => d.idx === state.editingIdx);
+            if (item) {
+                $('#detailModal').classList.add('hidden');
+                const modal = $('#entryModal');
+                
+                // Fill form
+                $('#entryDate').value = item.tanggal; // Assuming format matches YYYY-MM-DD for date input or similar
+                // If tanggal is in CSV format (e.g. DD/MM/YYYY), we might need to convert it
+                if (item.tanggal.includes('/')) {
+                    const p = item.tanggal.split('/');
+                    if (p.length === 3) $('#entryDate').value = `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
+                } else if (item.tanggal.includes('-')) {
+                    // Check if it's already YYYY-MM-DD
+                    if (item.tanggal.split('-')[0].length === 4) $('#entryDate').value = item.tanggal;
+                }
+
+                $('#entryType').value = item.tipe;
+                $('#entryNominal').value = item.nominal;
+                $('#entryKeterangan').value = item.keterangan === '-' ? '' : item.keterangan;
+                
+                $('#submitEntryBtn').innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> Update Data';
+                $('#entryModal h3').textContent = 'Edit Data';
+                
+                modal.classList.remove('hidden');
+                lucide.createIcons();
+            }
+        });
+
+        $('#deleteEntryBtn').addEventListener('click', () => {
+            if (state.editingIdx !== null) {
+                deleteEntry(state.editingIdx);
+            }
+        });
     }
 
     // Start the app
