@@ -329,10 +329,15 @@
                     <div id="connectionStatus" class="mt-4 text-center text-xs font-bold"></div>
                 </div>
 
-                <div class="bg-rose-50 p-6 rounded-lg border border-rose-100">
-                    <h3 class="text-sm font-bold text-rose-800 mb-2">Hapus Data</h3>
-                    <p class="text-[10px] text-rose-600 mb-4 opacity-70">Tindakan ini akan menghapus URL spreadsheet yang tersimpan dan memutus koneksi data.</p>
-                    <button id="disconnectBtn" class="w-full bg-white text-rose-600 border border-rose-100 font-bold py-3 rounded-lg hover:bg-rose-100 transition-all">Putuskan Koneksi</button>
+                <div class="bg-rose-50 p-6 rounded-lg border border-rose-100 space-y-3">
+                    <h3 class="text-sm font-bold text-rose-800 mb-2">Keamanan Admin</h3>
+                    <button id="logoutBtn" class="w-full bg-rose-600 text-white font-bold py-3 rounded-lg hover:bg-rose-700 transition-all flex items-center justify-center gap-2">
+                        <i data-lucide="log-out" class="w-4 h-4"></i> Logout Admin
+                    </button>
+                    <div class="pt-2 border-t border-rose-100">
+                        <p class="text-[10px] text-rose-600 mb-2 opacity-70 italic">Tindakan di bawah ini akan menghapus semua konfigurasi.</p>
+                        <button id="disconnectBtn" class="w-full bg-white text-rose-600 border border-rose-100 font-bold py-2 rounded-lg hover:bg-rose-100 transition-all text-xs">Putuskan Koneksi</button>
+                    </div>
                 </div>
             </div>
         </div>

@@ -129,6 +129,22 @@ body {
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Skeleton Loading */
+.skeleton {
+    background: linear-gradient(90deg, var(--glass-border) 25%, var(--glass-bg) 50%, var(--glass-border) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.skeleton-text { height: 12px; border-radius: 4px; margin-bottom: 8px; }
+.skeleton-title { height: 16px; border-radius: 4px; margin-bottom: 12px; width: 60%; }
+.skeleton-circle { width: 40px; height: 40px; border-radius: 12px; }
+
 /* Toast Enhancements */
 .toast {
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);

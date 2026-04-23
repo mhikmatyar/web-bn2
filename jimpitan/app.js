@@ -101,9 +101,8 @@
             });
 
             // Admin session check
-            if (sessionStorage.getItem('bn2-isAdmin') === 'true') {
+            if (localStorage.getItem('bn2-isAdmin') === 'true') {
                 state.isAdmin = true;
-                $('#addDataBtn').classList.remove('hidden');
             }
             
             updateAdminUI();
@@ -695,7 +694,7 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
             // Obfuscated password check (adminbn2)
             if (btoa(pass) === 'YWRtaW5ibjI=') {
                 state.isAdmin = true;
-                sessionStorage.setItem('bn2-isAdmin', 'true');
+                localStorage.setItem('bn2-isAdmin', 'true');
                 $('#adminPass').value = '';
                 $('#authModal').classList.add('hidden');
                 
@@ -731,6 +730,16 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
                 setTimeout(() => $('#connectionStatus').textContent = '', 3000);
             } catch (err) {
                 $('#connectionStatus').textContent = 'Gagal memuat data!';
+            }
+        });
+
+        $('#logoutBtn').addEventListener('click', () => {
+            if (confirm('Keluar dari mode Admin?')) {
+                state.isAdmin = false;
+                localStorage.removeItem('bn2-isAdmin');
+                updateAdminUI();
+                switchTab('jimpitan');
+                showToast('Logout Berhasil', 'success');
             }
         });
 
@@ -1093,6 +1102,24 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
         try {
             const container = $('#rekapList');
             if (!container) return;
+
+            // --- SKELETON LOADING VIEW ---
+            if (!items || items.length === 0) {
+                const hasCachedData = localStorage.getItem('bn2-jimpitanData');
+                if (!hasCachedData) {
+                    container.innerHTML = Array(3).fill(0).map(() => `
+                        <div class="glass-card p-4 rounded-2xl mb-4 flex items-center gap-4 animate-pulse">
+                            <div class="skeleton-circle skeleton"></div>
+                            <div class="flex-1">
+                                <div class="skeleton-title skeleton"></div>
+                                <div class="skeleton-text skeleton w-1/3"></div>
+                            </div>
+                            <div class="w-16 h-6 rounded-lg skeleton"></div>
+                        </div>
+                    `).join('');
+                    return;
+                }
+            }
 
             // Trigger fade animation
             container.classList.remove('tab-content-animate');
