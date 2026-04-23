@@ -21,7 +21,7 @@
         chartRange: 'harian',
         currentWeekPage: 0, // 0 is latest week
         isAdmin: false,
-        chart: null,
+        deleteBlacklist: new Set(), // Menyimpan ID data yang baru dihapus agar tidak muncul lagi dari cache
         editingIdx: null,
         monthsNames: ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'],
         dayNames: ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
@@ -571,6 +571,10 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
                 showToast('Data berhasil dihapus!', 'success');
                 if ($('#detailModal')) $('#detailModal').classList.add('hidden');
                 
+                // Tambahkan ke Blacklist agar tidak muncul lagi jika server masih mengirim cache lama
+                state.deleteBlacklist.add(idx);
+                setTimeout(() => state.deleteBlacklist.delete(idx), 60000); // Hapus dari blacklist setelah 1 menit
+                
                 // Optimistic UI: Remove from local state
                 state.data = state.data.filter(d => d.idx !== idx);
                 renderAll();
@@ -844,7 +848,6 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
     function parseCSVData(csv) {
         const result = Papa.parse(csv, { header: true, skipEmptyLines: true, transformHeader: h => h.trim() });
         
-        // Safety check: Jangan kosongkan data jika server mengirim data kosong secara glitch
         if ((!result.data || result.data.length === 0) && state.data.length > 0) {
             console.warn("Jimpitan App: Server returned empty data, using local state.");
             hideLoading();
@@ -877,19 +880,16 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
                 const parts = tglStr.split(/[-/ ]/);
                 if (parts.length === 3) {
                     let d, m, y;
-                    // Check if first part is Year (YYYY-MM-DD)
                     if (parts[0].length === 4) {
                         y = parseInt(parts[0]);
                         m = parseInt(parts[1]) - 1;
                         d = parseInt(parts[2]);
                     } else {
-                        // Assume DD-MM-YYYY
                         d = parseInt(parts[0]);
                         m = parseInt(parts[1]) - 1;
                         y = parseInt(parts[2]);
                     }
 
-                    // Handle string months (Jan, Feb, Apr, etc)
                     if (isNaN(m) || m < 0 || m > 11) {
                         const mLower = (parts[1] || parts[0]).toLowerCase();
                         if (monthNamesMap[mLower] !== undefined) {
@@ -916,15 +916,17 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
             return {
                 idx,
                 tanggal: tglStr || '-',
-                dateObj: dateObj,
+                dateObj,
                 tipe: isPengeluaran ? 'Pengeluaran' : 'Pemasukan',
                 nominal: parseUang(get('NOMINAL', 'JUMLAH', 'UANG')),
                 keterangan: get('KETERANGAN', 'CATATAN', 'DESKRIPSI') || '-',
-                pelapor: get('PELAPOR', 'NAMA', 'PENGINPUT') || '-'
+                pelapor: get('PELAPOR', 'ADMIN', 'NAMA') || '-'
             };
-        }).filter(d => d.nominal > 0);
+        }).filter(item => !state.deleteBlacklist.has(item.idx));
 
         state.data.sort((a, b) => b.dateObj - a.dateObj);
+        
+        hideLoading();
         renderAll();
     }
 
