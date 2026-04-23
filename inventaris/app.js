@@ -122,7 +122,6 @@
                 $('#sidebar').classList.remove('open');
             }
         });
-    }
 
     function navigateTo(page) {
         $$('.page').forEach(p => p.classList.remove('active'));
