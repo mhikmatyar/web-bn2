@@ -111,6 +111,13 @@ body {
     align-items: center;
     justify-content: space-between;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all var(--transition);
+}
+
+.sidebar.collapsed .sidebar-header {
+    padding: 20px 12px;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .logo {
@@ -127,6 +134,10 @@ body {
 
 .sidebar.collapsed .logo span {
     display: none;
+}
+
+.sidebar.collapsed .logo {
+    gap: 0;
 }
 
 .logo i {
