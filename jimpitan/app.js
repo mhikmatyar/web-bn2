@@ -816,7 +816,7 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
                 idx,
                 tanggal: tglStr || '-',
                 dateObj: dateObj,
-                tipe: isPengeluaran ? 'PENGELUARAN' : 'JIMPITAN',
+                tipe: isPengeluaran ? 'Pengeluaran' : 'Pemasukan',
                 nominal: parseUang(get('NOMINAL', 'JUMLAH', 'UANG')),
                 keterangan: get('KETERANGAN', 'CATATAN', 'DESKRIPSI') || '-',
                 pelapor: get('PELAPOR', 'NAMA', 'PENGINPUT') || '-'
@@ -867,21 +867,21 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
             const rekapLbl = $('#rekapPeriodLabel');
             if (rekapLbl) rekapLbl.textContent = periodText;
 
-            // Filter data
             state.filteredData = state.data.filter(d => 
                 d.dateObj.getMonth() + 1 === state.selectedMonth && 
                 d.dateObj.getFullYear() === state.selectedYear
             );
 
-            const currentViewData = state.filteredData.filter(d => d.tipe === state.activeTab.toUpperCase());
+            const typeFilter = state.activeTab === 'jimpitan' ? 'Pemasukan' : 'Pengeluaran';
+            const currentViewData = state.filteredData.filter(d => d.tipe === typeFilter);
 
             // Calculations
-            const monthIn = state.filteredData.filter(d => d.tipe === 'JIMPITAN').reduce((s, i) => s + i.nominal, 0);
-            const monthOut = state.filteredData.filter(d => d.tipe === 'PENGELUARAN').reduce((s, i) => s + i.nominal, 0);
+            const monthIn = state.filteredData.filter(d => d.tipe === 'Pemasukan').reduce((s, i) => s + i.nominal, 0);
+            const monthOut = state.filteredData.filter(d => d.tipe === 'Pengeluaran').reduce((s, i) => s + i.nominal, 0);
             
             const yearData = state.data.filter(d => d.dateObj.getFullYear() === state.selectedYear);
-            const yearIn = yearData.filter(d => d.tipe === 'JIMPITAN').reduce((s, i) => s + i.nominal, 0);
-            const yearOut = yearData.filter(d => d.tipe === 'PENGELUARAN').reduce((s, i) => s + i.nominal, 0);
+            const yearIn = yearData.filter(d => d.tipe === 'Pemasukan').reduce((s, i) => s + i.nominal, 0);
+            const yearOut = yearData.filter(d => d.tipe === 'Pengeluaran').reduce((s, i) => s + i.nominal, 0);
 
             const daysWithData = new Set(state.filteredData.map(d => d.dateObj.toDateString())).size;
 
@@ -896,8 +896,8 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
                 const prevM    = state.selectedMonth === 1 ? 12 : state.selectedMonth - 1;
                 const prevY    = state.selectedMonth === 1 ? state.selectedYear - 1 : state.selectedYear;
                 const prevData = state.data.filter(d => d.dateObj.getMonth() + 1 === prevM && d.dateObj.getFullYear() === prevY);
-                const prevIn   = prevData.filter(d => d.tipe === 'JIMPITAN').reduce((s, i) => s + i.nominal, 0);
-                const prevOut  = prevData.filter(d => d.tipe === 'PENGELUARAN').reduce((s, i) => s + i.nominal, 0);
+                const prevIn   = prevData.filter(d => d.tipe === 'Pemasukan').reduce((s, i) => s + i.nominal, 0);
+                const prevOut  = prevData.filter(d => d.tipe === 'Pengeluaran').reduce((s, i) => s + i.nominal, 0);
                 const prevSaldo = prevIn - prevOut;
                 const currSaldo = monthIn - monthOut;
                 if (prevData.length > 0) {
