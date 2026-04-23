@@ -13,6 +13,7 @@
         data: [], 
         filteredData: [],
         sheetUrl: '',
+        scriptUrl: '',
         activeTab: 'jimpitan',
         selectedMonth: new Date().getMonth() + 1,
         selectedYear: new Date().getFullYear(),
@@ -68,6 +69,7 @@
             bindShare();
             bindPwaInstall();
             initPullToRefresh();
+            bindEntryForm();
             
             switchTab(state.activeTab);
             
@@ -106,8 +108,13 @@
 
     function loadSettings() {
         state.sheetUrl = localStorage.getItem('bn2-jimpitanUrl') || DEFAULT_SHEET_URL;
+        state.scriptUrl = localStorage.getItem('bn2-scriptUrl') || '';
+        
         if (state.sheetUrl) {
             $('#sheetUrl').value = state.sheetUrl;
+        }
+        if (state.scriptUrl) {
+            $('#scriptUrl').value = state.scriptUrl;
         }
     }
 
@@ -388,6 +395,80 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
         });
     }
 
+    // =================== DATA ENTRY FORM ===================
+    function bindEntryForm() {
+        const addBtn   = $('#addDataBtn');
+        const modal    = $('#entryModal');
+        const closeBtn = $('#closeEntryModal');
+        const form     = $('#entryForm');
+
+        if (!addBtn || !modal) return;
+
+        addBtn.addEventListener('click', () => {
+            if (!state.scriptUrl) {
+                showToast('Apps Script URL belum diatur di Pengaturan', 'error');
+                switchTab('settings');
+                return;
+            }
+            // Set default date to today (local time)
+            const today = new Date().toISOString().split('T')[0];
+            $('#entryDate').value = today;
+            $('#entryType').value = state.activeTab.toUpperCase();
+            
+            modal.classList.remove('hidden');
+            if (window.lucide) lucide.createIcons();
+        });
+
+        closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const btn = $('#submitEntryBtn');
+            const originalHtml = btn.innerHTML;
+            
+            const payload = {
+                action: 'addItem',
+                tanggal: $('#entryDate').value,
+                tipe: $('#entryType').value,
+                nominal: parseInt($('#entryNominal').value),
+                keterangan: $('#entryKeterangan').value.trim() || '-',
+                password: 'adminbn2' // Default server password
+            };
+
+            if (isNaN(payload.nominal)) return showToast('Nominal tidak valid', 'error');
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="w-4 h-4 animate-spin border-2 border-white border-t-transparent rounded-full"></i> Menyimpan...';
+
+            try {
+                const response = await fetch(state.scriptUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showToast('Data berhasil disimpan ke Google Sheets!', 'success');
+                    modal.classList.add('hidden');
+                    form.reset();
+                    // Refresh data
+                    fetchData();
+                } else {
+                    throw new Error(result.error || 'Gagal menyimpan data');
+                }
+            } catch (err) {
+                console.error('Entry Error:', err);
+                showToast('Gagal: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        });
+    }
+
     // =================== PULL TO REFRESH ===================
     function initPullToRefresh() {
         const appEl    = document.querySelector('.max-w-md');
@@ -444,6 +525,7 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
                 state.isAdmin = true;
                 $('#adminPass').value = '';
                 $('#authModal').classList.add('hidden');
+                $('#addDataBtn').classList.remove('hidden');
                 switchTab('settings');
             } else {
                 showToast('Password salah! Coba lagi.', 'error');
@@ -456,24 +538,30 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
 
         $('#connectBtn').addEventListener('click', async () => {
             const url = $('#sheetUrl').value.trim();
+            const scriptUrl = $('#scriptUrl').value.trim();
             if (!url) return;
             
             localStorage.setItem('bn2-jimpitanUrl', url);
+            localStorage.setItem('bn2-scriptUrl', scriptUrl);
             state.sheetUrl = url;
+            state.scriptUrl = scriptUrl;
+            
             $('#connectionStatus').textContent = 'Menghubungkan...';
             try {
                 await fetchData();
-                $('#connectionStatus').textContent = 'Terhubung & Data diperbarui!';
+                $('#connectionStatus').textContent = 'Konfigurasi disimpan & Data diperbarui!';
                 setTimeout(() => $('#connectionStatus').textContent = '', 3000);
             } catch (err) {
-                $('#connectionStatus').textContent = 'Gagal terhubung!';
+                $('#connectionStatus').textContent = 'Gagal memuat data!';
             }
         });
 
         $('#disconnectBtn').addEventListener('click', () => {
             if(confirm('Putuskan koneksi data?')) {
                 localStorage.removeItem('bn2-jimpitanUrl');
+                localStorage.removeItem('bn2-scriptUrl');
                 state.sheetUrl = '';
+                state.scriptUrl = '';
                 state.data = [];
                 location.reload();
             }
