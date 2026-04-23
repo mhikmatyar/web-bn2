@@ -151,17 +151,25 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* Custom Colors */
+.bg-brand-green { background-color: #34ab45 !important; }
+.bg-brand-red   { background-color: #ff3b2e !important; }
+.text-brand-green { color: #34ab45 !important; }
+.text-brand-red   { color: #ff3b2e !important; }
+.bg-brand-green-light { background-color: rgba(52, 171, 69, 0.08) !important; }
+.bg-brand-red-light   { background-color: rgba(255, 59, 46, 0.08) !important; }
+
 /* Delta Badges (Stock Style) */
 .badge-up {
-    background: #ecfdf5;
-    color: #059669;
-    border: 1px solid #d1fae5;
+    background: rgba(52, 171, 69, 0.15);
+    color: #34ab45;
+    border: 1px solid rgba(52, 171, 69, 0.2);
 }
 
 .badge-down {
-    background: #fef2f2;
-    color: #dc2626;
-    border: 1px solid #fee2e2;
+    background: rgba(255, 59, 46, 0.15);
+    color: #ff3b2e;
+    border: 1px solid rgba(255, 59, 46, 0.2);
 }
 
 .delta-badge {
@@ -213,6 +221,10 @@ body.dark .sub-stat-card {
     display: inline-block;
     margin-right: 6px;
 }
+
+.stat-accent-green { background-color: #34ab45; }
+.stat-accent-red   { background-color: #ff3b2e; }
+.stat-accent-blue  { background-color: #3b82f6; }
 
 .segmented-control {
     background: var(--glass-bg);

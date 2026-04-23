@@ -1036,14 +1036,14 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
             renderChart();
             
             const isJimpitan = state.activeTab === 'jimpitan';
-            const themeBg = isJimpitan ? 'bg-emerald-700' : 'bg-rose-700';
-            const themeBgLight = isJimpitan ? 'bg-emerald-50' : 'bg-rose-50';
-            const themeText = isJimpitan ? 'text-emerald-700' : 'text-rose-700';
+            const themeBg = isJimpitan ? 'bg-brand-green' : 'bg-brand-red';
+            const themeBgLight = isJimpitan ? 'bg-brand-green-light' : 'bg-brand-red-light';
+            const themeText = isJimpitan ? 'text-brand-green' : 'text-brand-red';
 
             // Update UI Colors
             const header = $('header');
             if (header) {
-                header.classList.remove('bg-emerald-700', 'bg-rose-700');
+                header.classList.remove('bg-emerald-700', 'bg-rose-700', 'bg-brand-green', 'bg-brand-red');
                 header.classList.add(themeBg);
             }
             
@@ -1055,7 +1055,7 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
             // Update Tab Buttons theme
             $$('.tab-btn').forEach(b => {
                 const isActive = b.dataset.tab === state.activeTab;
-                b.classList.remove('active', 'bg-emerald-700', 'bg-rose-700', 'text-white', 'shadow-sm', 'text-slate-500', 'bg-white', 'text-emerald-700', 'text-rose-700');
+                b.classList.remove('active', 'bg-emerald-700', 'bg-rose-700', 'bg-brand-green', 'bg-brand-red', 'text-white', 'shadow-sm', 'text-slate-500', 'bg-white', 'text-emerald-700', 'text-rose-700', 'text-brand-green', 'text-brand-red');
                 
                 if (isActive) {
                     b.classList.add(themeBg, 'text-white', 'shadow-sm');
@@ -1067,7 +1067,7 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
             // Update Chart Filter Buttons
             $$('.chart-filter-btn').forEach(b => {
                 const isActive = b.dataset.range === state.chartRange;
-                b.classList.remove('bg-emerald-700', 'text-white', 'shadow-sm', 'bg-emerald-50', 'text-emerald-600', 'text-emerald-700', 'bg-rose-700', 'bg-rose-50', 'text-rose-600', 'text-rose-700');
+                b.classList.remove('bg-emerald-700', 'bg-rose-700', 'bg-brand-green', 'bg-brand-red', 'text-white', 'shadow-sm', 'bg-emerald-50', 'bg-rose-50', 'bg-brand-green-light', 'bg-brand-red-light', 'text-emerald-600', 'text-rose-600', 'text-brand-green', 'text-brand-red');
                 
                 if (isActive) {
                     b.classList.add(themeBg, 'text-white', 'shadow-sm');
@@ -1078,8 +1078,9 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
 
             // Update Section Icons
             $$('[data-lucide="history"], [data-lucide="line-chart"], [data-lucide="trending-up"]').forEach(icon => {
-                icon.classList.remove('text-emerald-600', 'text-rose-600');
-                icon.classList.add(isJimpitan ? 'text-emerald-600' : 'text-rose-600');
+                icon.classList.remove('text-emerald-600', 'text-rose-600', 'text-brand-green', 'text-brand-red');
+                icon.classList.add(themeText);
+            });
             });
 
             // Update Export Button
