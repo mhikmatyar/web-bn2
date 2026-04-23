@@ -48,6 +48,16 @@
     function init() {
         try {
             console.log("Jimpitan App: Initializing components...");
+
+            // --- Splash Screen ---
+            const splash = document.getElementById('splashScreen');
+            if (splash) {
+                setTimeout(() => {
+                    splash.classList.add('fade-out');
+                    setTimeout(() => splash.remove(), 700);
+                }, 1800);
+            }
+
             bindNavigation();
             bindSettings();
             initDateSelectors();
@@ -55,10 +65,33 @@
             bindModals();
             bindChartFilters();
             bindExport();
+            bindShare();
             
             switchTab(state.activeTab);
             
             if (window.lucide) lucide.createIcons();
+            
+            // Register Service Worker
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('sw.js').then(reg => {
+                        console.log('SW Registered', reg.scope);
+                    }).catch(err => console.log('SW Registration failed', err));
+                });
+            }
+
+            // Dark Mode Init
+            if (localStorage.getItem('bn2-darkMode') === 'true') {
+                document.body.classList.add('dark');
+                if ($('#darkModeToggle i')) $('#darkModeToggle i').setAttribute('data-lucide', 'sun');
+            }
+
+            $('#darkModeToggle').addEventListener('click', () => {
+                const isDark = document.body.classList.toggle('dark');
+                localStorage.setItem('bn2-darkMode', isDark);
+                $('#darkModeToggle i').setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+                if (window.lucide) lucide.createIcons();
+            });
             
             if (state.sheetUrl) {
                 console.log("Jimpitan App: Fetching data from", state.sheetUrl);
@@ -147,11 +180,52 @@
         });
     }
 
+    // =================== SHARE TO WHATSAPP ===================
+    function bindShare() {
+        const btn = $('#shareBtn');
+        if (!btn) return;
+        btn.addEventListener('click', () => {
+            const monthName = state.monthsNames[state.selectedMonth - 1];
+            const year = state.selectedYear;
+
+            const monthIn  = state.filteredData.filter(d => d.tipe === 'JIMPITAN').reduce((s, i) => s + i.nominal, 0);
+            const monthOut = state.filteredData.filter(d => d.tipe === 'PENGELUARAN').reduce((s, i) => s + i.nominal, 0);
+            const saldo    = monthIn - monthOut;
+            const entries  = new Set(state.filteredData.map(d => d.dateObj.toDateString())).size;
+
+            const tipe  = state.activeTab === 'jimpitan' ? 'Jimpitan' : 'Pengeluaran';
+            const aktif = state.filteredData.filter(d => d.tipe === state.activeTab.toUpperCase());
+
+            // Build detail lines (max 10 latest)
+            const lines = aktif.slice(0, 10).map(d =>
+                `  • ${d.tanggal} — ${formatRp(d.nominal)}${d.keterangan !== '-' ? ' (' + d.keterangan + ')' : ''}`
+            ).join('\n');
+
+            const text =
+`📊 *Rekap ${tipe} — ${monthName} ${year}*
+🏡 Jimpitan Bumi Neikarta 2
+${'─'.repeat(30)}
+💰 Total Jimpitan   : ${formatRp(monthIn)}
+💸 Total Pengeluaran: ${formatRp(monthOut)}
+📈 Saldo Bulan Ini  : ${formatRp(saldo)}
+📅 Entri Data       : ${entries} hari
+${'─'.repeat(30)}
+🗒 Detail ${tipe} (10 terakhir):
+${lines || '  (Tidak ada data)'}
+
+_Dikirim via Jimpitan BN2 App 🚀_`;
+
+            const encoded = encodeURIComponent(text);
+            window.open(`https://wa.me/?text=${encoded}`, '_blank');
+        });
+    }
+
     // =================== AUTHENTICATION ===================
     function bindSettings() {
         $('#confirmAuthBtn').addEventListener('click', () => {
             const pass = $('#adminPass').value;
-            if (pass === 'adminbn2') {
+            // Obfuscated password check (adminbn2)
+            if (btoa(pass) === 'YWRtaW5ibjI=') {
                 state.isAdmin = true;
                 $('#adminPass').value = '';
                 $('#authModal').classList.add('hidden');
@@ -265,12 +339,22 @@
         showLoading();
         try {
             const csv = await fetchCSV(state.sheetUrl);
+            localStorage.setItem('bn2-jimpitanData', csv);
             parseCSVData(csv);
         } catch (err) {
             console.error('Fetch error:', err);
-            hideLoading();
-            // Show error message to user
-            alert('Gagal memuat data dari Google Sheets. Pastikan URL benar dan Spreadsheet sudah dipublikasikan.');
+            
+            // Try loading from LocalStorage
+            const cachedData = localStorage.getItem('bn2-jimpitanData');
+            if (cachedData) {
+                console.log('Loading from cache due to fetch error');
+                parseCSVData(cachedData);
+                hideLoading();
+                // Optional: Toast message about offline mode
+            } else {
+                hideLoading();
+                alert('Gagal memuat data dari Google Sheets. Pastikan URL benar dan Spreadsheet sudah dipublikasikan.');
+            }
         }
     }
 
@@ -410,6 +494,14 @@
             
             if ($('#totalTahunIni')) $('#totalTahunIni').textContent = formatRp(state.activeTab === 'jimpitan' ? yearIn : yearOut);
             if ($('#entriDataCount')) $('#entriDataCount').textContent = `${daysWithData} hari`;
+
+            // Tab content fade animation
+            const rekapEl = $('#rekapList');
+            if (rekapEl) {
+                rekapEl.classList.remove('tab-content-animate');
+                void rekapEl.offsetWidth; // force reflow
+                rekapEl.classList.add('tab-content-animate');
+            }
 
             renderRekapList(currentViewData);
             renderChart();
