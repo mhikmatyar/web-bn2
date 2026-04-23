@@ -445,9 +445,13 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
             const isEdit = state.editingIdx !== null;
             
             const typeRaw = $('#entryType').value;
+            const entryDate = new Date($('#entryDate').value);
+            const monthShort = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+            const formattedDate = `${entryDate.getDate()}-${monthShort[entryDate.getMonth()]}-${entryDate.getFullYear()}`;
+
             const payload = {
                 action: isEdit ? 'editItem' : 'addItem',
-                tanggal: $('#entryDate').value,
+                tanggal: formattedDate,
                 tipe: typeRaw === 'JIMPITAN' ? 'Pemasukan' : (typeRaw === 'PENGELUARAN' ? 'Pengeluaran' : typeRaw),
                 nominal: parseInt($('#entryNominal').value),
                 keterangan: $('#entryKeterangan').value.trim() || '-',
@@ -771,17 +775,25 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
             if (tglStr) {
                 const parts = tglStr.split(/[-/ ]/);
                 if (parts.length === 3) {
-                    let d = parseInt(parts[0]);
-                    let m = parseInt(parts[1]) - 1;
-                    let y = parseInt(parts[2]);
+                    let d, m, y;
+                    // Check if first part is Year (YYYY-MM-DD)
+                    if (parts[0].length === 4) {
+                        y = parseInt(parts[0]);
+                        m = parseInt(parts[1]) - 1;
+                        d = parseInt(parts[2]);
+                    } else {
+                        // Assume DD-MM-YYYY
+                        d = parseInt(parts[0]);
+                        m = parseInt(parts[1]) - 1;
+                        y = parseInt(parts[2]);
+                    }
 
-                    // Handle string months
-                    if (isNaN(m)) {
-                        const mLower = parts[1].toLowerCase();
+                    // Handle string months (Jan, Feb, Apr, etc)
+                    if (isNaN(m) || m < 0 || m > 11) {
+                        const mLower = (parts[1] || parts[0]).toLowerCase();
                         if (monthNamesMap[mLower] !== undefined) {
                             m = monthNamesMap[mLower];
                         } else {
-                            // Try searching partial match
                             for (let key in monthNamesMap) {
                                 if (mLower.startsWith(key)) {
                                     m = monthNamesMap[key];
@@ -791,7 +803,7 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
                         }
                     }
 
-                    if (y < 100) y += 2000; // Handle 2-digit years
+                    if (y < 100) y += 2000;
                     dateObj = new Date(y, m, d);
                 } else {
                     dateObj = new Date(tglStr);
