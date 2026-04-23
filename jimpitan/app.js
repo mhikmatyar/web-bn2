@@ -1390,6 +1390,45 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
                 $('#detailModal').classList.add('flex');
             }
         };
+
+        $('#editEntryBtn').addEventListener('click', () => {
+            const item = state.data.find(d => d.idx === state.editingIdx);
+            if (item) {
+                $('#detailModal').classList.add('hidden');
+                const modal = $('#entryModal');
+                
+                // Konversi tanggal dari format Sheet (23-Apr-2026) kembali ke format Input (2026-04-23)
+                const t = item.tanggal;
+                if (t.includes('-') && t.split('-')[0].length !== 4) { 
+                    const monthShort = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+                    const p = t.split('-');
+                    const mIdx = monthShort.indexOf(p[1]);
+                    if (mIdx !== -1) {
+                        $('#entryDate').value = `${p[2]}-${(mIdx+1).toString().padStart(2,'0')}-${p[0].padStart(2,'0')}`;
+                    }
+                } else {
+                    $('#entryDate').value = t;
+                }
+
+                $('#entryType').value = item.tipe === 'Pemasukan' ? 'JIMPITAN' : 'PENGELUARAN';
+                $('#entryNominal').value = item.nominal;
+                $('#entryKeterangan').value = item.keterangan === '-' ? '' : item.keterangan;
+                
+                $('#submitEntryBtn').innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> Update Data';
+                $('#entryModal h3').textContent = 'Edit Data';
+                
+                modal.classList.remove('hidden');
+                if (window.lucide) lucide.createIcons();
+            }
+        });
+
+        $('#deleteEntryBtn').addEventListener('click', () => {
+            if (state.editingIdx !== null) {
+                if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
+                    deleteEntry(state.editingIdx);
+                }
+            }
+        });
     }
 
     // Start the app
