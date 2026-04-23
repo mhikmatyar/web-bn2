@@ -1371,62 +1371,73 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
                 $('#detailKeterangan').textContent = item.keterangan;
                 $('#detailNominal').textContent = formatRp(item.nominal);
                 
-                // Admin Actions
-                state.editingIdx = state.isAdmin ? item.idx : null;
-                const adminActions = $('#adminDetailActions');
-                if (adminActions) {
-                    if (state.isAdmin) {
-                        adminActions.style.setProperty('display', 'grid', 'important');
-                        adminActions.classList.remove('hidden');
-                    } else {
-                        adminActions.style.display = 'none';
-                        adminActions.classList.add('hidden');
+                // Admin Actions Injection
+                let adminActions = $('#adminDetailActions');
+                if (state.isAdmin) {
+                    if (!adminActions) {
+                        // Create it if it doesn't exist (handle cache issues)
+                        adminActions = document.createElement('div');
+                        adminActions.id = 'adminDetailActions';
+                        adminActions.className = 'grid grid-cols-2 gap-4 mb-6';
+                        const closeBtn = $('#closeDetailBtn');
+                        if (closeBtn) closeBtn.parentNode.insertBefore(adminActions, closeBtn);
                     }
+                    
+                    adminActions.innerHTML = `
+                        <button id="editEntryBtn" class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all hover:bg-slate-200">
+                            <i data-lucide="edit-3" class="w-4 h-4"></i> Edit
+                        </button>
+                        <button id="deleteEntryBtn" class="bg-rose-50 text-rose-600 font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all hover:bg-rose-100">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i> Hapus
+                        </button>
+                    `;
+                    adminActions.style.setProperty('display', 'grid', 'important');
+                    
+                    // Re-bind listeners because we just replaced innerHTML
+                    $('#editEntryBtn').onclick = () => handleEdit(item);
+                    $('#deleteEntryBtn').onclick = () => deleteEntry(item.idx);
+                    
+                } else if (adminActions) {
+                    adminActions.style.display = 'none';
                 }
-                
-                updateAdminUI(); // Refresh other elements
 
                 $('#detailModal').classList.remove('hidden');
                 $('#detailModal').classList.add('flex');
                 
-                lucide.createIcons();
+                if (window.lucide) lucide.createIcons();
             }
         };
 
-        $('#editEntryBtn').addEventListener('click', () => {
-            const item = state.data.find(d => d.idx === state.editingIdx);
-            if (item) {
-                $('#detailModal').classList.add('hidden');
-                const modal = $('#entryModal');
-                
-                // Fill form
-                $('#entryDate').value = item.tanggal; // Assuming format matches YYYY-MM-DD for date input or similar
-                // If tanggal is in CSV format (e.g. DD/MM/YYYY), we might need to convert it
-                if (item.tanggal.includes('/')) {
-                    const p = item.tanggal.split('/');
-                    if (p.length === 3) $('#entryDate').value = `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
-                } else if (item.tanggal.includes('-')) {
-                    // Check if it's already YYYY-MM-DD
-                    if (item.tanggal.split('-')[0].length === 4) $('#entryDate').value = item.tanggal;
+        // Helper for edit
+        function handleEdit(item) {
+            $('#detailModal').classList.add('hidden');
+            const modal = $('#entryModal');
+            
+            // Fill form
+            const t = item.tanggal;
+            if (t.includes('-') && t.split('-')[0].length !== 4) { // DD-MMM-YYYY
+                const monthShort = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+                const p = t.split('-');
+                const mIdx = monthShort.indexOf(p[1]);
+                if (mIdx !== -1) {
+                    $('#entryDate').value = `${p[2]}-${(mIdx+1).toString().padStart(2,'0')}-${p[0].padStart(2,'0')}`;
                 }
-
-                $('#entryType').value = item.tipe;
-                $('#entryNominal').value = item.nominal;
-                $('#entryKeterangan').value = item.keterangan === '-' ? '' : item.keterangan;
-                
-                $('#submitEntryBtn').innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> Update Data';
-                $('#entryModal h3').textContent = 'Edit Data';
-                
-                modal.classList.remove('hidden');
-                lucide.createIcons();
+            } else {
+                $('#entryDate').value = t;
             }
-        });
 
-        $('#deleteEntryBtn').addEventListener('click', () => {
-            if (state.editingIdx !== null) {
-                deleteEntry(state.editingIdx);
-            }
-        });
+            $('#entryType').value = item.tipe === 'Pemasukan' ? 'JIMPITAN' : 'PENGELUARAN';
+            $('#entryNominal').value = item.nominal;
+            $('#entryKeterangan').value = item.keterangan === '-' ? '' : item.keterangan;
+            
+            $('#submitEntryBtn').innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> Update Data';
+            $('#entryModal h3').textContent = 'Edit Data';
+            
+            modal.classList.remove('hidden');
+            if (window.lucide) lucide.createIcons();
+        }
+
+        }
     }
 
     // Start the app
