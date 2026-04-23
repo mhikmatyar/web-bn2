@@ -105,6 +105,8 @@
                 $('#addDataBtn').classList.remove('hidden');
             }
             
+            updateAdminUI();
+
             if (state.sheetUrl) {
                 console.log("Jimpitan App: Fetching data from", state.sheetUrl);
                 fetchData();
@@ -574,18 +576,33 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
     }
 
     // =================== AUTHENTICATION ===================
+    function updateAdminUI() {
+        const addBtn = $('#addDataBtn');
+        const adminActions = $('#adminDetailActions');
+        
+        if (state.isAdmin) {
+            if (addBtn) addBtn.classList.remove('hidden');
+            if (adminActions) adminActions.classList.remove('hidden');
+        } else {
+            if (addBtn) addBtn.classList.add('hidden');
+            if (adminActions) adminActions.classList.add('hidden');
+        }
+        if (window.lucide) lucide.createIcons();
+    }
+
     function bindSettings() {
         $('#confirmAuthBtn').addEventListener('click', () => {
-            const pass = $('#adminPass').value;
+            const pass = $('#adminPass').value.trim();
             // Obfuscated password check (adminbn2)
             if (btoa(pass) === 'YWRtaW5ibjI=') {
                 state.isAdmin = true;
                 sessionStorage.setItem('bn2-isAdmin', 'true');
                 $('#adminPass').value = '';
                 $('#authModal').classList.add('hidden');
-                $('#addDataBtn').classList.remove('hidden');
+                
                 showToast('Mode Admin Aktif', 'success');
-                if (window.lucide) lucide.createIcons();
+                updateAdminUI();
+                
                 // Refresh current view to show buttons
                 if (state.activeTab === 'settings') switchTab('jimpitan');
                 else renderAll();
@@ -1339,16 +1356,8 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
                 $('#detailNominal').textContent = formatRp(item.nominal);
                 
                 // Admin Actions
-                const adminActions = $('#adminDetailActions');
-                if (adminActions) {
-                    if (state.isAdmin) {
-                        adminActions.classList.remove('hidden');
-                        state.editingIdx = item.idx;
-                    } else {
-                        adminActions.classList.add('hidden');
-                        state.editingIdx = null;
-                    }
-                }
+                state.editingIdx = state.isAdmin ? item.idx : null;
+                updateAdminUI();
 
                 $('#detailModal').classList.remove('hidden');
                 $('#detailModal').classList.add('flex');
