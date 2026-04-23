@@ -7,6 +7,7 @@
     'use strict';
 
     const DEFAULT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQfPsk4L2qxshegLjX6zTdY4mPv0e4xYFqbzYFKgqwHJrMuSXAeDJuIFAhdyK2vi4SwyJ2HXZX4h0un/pub?gid=289431951&single=true&output=csv';
+    const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbu_k4AGvwsi_DIz1w1oGY51Omw5Yfml7j6HQILG1InKVtNa6fWcBEJkkmezXpzbwCsA/exec';
 
     // State
     const state = {
@@ -115,7 +116,7 @@
 
     function loadSettings() {
         state.sheetUrl = localStorage.getItem('bn2-jimpitanUrl') || DEFAULT_SHEET_URL;
-        state.scriptUrl = localStorage.getItem('bn2-scriptUrl') || '';
+        state.scriptUrl = localStorage.getItem('bn2-scriptUrl') || DEFAULT_SCRIPT_URL;
         
         if (state.sheetUrl) {
             $('#sheetUrl').value = state.sheetUrl;
@@ -584,6 +585,7 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
                 $('#authModal').classList.add('hidden');
                 $('#addDataBtn').classList.remove('hidden');
                 showToast('Mode Admin Aktif', 'success');
+                if (window.lucide) lucide.createIcons();
                 // Refresh current view to show buttons
                 if (state.activeTab === 'settings') switchTab('jimpitan');
                 else renderAll();
