@@ -489,23 +489,47 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
                     showToast(isEdit ? 'Data berhasil diperbarui!' : 'Data berhasil disimpan!', 'success');
                     modal.classList.add('hidden');
                     form.reset();
-                    state.editingIdx = null;
                     
-                    // Optimistic update for UI if editing
+                    // --- OPTIMISTIC UI UPDATE ---
                     if (isEdit) {
-                        const idx = state.data.findIndex(d => d.idx === payload.row - 2);
+                        const idx = state.data.findIndex(d => d.idx === state.editingIdx);
                         if (idx !== -1) {
                             state.data[idx].nominal = payload.nominal;
                             state.data[idx].keterangan = payload.keterangan;
                             state.data[idx].tipe = payload.tipe;
-                            renderAll();
+                            // Update dateObj too
+                            const [d, m, y] = payload.tanggal.split('-');
+                            const monthIdx = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'].indexOf(m);
+                            state.data[idx].dateObj = new Date(y, monthIdx, d);
+                            state.data[idx].tanggal = payload.tanggal;
                         }
+                    } else {
+                        // Optimistic Add
+                        const [d, m, y] = payload.tanggal.split('-');
+                        const monthIdx = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'].indexOf(m);
+                        const newItem = {
+                            idx: state.data.length > 0 ? Math.max(...state.data.map(i => i.idx)) + 1 : 0,
+                            tanggal: payload.tanggal,
+                            tipe: payload.tipe,
+                            nominal: payload.nominal,
+                            keterangan: payload.keterangan,
+                            pelapor: 'Admin (Pending)',
+                            dateObj: new Date(y, monthIdx, d)
+                        };
+                        state.data.unshift(newItem);
                     }
+                    
+                    state.editingIdx = null;
+                    renderAll();
 
-                    // Longer delay to ensure Google Sheets publishing updates
+                    // Longer delay with clearer status
+                    updateSyncOverlayText('Menunggu sinkronisasi server...');
                     setTimeout(() => {
-                        fetchData().finally(() => showSyncStatus(false));
-                    }, 2500);
+                        fetchData().finally(() => {
+                            showSyncStatus(false);
+                            updateSyncOverlayText('Sinkronisasi...');
+                        });
+                    }, 5000); // Increased to 5s for better safety
                 } else {
                     throw new Error(result.error || 'Gagal menyimpan data');
                 }
@@ -565,6 +589,11 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
             btn.innerHTML = originalHtml;
             if (window.lucide) lucide.createIcons();
         }
+    }
+
+    function updateSyncOverlayText(text) {
+        const el = $('#syncOverlay span');
+        if (el) el.textContent = text;
     }
 
     function showSyncStatus(show) {
@@ -785,9 +814,15 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
         
         showLoading();
         try {
-            const csv = await fetchCSV(state.sheetUrl);
-            localStorage.setItem('bn2-jimpitanData', csv);
-            parseCSVData(csv);
+            // Tambahkan cache buster agar Google tidak mengirim data lama
+            const cacheBuster = state.sheetUrl + (state.sheetUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
+            const csv = await fetchCSV(cacheBuster);
+            
+            // Validasi data sebelum menimpa state
+            if (csv && csv.trim().length > 10) {
+                localStorage.setItem('bn2-jimpitanData', csv);
+                parseCSVData(csv);
+            }
         } catch (err) {
             console.error('Fetch error:', err);
             
@@ -807,6 +842,14 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
 
     function parseCSVData(csv) {
         const result = Papa.parse(csv, { header: true, skipEmptyLines: true, transformHeader: h => h.trim() });
+        
+        // Safety check: Jangan kosongkan data jika server mengirim data kosong secara glitch
+        if ((!result.data || result.data.length === 0) && state.data.length > 0) {
+            console.warn("Jimpitan App: Server returned empty data, using local state.");
+            hideLoading();
+            return;
+        }
+
         const monthNamesMap = {
             'jan': 0, 'feb': 1, 'mar': 2, 'apr': 3, 'mei': 4, 'jun': 5,
             'jul': 6, 'agu': 7, 'sep': 8, 'okt': 9, 'nov': 10, 'des': 11,
