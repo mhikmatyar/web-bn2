@@ -150,3 +150,40 @@ body {
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+/* Dashboard Premium Styles */
+.bg-mesh-emerald {
+    background-color: #059669;
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.5) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(5, 150, 105, 0.3) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(4, 120, 87, 0.4) 0px, transparent 50%),
+        radial-gradient(at 0% 100%, rgba(6, 95, 70, 0.2) 0px, transparent 50%);
+}
+
+.bg-mesh-rose {
+    background-color: #e11d48;
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(244, 63, 94, 0.5) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(225, 29, 72, 0.3) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(190, 18, 60, 0.4) 0px, transparent 50%),
+        radial-gradient(at 0% 100%, rgba(159, 18, 57, 0.2) 0px, transparent 50%);
+}
+
+.segmented-control {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+}
+
+.stat-pill {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.stat-pill:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+}
