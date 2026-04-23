@@ -1370,7 +1370,6 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
             $('#chartEmptyMessage').classList.add('hidden');
             $('#jimpitanChart').classList.remove('hidden');
 
-            const isJimpitan = state.activeTab === 'jimpitan';
             const themeColor = isJimpitan ? '#059669' : '#e11d48';
             const isDark     = document.body.classList.contains('dark');
             const tickColor  = isDark ? '#64748b' : '#94a3b8';
