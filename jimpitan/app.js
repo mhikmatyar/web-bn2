@@ -1587,6 +1587,23 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
         };
     }
 
+    // =================== GLOBAL HELPERS ===================
+    function formatRp(num) {
+        if (num === null || num === undefined) return 'Rp 0';
+        return 'Rp ' + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+
+    function parseUang(str) {
+        if (!str) return 0;
+        const clean = str.toString().replace(/[^0-9]/g, '');
+        return parseInt(clean) || 0;
+    }
+
+    function getWeekOfMonth(date) {
+        const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+        return Math.ceil((date.getDate() + firstDay) / 7);
+    }
+
     // Start the app
     init();
     console.log("Jimpitan App: Initialized");
