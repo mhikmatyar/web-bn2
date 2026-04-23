@@ -182,42 +182,155 @@
 
     // =================== SHARE TO WHATSAPP ===================
     function bindShare() {
-        const btn = $('#shareBtn');
-        if (!btn) return;
-        btn.addEventListener('click', () => {
-            const monthName = state.monthsNames[state.selectedMonth - 1];
-            const year = state.selectedYear;
+        const openBtn  = $('#shareBtn');
+        const modal    = $('#shareModal');
+        const closeBtn = $('#closeShareModal');
+        const weekBtn  = $('#shareWeekBtn');
+        const monthBtn = $('#shareMonthBtn');
 
-            const monthIn  = state.filteredData.filter(d => d.tipe === 'JIMPITAN').reduce((s, i) => s + i.nominal, 0);
-            const monthOut = state.filteredData.filter(d => d.tipe === 'PENGELUARAN').reduce((s, i) => s + i.nominal, 0);
-            const saldo    = monthIn - monthOut;
-            const entries  = new Set(state.filteredData.map(d => d.dateObj.toDateString())).size;
+        if (!openBtn || !modal) return;
 
-            const tipe  = state.activeTab === 'jimpitan' ? 'Jimpitan' : 'Pengeluaran';
-            const aktif = state.filteredData.filter(d => d.tipe === state.activeTab.toUpperCase());
+        // Open bottom sheet
+        openBtn.addEventListener('click', () => {
+            modal.classList.remove('hidden');
+            if (window.lucide) lucide.createIcons();
+        });
 
-            // Build detail lines (max 10 latest)
-            const lines = aktif.slice(0, 10).map(d =>
-                `  • ${d.tanggal} — ${formatRp(d.nominal)}${d.keterangan !== '-' ? ' (' + d.keterangan + ')' : ''}`
-            ).join('\n');
+        // Close bottom sheet (backdrop or X button)
+        closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.classList.add('hidden');
+        });
 
-            const text =
-`📊 *Rekap ${tipe} — ${monthName} ${year}*
+        // ---- Share Mingguan ----
+        weekBtn.addEventListener('click', () => {
+            modal.classList.add('hidden');
+            const text = generateWeeklyShareText();
+            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+        });
+
+        // ---- Share Bulanan ----
+        monthBtn.addEventListener('click', () => {
+            modal.classList.add('hidden');
+            const text = generateMonthlyShareText();
+            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+        });
+    }
+
+    // Builds week groups for a given month (Sunday-start, same as rekap list)
+    function buildWeeksForMonth(monthIdx, year, tipeFilter) {
+        const daysInMonth = new Date(year, monthIdx + 1, 0).getDate();
+        const allDates = [];
+        for (let d = 1; d <= daysInMonth; d++) allDates.push(new Date(year, monthIdx, d));
+
+        // Group into Sun-Sat weeks
+        const weeks = [];
+        let cur = [];
+        allDates.forEach((date, i) => {
+            cur.push(date);
+            if (date.getDay() === 6 || i === allDates.length - 1) {
+                weeks.push(cur);
+                cur = [];
+            }
+        });
+
+        // Map transactions per date
+        const filtered = state.filteredData.filter(d => tipeFilter ? d.tipe === tipeFilter : true);
+        const dataMap  = {};
+        filtered.forEach(item => {
+            const k = item.dateObj.toDateString();
+            if (!dataMap[k]) dataMap[k] = [];
+            dataMap[k].push(item);
+        });
+
+        return weeks.map((week, idx) => {
+            const items = week.flatMap(d => dataMap[d.toDateString()] || []);
+            const total = items.reduce((s, i) => s + i.nominal, 0);
+            return { weekNum: idx + 1, week, items, total };
+        });
+    }
+
+    function generateWeeklyShareText() {
+        const monthIdx  = state.selectedMonth - 1;
+        const year      = state.selectedYear;
+        const monthName = state.monthsNames[monthIdx];
+        const monthShort= monthName.substring(0, 3);
+        const isJimpitan= state.activeTab === 'jimpitan';
+        const tipeLabel = isJimpitan ? 'Jimpitan' : 'Pengeluaran';
+        const tipeFilter= isJimpitan ? 'JIMPITAN' : 'PENGELUARAN';
+
+        const weeks = buildWeeksForMonth(monthIdx, year, tipeFilter);
+        const totalWeeks = weeks.length;
+
+        // currentWeekPage 0 = latest week displayed
+        const reversedIdx = state.currentWeekPage;
+        const weekData = [...weeks].reverse()[reversedIdx] || weeks[weeks.length - 1];
+
+        const { weekNum, week, items, total } = weekData;
+        const startDate = week[0].getDate();
+        const endDate   = week[week.length - 1].getDate();
+        const rangeStr  = `${startDate}–${endDate} ${monthShort} ${year}`;
+
+        // Build transaction lines
+        const lines = items.length > 0
+            ? items.map(d => {
+                const dayName = state.dayNames[d.dateObj.getDay()];
+                const ket = d.keterangan !== '-' ? ` (${d.keterangan})` : '';
+                return `  • ${dayName}, ${d.dateObj.getDate()} ${monthShort} — ${formatRp(d.nominal)}${ket}`;
+              }).join('\n')
+            : '  (Tidak ada transaksi minggu ini)';
+
+        const emoji = isJimpitan ? '💰' : '💸';
+
+        return `${emoji} *Rekap ${tipeLabel} Minggu Ke-${weekNum}*
 🏡 Jimpitan Bumi Neikarta 2
-${'─'.repeat(30)}
+📅 ${rangeStr}
+${'─'.repeat(32)}
+${lines}
+${'─'.repeat(32)}
+*Total Minggu Ke-${weekNum}: ${formatRp(total)}*
+
+_Dikirim via Jimpitan BN2 App 🚀_`;
+    }
+
+    function generateMonthlyShareText() {
+        const monthIdx  = state.selectedMonth - 1;
+        const year      = state.selectedYear;
+        const monthName = state.monthsNames[monthIdx];
+        const isJimpitan= state.activeTab === 'jimpitan';
+        const tipeLabel = isJimpitan ? 'Jimpitan' : 'Pengeluaran';
+        const tipeFilter= isJimpitan ? 'JIMPITAN' : 'PENGELUARAN';
+
+        const monthIn  = state.filteredData.filter(d => d.tipe === 'JIMPITAN').reduce((s, i) => s + i.nominal, 0);
+        const monthOut = state.filteredData.filter(d => d.tipe === 'PENGELUARAN').reduce((s, i) => s + i.nominal, 0);
+        const saldo    = monthIn - monthOut;
+        const entries  = new Set(state.filteredData.map(d => d.dateObj.toDateString())).size;
+
+        // Per-week breakdown
+        const weeks      = buildWeeksForMonth(monthIdx, year, tipeFilter);
+        const monthShort = monthName.substring(0, 3);
+
+        const weekLines = weeks.map(({ weekNum, week, total }) => {
+            const s = week[0].getDate();
+            const e = week[week.length - 1].getDate();
+            const bar = total > 0 ? '▓'.repeat(Math.min(Math.round(total / 5000), 12)) : '░░';
+            return `  Minggu ${weekNum} (${s}–${e} ${monthShort}): ${formatRp(total)} ${bar}`;
+        }).join('\n');
+
+        return `📊 *Rekap ${tipeLabel} — ${monthName} ${year}*
+🏡 Jimpitan Bumi Neikarta 2
+${'─'.repeat(32)}
 💰 Total Jimpitan   : ${formatRp(monthIn)}
 💸 Total Pengeluaran: ${formatRp(monthOut)}
 📈 Saldo Bulan Ini  : ${formatRp(saldo)}
-📅 Entri Data       : ${entries} hari
-${'─'.repeat(30)}
-🗒 Detail ${tipe} (10 terakhir):
-${lines || '  (Tidak ada data)'}
+📅 Entri Data       : ${entries} hari aktif
+${'─'.repeat(32)}
+📆 *Breakdown Per Minggu (${tipeLabel}):*
+${weekLines}
+${'─'.repeat(32)}
+*Total ${tipeLabel}: ${formatRp(isJimpitan ? monthIn : monthOut)}*
 
 _Dikirim via Jimpitan BN2 App 🚀_`;
-
-            const encoded = encodeURIComponent(text);
-            window.open(`https://wa.me/?text=${encoded}`, '_blank');
-        });
     }
 
     // =================== AUTHENTICATION ===================

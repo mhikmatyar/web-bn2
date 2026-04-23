@@ -299,6 +299,47 @@
         </div>
     </div>
 
+    <!-- MODAL: SHARE OPTIONS -->
+    <div id="shareModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[300] flex items-end justify-center hidden" id="shareModal">
+        <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-t-2xl p-6 pb-8 shadow-2xl transform translate-y-0 transition-transform duration-300">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">Bagikan Rekap</h3>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Pilih format laporan untuk dibagikan</p>
+                </div>
+                <button id="closeShareModal" class="p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-slate-200 transition-colors">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3">
+                <!-- Share Mingguan -->
+                <button id="shareWeekBtn" class="w-full flex items-center gap-4 p-4 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 rounded-xl transition-all active:scale-[0.98]">
+                    <div class="w-10 h-10 bg-emerald-700 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="calendar-days" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <div class="text-left flex-1">
+                        <div class="text-xs font-bold text-emerald-800 dark:text-emerald-300">Share Minggu Ini</div>
+                        <div class="text-[10px] text-emerald-600 dark:text-emerald-500 mt-0.5">Rekap detail transaksi minggu yang sedang dilihat</div>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-emerald-400"></i>
+                </button>
+
+                <!-- Share Bulanan -->
+                <button id="shareMonthBtn" class="w-full flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition-all active:scale-[0.98]">
+                    <div class="w-10 h-10 bg-slate-700 dark:bg-slate-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="bar-chart-2" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <div class="text-left flex-1">
+                        <div class="text-xs font-bold text-slate-800 dark:text-slate-200">Share Bulan Ini</div>
+                        <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Ringkasan total + breakdown per minggu</div>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- SPLASH SCREEN -->
     <div id="splashScreen">
         <div class="splash-logo">
