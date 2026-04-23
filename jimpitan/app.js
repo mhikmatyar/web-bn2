@@ -66,6 +66,8 @@
             bindChartFilters();
             bindExport();
             bindShare();
+            bindPwaInstall();
+            initPullToRefresh();
             
             switchTab(state.activeTab);
             
@@ -165,7 +167,7 @@
 
     function bindExport() {
         $('#exportBtn').addEventListener('click', () => {
-            if (state.filteredData.length === 0) return alert('Tidak ada data untuk diekspor');
+            if (state.filteredData.length === 0) return showToast('Tidak ada data untuk diekspor', 'info');
             
             const csvContent = Papa.unparse(state.filteredData);
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -332,6 +334,107 @@ ${'─'.repeat(32)}
 _Dikirim via Jimpitan BN2 App 🚀_`;
     }
 
+    // =================== TOAST NOTIFICATION ===================
+    function showToast(message, type = 'info', duration = 3000) {
+        const container = document.getElementById('toastContainer');
+        if (!container) return;
+        const icons = {
+            success: '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>',
+            error:   '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+            info:    '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+            offline: '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>'
+        };
+        const el = document.createElement('div');
+        el.className = `toast toast-${type}`;
+        el.innerHTML = `${icons[type] || ''}<span style="flex:1">${message}</span>`;
+        container.appendChild(el);
+        const dismiss = () => { el.classList.add('hide'); setTimeout(() => el.remove(), 300); };
+        el.addEventListener('click', dismiss);
+        setTimeout(dismiss, duration);
+    }
+
+    // =================== PWA INSTALL BANNER ===================
+    function bindPwaInstall() {
+        let deferredPrompt = null;
+        const banner     = document.getElementById('pwaBanner');
+        const installBtn = document.getElementById('pwaInstall');
+        const dismissBtn = document.getElementById('pwaDismiss');
+        if (!banner || localStorage.getItem('bn2-pwaDismissed')) return;
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            banner.classList.remove('hidden');
+            if (window.lucide) lucide.createIcons();
+        });
+
+        installBtn && installBtn.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') showToast('Aplikasi berhasil diinstall! 🎉', 'success');
+            deferredPrompt = null;
+            banner.classList.add('hidden');
+        });
+
+        dismissBtn && dismissBtn.addEventListener('click', () => {
+            banner.classList.add('hidden');
+            localStorage.setItem('bn2-pwaDismissed', '1');
+        });
+
+        window.addEventListener('appinstalled', () => {
+            banner.classList.add('hidden');
+            showToast('Jimpitan BN2 sudah terpasang!', 'success');
+        });
+    }
+
+    // =================== PULL TO REFRESH ===================
+    function initPullToRefresh() {
+        const appEl    = document.querySelector('.max-w-md');
+        const indicator = document.getElementById('pullIndicator');
+        const pullText  = document.getElementById('pullText');
+        const pullIcon  = document.getElementById('pullIcon');
+        if (!appEl || !indicator) return;
+
+        let startY = 0, currentY = 0, pulling = false;
+        const THRESHOLD = 80;
+
+        appEl.addEventListener('touchstart', (e) => {
+            if (window.scrollY === 0) { startY = e.touches[0].clientY; pulling = true; }
+        }, { passive: true });
+
+        appEl.addEventListener('touchmove', (e) => {
+            if (!pulling) return;
+            currentY = e.touches[0].clientY;
+            const delta = currentY - startY;
+            if (delta > 20) {
+                indicator.classList.add('visible');
+                if (pullText) pullText.textContent = delta > THRESHOLD ? 'Lepaskan untuk refresh' : 'Tarik untuk refresh';
+                if (pullIcon) pullIcon.style.transform = `rotate(${Math.min(delta * 2, 360)}deg)`;
+            }
+        }, { passive: true });
+
+        appEl.addEventListener('touchend', () => {
+            if (!pulling) return;
+            pulling = false;
+            const delta = currentY - startY;
+            if (delta > THRESHOLD && state.sheetUrl) {
+                if (pullText) pullText.textContent = 'Memperbarui...';
+                if (pullIcon) pullIcon.classList.add('pull-spin');
+                fetchData().finally(() => {
+                    setTimeout(() => {
+                        indicator.classList.remove('visible');
+                        if (pullIcon) { pullIcon.classList.remove('pull-spin'); pullIcon.style.transform = ''; }
+                    }, 800);
+                });
+            } else {
+                indicator.classList.remove('visible');
+                if (pullIcon) pullIcon.style.transform = '';
+            }
+            startY = 0; currentY = 0;
+        }, { passive: true });
+    }
+
     // =================== AUTHENTICATION ===================
     function bindSettings() {
         $('#confirmAuthBtn').addEventListener('click', () => {
@@ -343,7 +446,7 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
                 $('#authModal').classList.add('hidden');
                 switchTab('settings');
             } else {
-                alert('Password salah!');
+                showToast('Password salah! Coba lagi.', 'error');
             }
         });
 
@@ -462,10 +565,10 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
                 console.log('Loading from cache due to fetch error');
                 parseCSVData(cachedData);
                 hideLoading();
-                // Optional: Toast message about offline mode
+                showToast('Mode offline — menampilkan data terakhir', 'offline');
             } else {
                 hideLoading();
-                alert('Gagal memuat data dari Google Sheets. Pastikan URL benar dan Spreadsheet sudah dipublikasikan.');
+                showToast('Gagal memuat data. Cek URL atau koneksi internet.', 'error');
             }
         }
     }
@@ -603,17 +706,31 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
             if ($('#summaryJimpitan')) $('#summaryJimpitan').textContent = formatRp(monthIn);
             if ($('#summaryPengeluaran')) $('#summaryPengeluaran').textContent = `-${formatRp(monthOut)}`;
             if ($('#saldoBulanIni')) $('#saldoBulanIni').textContent = formatRp(monthIn - monthOut);
-            
+
+            // --- Month Comparison Delta (F) ---
+            const deltaEl = $('#saldoDelta');
+            if (deltaEl) {
+                const prevM    = state.selectedMonth === 1 ? 12 : state.selectedMonth - 1;
+                const prevY    = state.selectedMonth === 1 ? state.selectedYear - 1 : state.selectedYear;
+                const prevData = state.data.filter(d => d.dateObj.getMonth() + 1 === prevM && d.dateObj.getFullYear() === prevY);
+                const prevIn   = prevData.filter(d => d.tipe === 'JIMPITAN').reduce((s, i) => s + i.nominal, 0);
+                const prevOut  = prevData.filter(d => d.tipe === 'PENGELUARAN').reduce((s, i) => s + i.nominal, 0);
+                const prevSaldo = prevIn - prevOut;
+                const currSaldo = monthIn - monthOut;
+                if (prevData.length > 0) {
+                    const delta = currSaldo - prevSaldo;
+                    const sign  = delta >= 0 ? '↑' : '↓';
+                    const prevMonthName = state.monthsNames[prevM - 1].substring(0, 3);
+                    deltaEl.textContent = `${sign} ${delta >= 0 ? '+' : ''}${formatRp(Math.abs(delta))} vs ${prevMonthName} ${prevY}`;
+                    deltaEl.style.opacity = '0.85';
+                } else {
+                    deltaEl.textContent = '';
+                    deltaEl.style.opacity = '0';
+                }
+            }
+
             if ($('#totalTahunIni')) $('#totalTahunIni').textContent = formatRp(state.activeTab === 'jimpitan' ? yearIn : yearOut);
             if ($('#entriDataCount')) $('#entriDataCount').textContent = `${daysWithData} hari`;
-
-            // Tab content fade animation
-            const rekapEl = $('#rekapList');
-            if (rekapEl) {
-                rekapEl.classList.remove('tab-content-animate');
-                void rekapEl.offsetWidth; // force reflow
-                rekapEl.classList.add('tab-content-animate');
-            }
 
             renderRekapList(currentViewData);
             renderChart();
@@ -690,6 +807,11 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
         try {
             const container = $('#rekapList');
             if (!container) return;
+
+            // Trigger fade animation
+            container.classList.remove('tab-content-animate');
+            void container.offsetWidth; // force reflow
+            container.classList.add('tab-content-animate');
             const monthIdx = state.selectedMonth - 1;
             const year = state.selectedYear;
             
@@ -836,6 +958,24 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
                 });
             }
 
+            // --- Swipe Gesture (H) ---
+            const rekapEl = container;
+            let swipeStartX = 0;
+            rekapEl.addEventListener('touchstart', (e) => { swipeStartX = e.touches[0].clientX; }, { passive: true });
+            rekapEl.addEventListener('touchend', (e) => {
+                const dx = e.changedTouches[0].clientX - swipeStartX;
+                if (Math.abs(dx) < 50) return;
+                if (dx < 0 && state.currentWeekPage > 0) {
+                    // Swipe left = newer week
+                    state.currentWeekPage--;
+                    renderRekapList(items);
+                } else if (dx > 0 && state.currentWeekPage < totalWeeks - 1) {
+                    // Swipe right = older week
+                    state.currentWeekPage++;
+                    renderRekapList(items);
+                }
+            }, { passive: true });
+
             lucide.createIcons();
         } catch (e) {
             console.error("Rekap List Error:", e);
@@ -905,6 +1045,9 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
 
             const isJimpitan = state.activeTab === 'jimpitan';
             const themeColor = isJimpitan ? '#059669' : '#e11d48';
+            const isDark     = document.body.classList.contains('dark');
+            const tickColor  = isDark ? '#64748b' : '#94a3b8';
+            const tooltipBg  = isDark ? '#1e293b' : '#0f172a';
 
             state.chart = new Chart(ctx, {
                 type: 'bar',
@@ -932,11 +1075,11 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
                                 display: true,
                                 text: state.chartRange === 'harian' ? 'Tanggal' : 'Periode',
                                 font: { size: 10, weight: '600', family: 'Plus Jakarta Sans' },
-                                color: '#94a3b8'
+                                color: tickColor
                             },
                             ticks: {
                                 font: { size: 9, family: 'Plus Jakarta Sans' },
-                                color: '#94a3b8',
+                                color: tickColor,
                                 maxRotation: 0
                             }
                         },
@@ -947,11 +1090,11 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
                                 display: true,
                                 text: 'Nominal (Rp)',
                                 font: { size: 10, weight: '600', family: 'Plus Jakarta Sans' },
-                                color: '#94a3b8'
+                                color: tickColor
                             },
                             ticks: {
                                 font: { size: 9, family: 'Plus Jakarta Sans' },
-                                color: '#94a3b8',
+                                color: tickColor,
                                 callback: function(value) {
                                     if (value >= 1000000) return (value / 1000000) + 'jt';
                                     if (value >= 1000) return (value / 1000) + 'rb';
@@ -963,7 +1106,7 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
                     plugins: {
                         legend: { display: false },
                         tooltip: {
-                            backgroundColor: '#0f172a',
+                            backgroundColor: tooltipBg,
                             titleFont: { family: 'Plus Jakarta Sans', size: 12, weight: 'bold' },
                             bodyFont: { family: 'Plus Jakarta Sans', size: 12 },
                             padding: 12,
