@@ -579,13 +579,16 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
     function updateAdminUI() {
         const addBtn = $('#addDataBtn');
         const adminActions = $('#adminDetailActions');
+        const badge = $('#adminBadge');
         
         if (state.isAdmin) {
-            if (addBtn) addBtn.classList.remove('hidden');
-            if (adminActions) adminActions.classList.remove('hidden');
+            if (addBtn) addBtn.style.setProperty('display', 'block', 'important');
+            if (adminActions) adminActions.style.setProperty('display', 'grid', 'important');
+            if (badge) badge.style.setProperty('display', 'inline-block', 'important');
         } else {
-            if (addBtn) addBtn.classList.add('hidden');
-            if (adminActions) adminActions.classList.add('hidden');
+            if (addBtn) addBtn.style.display = 'none';
+            if (adminActions) adminActions.style.display = 'none';
+            if (badge) badge.style.display = 'none';
         }
         if (window.lucide) lucide.createIcons();
     }
