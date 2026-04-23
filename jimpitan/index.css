@@ -153,15 +153,15 @@ body {
 
 /* Delta Badges (Stock Style) */
 .badge-up {
-    background: rgba(34, 197, 94, 0.2);
-    color: #4ade80;
-    border: 1px solid rgba(74, 222, 128, 0.3);
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #d1fae5;
 }
 
 .badge-down {
-    background: rgba(239, 68, 68, 0.2);
-    color: #fca5a5;
-    border: 1px solid rgba(252, 165, 165, 0.3);
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fee2e2;
 }
 
 .delta-badge {
@@ -170,29 +170,31 @@ body {
     gap: 4px;
     padding: 2px 8px;
     border-radius: 6px;
-    font-size: 9px;
+    font-size: 10px;
     font-weight: 800;
-    backdrop-filter: blur(4px);
 }
 
-/* Dashboard Premium Styles */
-.bg-mesh-emerald {
-    background-color: #059669;
-    background-image: 
-        radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.5) 0px, transparent 50%),
-        radial-gradient(at 100% 0%, rgba(5, 150, 105, 0.3) 0px, transparent 50%),
-        radial-gradient(at 100% 100%, rgba(4, 120, 87, 0.4) 0px, transparent 50%),
-        radial-gradient(at 0% 100%, rgba(6, 95, 70, 0.2) 0px, transparent 50%);
+/* Dashboard Clean White Styles */
+.status-card-white {
+    background: white;
+    border: 1px solid #f1f5f9;
+    color: #1e293b;
+    box-shadow: 0 4px 20px -2px rgba(0,0,0,0.05);
 }
 
-.bg-mesh-rose {
-    background-color: #e11d48;
-    background-image: 
-        radial-gradient(at 0% 0%, rgba(244, 63, 94, 0.5) 0px, transparent 50%),
-        radial-gradient(at 100% 0%, rgba(225, 29, 72, 0.3) 0px, transparent 50%),
-        radial-gradient(at 100% 100%, rgba(190, 18, 60, 0.4) 0px, transparent 50%),
-        radial-gradient(at 0% 100%, rgba(159, 18, 57, 0.2) 0px, transparent 50%);
+body.dark .status-card-white {
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: #f8fafc;
 }
+
+.stat-item {
+    border-left: 3px solid transparent;
+    padding-left: 12px;
+}
+.stat-item-green { border-color: #10b981; }
+.stat-item-red { border-color: #ef4444; }
+.stat-item-blue { border-color: #3b82f6; }
 
 .segmented-control {
     background: var(--glass-bg);

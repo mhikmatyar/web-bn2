@@ -1036,11 +1036,7 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
             renderChart();
             
             const isJimpitan = state.activeTab === 'jimpitan';
-            const themeColor = isJimpitan ? 'emerald' : 'rose';
             const themeBg = isJimpitan ? 'bg-emerald-700' : 'bg-rose-700';
-            const themeMesh = isJimpitan ? 'bg-mesh-emerald' : 'bg-mesh-rose';
-            const themeBgLight = isJimpitan ? 'bg-emerald-50' : 'bg-rose-50';
-            const themeText = isJimpitan ? 'text-emerald-700' : 'text-rose-700';
 
             // Update UI Colors
             const header = $('header');
@@ -1051,10 +1047,7 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
             
             const statusCard = $('#statusCard'); 
             if (statusCard) {
-                statusCard.classList.remove('bg-emerald-700', 'bg-rose-700', 'bg-mesh-emerald', 'bg-mesh-rose');
-                statusCard.classList.add(themeMesh);
-                statusCard.classList.remove('shadow-emerald-700/20', 'shadow-rose-700/20');
-                statusCard.classList.add(`shadow-${themeColor}-700/20`);
+                statusCard.classList.add('status-card-white');
             }
 
             // Update Tab Buttons theme
