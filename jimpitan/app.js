@@ -561,6 +561,7 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
                 body: JSON.stringify({
                     action: 'deleteItem',
                     row: idx + 2,
+                    source: 'jimpitan',
                     password: 'adminbn2'
                 })
             });
