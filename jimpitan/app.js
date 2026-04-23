@@ -1373,7 +1373,18 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
                 
                 // Admin Actions
                 state.editingIdx = state.isAdmin ? item.idx : null;
-                updateAdminUI();
+                const adminActions = $('#adminDetailActions');
+                if (adminActions) {
+                    if (state.isAdmin) {
+                        adminActions.style.setProperty('display', 'grid', 'important');
+                        adminActions.classList.remove('hidden');
+                    } else {
+                        adminActions.style.display = 'none';
+                        adminActions.classList.add('hidden');
+                    }
+                }
+                
+                updateAdminUI(); // Refresh other elements
 
                 $('#detailModal').classList.remove('hidden');
                 $('#detailModal').classList.add('flex');
