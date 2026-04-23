@@ -1014,12 +1014,18 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
                 const currSaldo = monthIn - monthOut;
                 if (prevData.length > 0) {
                     const delta = currSaldo - prevSaldo;
-                    const sign  = delta >= 0 ? '↑' : '↓';
+                    const isUp = delta >= 0;
+                    const sign = isUp ? '↑' : '↓';
+                    const badgeClass = isUp ? 'badge-up' : 'badge-down';
                     const prevMonthName = state.monthsNames[prevM - 1].substring(0, 3);
-                    deltaEl.textContent = `${sign} ${delta >= 0 ? '+' : ''}${formatRp(Math.abs(delta))} vs ${prevMonthName} ${prevY}`;
-                    deltaEl.style.opacity = '0.85';
+                    
+                    deltaEl.innerHTML = `
+                        <span class="delta-badge ${badgeClass}">${sign} ${isUp ? '+' : ''}${formatRp(Math.abs(delta))}</span>
+                        <span class="opacity-60 ml-1 text-[9px]">vs ${prevMonthName} ${prevY}</span>
+                    `;
+                    deltaEl.style.opacity = '1';
                 } else {
-                    deltaEl.textContent = '';
+                    deltaEl.innerHTML = '';
                     deltaEl.style.opacity = '0';
                 }
             }
