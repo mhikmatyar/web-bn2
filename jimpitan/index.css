@@ -188,13 +188,31 @@ body.dark .status-card-white {
     color: #f8fafc;
 }
 
-.stat-item {
-    border-left: 3px solid transparent;
-    padding-left: 12px;
+.sub-stat-card {
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+    padding: 12px;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
 }
-.stat-item-green { border-color: #10b981; }
-.stat-item-red { border-color: #ef4444; }
-.stat-item-blue { border-color: #3b82f6; }
+
+body.dark .sub-stat-card {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+}
+
+.sub-stat-card:hover {
+    transform: translateY(-2px);
+    border-color: #e2e8f0;
+}
+
+.stat-accent {
+    width: 3px;
+    height: 12px;
+    border-radius: 2px;
+    display: inline-block;
+    margin-right: 6px;
+}
 
 .segmented-control {
     background: var(--glass-bg);

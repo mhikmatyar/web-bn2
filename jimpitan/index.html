@@ -209,18 +209,27 @@
                     <div id="saldoDelta"></div>
                 </div>
 
-                <div class="grid grid-cols-3 gap-2 border-t border-slate-50 dark:border-slate-800 pt-6">
-                    <div class="stat-item stat-item-green">
-                        <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Masuk</p>
-                        <p id="statMasuk" class="text-xs font-black">Rp 0</p>
+                <div class="grid grid-cols-3 gap-3 border-t border-slate-50 dark:border-slate-800 pt-6">
+                    <div class="sub-stat-card">
+                        <div class="flex items-center mb-1">
+                            <span class="stat-accent bg-emerald-500"></span>
+                            <p class="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Masuk</p>
+                        </div>
+                        <p id="statMasuk" class="text-[10px] font-black">Rp 0</p>
                     </div>
-                    <div class="stat-item stat-item-red">
-                        <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Keluar</p>
-                        <p id="statKeluar" class="text-xs font-black">Rp 0</p>
+                    <div class="sub-stat-card">
+                        <div class="flex items-center mb-1">
+                            <span class="stat-accent bg-rose-500"></span>
+                            <p class="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Keluar</p>
+                        </div>
+                        <p id="statKeluar" class="text-[10px] font-black">Rp 0</p>
                     </div>
-                    <div class="stat-item stat-item-blue">
-                        <p class="text-[9px] font-bold text-slate-400 uppercase mb-1">Aktif</p>
-                        <p id="entriDataCount" class="text-xs font-black">0 Hari</p>
+                    <div class="sub-stat-card">
+                        <div class="flex items-center mb-1">
+                            <span class="stat-accent bg-blue-500"></span>
+                            <p class="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Aktif</p>
+                        </div>
+                        <p id="entriDataCount" class="text-[10px] font-black">0 Hari</p>
                     </div>
                 </div>
             </div>
