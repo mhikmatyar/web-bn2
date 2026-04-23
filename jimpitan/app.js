@@ -1055,18 +1055,31 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
 
                     if (dayItems.length > 0) {
                         dayItems.forEach(item => {
+                            const isPengeluaranItem = item.tipe === 'PENGELUARAN' || item.tipe === 'Pengeluaran';
                             weekTotal += item.nominal;
                             weekHtml += `
                                 <div class="bg-white border border-slate-50 p-4 rounded-lg flex items-center gap-4 hover:border-emerald-100 transition-all active:scale-[0.99] cursor-pointer shadow-sm shadow-slate-200/20" onclick="window.showDetailById(${item.idx})">
-                                    <div class="w-10 h-10 rounded-lg flex items-center justify-center ${isJimpitan ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}">
-                                        <i data-lucide="${isJimpitan ? 'trending-up' : 'receipt'}" class="w-5 h-5"></i>
+                                    <div class="w-10 h-10 rounded-lg flex items-center justify-center ${!isPengeluaranItem ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}">
+                                        <i data-lucide="${!isPengeluaranItem ? 'trending-up' : 'receipt'}" class="w-5 h-5"></i>
                                     </div>
                                     <div class="flex-1">
-                                        <div class="text-xs font-bold text-slate-800 line-clamp-1">${item.keterangan !== '-' ? item.keterangan : (isJimpitan ? 'Jimpitan Warga' : 'Pengeluaran')}</div>
+                                        <div class="text-xs font-bold text-slate-800 line-clamp-1">${item.keterangan !== '-' ? item.keterangan : (!isPengeluaranItem ? 'Jimpitan Warga' : 'Pengeluaran')}</div>
                                         <div class="text-[10px] text-slate-400 font-medium">${dayName}, ${dateDisplay}</div>
                                     </div>
-                                    <div class="text-xs font-bold ${isJimpitan ? 'text-emerald-600' : 'text-rose-600'}">
-                                        ${isJimpitan ? '+' : '-'}${formatRp(item.nominal)}
+                                    <div class="flex flex-col items-end gap-1">
+                                        <span class="${isPengeluaranItem ? 'text-rose-600' : 'text-emerald-600'} font-bold text-sm">
+                                            ${isPengeluaranItem ? '-' : '+'}${formatRp(item.nominal)}
+                                        </span>
+                                        ${state.isAdmin ? `
+                                        <div class="flex gap-2 mt-1">
+                                            <button onclick="event.stopPropagation(); window.handleEditByIdx(${item.idx})" class="p-1.5 bg-slate-100 rounded-md text-slate-500 hover:text-slate-700">
+                                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                            </button>
+                                            <button onclick="event.stopPropagation(); window.deleteEntry(${item.idx})" class="p-1.5 bg-rose-50 rounded-md text-rose-500 hover:text-rose-700">
+                                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                            </button>
+                                        </div>
+                                        ` : ''}
                                     </div>
                                 </div>
                             `;
@@ -1433,6 +1446,12 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
             if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
                 deleteEntry(idx);
             }
+        };
+
+        // Helper untuk mencari data berdasarkan ID (untuk tombol di kartu)
+        window.handleEditByIdx = (itemIdx) => {
+            const item = state.data.find(d => d.idx === itemIdx);
+            if (item) window.handleEdit(item);
         };
     }
 
