@@ -444,10 +444,11 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
             const originalHtml = btn.innerHTML;
             const isEdit = state.editingIdx !== null;
             
+            const typeRaw = $('#entryType').value;
             const payload = {
                 action: isEdit ? 'editItem' : 'addItem',
                 tanggal: $('#entryDate').value,
-                tipe: $('#entryType').value,
+                tipe: typeRaw === 'JIMPITAN' ? 'Pemasukan' : (typeRaw === 'PENGELUARAN' ? 'Pengeluaran' : typeRaw),
                 nominal: parseInt($('#entryNominal').value),
                 keterangan: $('#entryKeterangan').value.trim() || '-',
                 password: 'adminbn2'
