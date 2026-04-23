@@ -97,6 +97,12 @@
                 $('#darkModeToggle i').setAttribute('data-lucide', isDark ? 'sun' : 'moon');
                 if (window.lucide) lucide.createIcons();
             });
+
+            // Admin session check
+            if (sessionStorage.getItem('bn2-isAdmin') === 'true') {
+                state.isAdmin = true;
+                $('#addDataBtn').classList.remove('hidden');
+            }
             
             if (state.sheetUrl) {
                 console.log("Jimpitan App: Fetching data from", state.sheetUrl);
@@ -573,10 +579,14 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
             // Obfuscated password check (adminbn2)
             if (btoa(pass) === 'YWRtaW5ibjI=') {
                 state.isAdmin = true;
+                sessionStorage.setItem('bn2-isAdmin', 'true');
                 $('#adminPass').value = '';
                 $('#authModal').classList.add('hidden');
                 $('#addDataBtn').classList.remove('hidden');
-                switchTab('settings');
+                showToast('Mode Admin Aktif', 'success');
+                // Refresh current view to show buttons
+                if (state.activeTab === 'settings') switchTab('jimpitan');
+                else renderAll();
             } else {
                 showToast('Password salah! Coba lagi.', 'error');
             }
