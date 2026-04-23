@@ -1071,12 +1071,12 @@ _Dikirim via Jimpitan BN2 App 🚀_`;
                                             ${isPengeluaranItem ? '-' : '+'}${formatRp(item.nominal)}
                                         </span>
                                         ${state.isAdmin ? `
-                                        <div class="flex gap-2 mt-1">
-                                            <button onclick="event.stopPropagation(); window.handleEditByIdx(${item.idx})" class="p-1.5 bg-slate-100 rounded-md text-slate-500 hover:text-slate-700">
-                                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                        <div class="flex gap-1 mt-1">
+                                            <button onclick="event.stopPropagation(); window.handleEditByIdx(${item.idx})" class="w-10 h-10 flex items-center justify-center bg-slate-100 rounded-lg text-slate-500 active:bg-slate-200" title="Edit">
+                                                <i data-lucide="edit-3" class="w-4 h-4" style="pointer-events: none;"></i>
                                             </button>
-                                            <button onclick="event.stopPropagation(); window.deleteEntry(${item.idx})" class="p-1.5 bg-rose-50 rounded-md text-rose-500 hover:text-rose-700">
-                                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                            <button onclick="event.stopPropagation(); window.deleteEntry(${item.idx})" class="w-10 h-10 flex items-center justify-center bg-rose-50 rounded-lg text-rose-500 active:bg-rose-100" title="Hapus">
+                                                <i data-lucide="trash-2" class="w-4 h-4" style="pointer-events: none;"></i>
                                             </button>
                                         </div>
                                         ` : ''}
