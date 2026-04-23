@@ -1,0 +1,17 @@
+{
+  "name": "Jimpitan Bumi Neikarta 2",
+  "short_name": "Jimpitan BN2",
+  "description": "Smart Neighborhood Tracker for Jimpitan BN2",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#065f46",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
