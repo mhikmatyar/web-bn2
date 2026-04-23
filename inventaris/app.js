@@ -93,23 +93,26 @@
         $('#sidebarClose').addEventListener('click', () => {
             $('#sidebar').classList.remove('open');
         });
+    }
 
-        // Sidebar Toggle (Maximize/Minimize)
-        function bindSidebarToggle() {
-            const sidebar = $('#sidebar');
-            const toggleBtn = $('#sidebarToggle');
-            
-            // Load saved state
-            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-            if (isCollapsed) {
-                sidebar.classList.add('collapsed');
-            }
+    // Sidebar Toggle (Maximize/Minimize)
+    function bindSidebarToggle() {
+        const sidebar = $('#sidebar');
+        const toggleBtn = $('#sidebarToggle');
+        
+        if (!toggleBtn) return;
 
-            toggleBtn.addEventListener('click', () => {
-                sidebar.classList.toggle('collapsed');
-                localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
-            });
+        // Load saved state
+        const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+        if (isCollapsed) {
+            sidebar.classList.add('collapsed');
         }
+
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+        });
+    }
 
         // Close sidebar on overlay click (mobile)
         document.addEventListener('click', e => {
