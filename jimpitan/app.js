@@ -1081,7 +1081,6 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
                 icon.classList.remove('text-emerald-600', 'text-rose-600', 'text-brand-green', 'text-brand-red');
                 icon.classList.add(themeText);
             });
-            });
 
             // Update Export Button
             const exportBtn = $('#exportBtn');
