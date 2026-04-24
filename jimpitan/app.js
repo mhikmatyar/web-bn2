@@ -837,6 +837,12 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
         const editBtn = $('#editConfigBtn');
         if (editBtn) editBtn.addEventListener('click', unlockSettings);
 
+        $('#logoutBtn').addEventListener('click', () => {
+            if (confirm('Keluar dari mode Admin?')) {
+                state.isAdmin = false;
+                localStorage.removeItem('bn2-isAdmin');
+                updateAdminUI();
+                switchTab('jimpitan');
                 showToast('Logout Berhasil', 'success');
             }
         });
