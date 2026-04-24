@@ -525,13 +525,23 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
             }
         } catch (err) {
             console.error('Jimpitan Sync Error:', err);
-            updateSyncOverlayText('Koneksi terganggu (Menunggu online)');
+            updateSyncOverlayText(`Error: ${err.message.substring(0, 20)}... (Retry)`);
             // Retry after 15 seconds
             state.isSyncing = false;
             setTimeout(processSyncQueue, 15000);
             return;
         } finally {
             state.isSyncing = false;
+        }
+    }
+
+    window.clearSyncQueue = function() {
+        if (confirm('Hapus semua antrean data yang belum terkirim? Data ini tidak akan masuk ke Google Sheets.')) {
+            state.syncQueue = [];
+            saveSyncQueue();
+            showSyncStatus(false);
+            showToast('Antrean berhasil dibersihkan', 'success');
+            renderAll();
         }
     }
 
@@ -827,15 +837,17 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
         const editBtn = $('#editConfigBtn');
         if (editBtn) editBtn.addEventListener('click', unlockSettings);
 
-        $('#logoutBtn').addEventListener('click', () => {
-            if (confirm('Keluar dari mode Admin?')) {
-                state.isAdmin = false;
-                localStorage.removeItem('bn2-isAdmin');
-                updateAdminUI();
-                switchTab('jimpitan');
                 showToast('Logout Berhasil', 'success');
             }
         });
+
+        const clearBtn = document.createElement('button');
+        clearBtn.className = 'w-full bg-slate-100 text-slate-600 font-bold py-3 rounded-lg hover:bg-slate-200 transition-all text-xs mt-4 flex items-center justify-center gap-2';
+        clearBtn.innerHTML = '<i data-lucide="trash" class="w-4 h-4"></i> Bersihkan Antrean Sync';
+        clearBtn.onclick = window.clearSyncQueue;
+        
+        const logoutParent = $('#logoutBtn').parentElement;
+        if (logoutParent) logoutParent.appendChild(clearBtn);
 
         $('#disconnectBtn').addEventListener('click', () => {
             if(confirm('Putuskan koneksi data?')) {
