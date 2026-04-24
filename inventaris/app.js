@@ -42,6 +42,7 @@
         bindExport();
         bindAddItem();
         bindSidebarToggle();
+        bindQRScanner();
         updateLocalStorageInfo();
 
         if (state.sheetUrl) {
@@ -371,6 +372,8 @@
         refreshBtn.querySelector('i').classList.add('spinner');
 
         try {
+            renderSkeletonTable();
+            renderSkeletonDashboard();
             await fetchCSV(state.sheetUrl);
             updateSyncStatus('connected', `Terakhir: ${new Date().toLocaleTimeString('id-ID')}`);
             renderAll();
@@ -583,6 +586,17 @@
                         position: 'bottom',
                         labels: { padding: 16, usePointStyle: true, font: { size: 12 } }
                     }
+                },
+                onClick: (e, elements) => {
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        const label = labels[index];
+                        navigateTo('inventaris');
+                        $('#filterKondisi').value = label;
+                        applyFilters();
+                        renderTable();
+                        showToast(`Memfilter barang kondisi: ${label}`, 'info');
+                    }
                 }
             }
         });
@@ -633,6 +647,17 @@
                     y: {
                         grid: { display: false },
                         ticks: { font: { size: 11 } }
+                    }
+                },
+                onClick: (e, elements) => {
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        const label = labels[index];
+                        navigateTo('inventaris');
+                        $('#filterKategori').value = label;
+                        applyFilters();
+                        renderTable();
+                        showToast(`Memfilter kategori: ${label}`, 'info');
                     }
                 }
             }
@@ -1025,6 +1050,91 @@
         });
     }
 
+    // =================== QR SCANNER LOGIC ===================
+    let html5QrCode = null;
+
+    function bindQRScanner() {
+        const btn = $('#scanQRBtn');
+        if (!btn) return;
+        btn.addEventListener('click', () => {
+            openModal('scannerModal');
+            startQRScanner();
+        });
+    }
+
+    function startQRScanner() {
+        html5QrCode = new Html5Qrcode("qr-reader");
+        const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+            let itemId = decodedText;
+            if (decodedText.includes('?id=')) {
+                try {
+                    const url = new URL(decodedText);
+                    itemId = url.searchParams.get('id');
+                } catch(e) {}
+            }
+
+            const item = state.items.find(i => i.noInventaris === itemId);
+            if (item) {
+                stopQRScanner();
+                showDetailModal(item);
+                showToast(`Barang ditemukan: ${item.namaBarang}`, 'success');
+            } else {
+                showToast(`Data "${itemId}" tidak ditemukan di inventaris`, 'error');
+            }
+        };
+
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+        html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback)
+            .catch(err => {
+                showToast("Gagal membuka kamera: " + err, "error");
+                closeModal('scannerModal');
+            });
+    }
+
+    function stopQRScanner() {
+        if (html5QrCode) {
+            html5QrCode.stop().then(() => {
+                html5QrCode.clear();
+                html5QrCode = null;
+                closeModal('scannerModal');
+            }).catch(err => {
+                console.error("Gagal stop scanner", err);
+                closeModal('scannerModal');
+            });
+        } else {
+            closeModal('scannerModal');
+        }
+    }
+
+    // =================== SKELETON LOGIC ===================
+    function renderSkeletonTable() {
+        const tbody = $('#tableBody');
+        let html = '';
+        for (let i = 0; i < 5; i++) {
+            html += `
+                <tr>
+                    <td><div class="skeleton skeleton-text" style="width: 20px"></div></td>
+                    <td><div class="skeleton skeleton-text"></div></td>
+                    <td><div class="skeleton skeleton-text"></div></td>
+                    <td><div class="skeleton skeleton-text"></div></td>
+                    <td><div class="skeleton skeleton-text" style="width: 30px"></div></td>
+                    <td><div class="skeleton skeleton-text" style="width: 60px"></div></td>
+                    <td><div class="skeleton skeleton-text"></div></td>
+                    <td><div class="skeleton skeleton-text" style="width: 80px"></div></td>
+                </tr>
+            `;
+        }
+        tbody.innerHTML = html;
+    }
+
+    function renderSkeletonDashboard() {
+        const ids = ['statTotalBarang', 'statTotalNilai', 'statTotalKategori', 'statRusakBerat'];
+        ids.forEach(id => {
+            const el = $(`#${id}`);
+            if (el) el.innerHTML = '<div class="skeleton skeleton-text" style="width: 60px; height: 24px; margin: 0"></div>';
+        });
+    }
+
     // =================== MODALS ===================
     function bindModals() {
         // Detail modal
@@ -1068,9 +1178,14 @@
             }
         });
 
+        // QR Scanner modal
+        $('#scannerModalClose').addEventListener('click', () => stopQRScanner());
+        $('#scannerModalCloseBtn').addEventListener('click', () => stopQRScanner());
+
         // ESC to close
         document.addEventListener('keydown', e => {
             if (e.key === 'Escape') {
+                if ($('#scannerModal').classList.contains('active')) stopQRScanner();
                 $$('.modal-overlay.active').forEach(m => closeModal(m.id));
             }
         });
@@ -1523,20 +1638,18 @@
 
         const printWindow = window.open('', '_blank');
         const labelsHtml = items.map(item => {
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.origin + window.location.pathname + '?id=' + item.noInventaris)}`;
+            // Use only the ID for simpler QR code (faster scanning & loading)
+            const qrData = encodeURIComponent(item.noInventaris);
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrData}`;
             
             return `
                 <div class="label-card">
-                    <div class="label-header">INVENTARIS PERUMAHAN BN2</div>
-                    <div class="label-body">
-                        <div class="qr-code">
-                            <img src="${qrUrl}" alt="QR">
-                        </div>
-                        <div class="item-info">
-                            <div class="item-name">${item.namaBarang}</div>
-                            <div class="item-no">${item.noInventaris}</div>
-                            <div class="item-loc">Lokasi: ${item.lokasi}</div>
-                        </div>
+                    <div class="qr-code">
+                        <img src="${qrUrl}" alt="QR" onload="this.classList.add('loaded')">
+                    </div>
+                    <div class="item-info">
+                        <div class="item-name">${item.namaBarang}</div>
+                        <div class="item-no">${item.noInventaris}</div>
                     </div>
                 </div>
             `;
@@ -1547,66 +1660,75 @@
             <head>
                 <title>Cetak Label Inventaris BN2</title>
                 <style>
-                    body { font-family: 'Inter', sans-serif; margin: 0; padding: 20px; background: #f0f0f0; }
+                    body { 
+                        margin: 0; 
+                        padding: 10px; 
+                        background: #f0f0f0; 
+                        font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+                    }
                     .print-grid { 
                         display: grid; 
-                        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
-                        gap: 15px; 
+                        grid-template-columns: repeat(auto-fill, 64mm); 
+                        gap: 5mm; 
+                        justify-content: center;
                     }
                     .label-card {
                         background: white;
-                        border: 2px solid #000;
-                        border-radius: 8px;
-                        padding: 12px;
-                        width: 300px;
+                        border: 1px solid #eee;
+                        width: 64mm;
+                        height: 32mm;
                         box-sizing: border-box;
                         display: flex;
                         flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        padding: 2mm;
                         page-break-inside: avoid;
                     }
-                    .label-header {
-                        font-size: 10px;
-                        font-weight: 800;
-                        text-align: center;
-                        border-bottom: 1px solid #000;
-                        padding-bottom: 5px;
-                        margin-bottom: 8px;
-                        letter-spacing: 1px;
-                    }
-                    .label-body {
+                    .qr-code {
+                        width: 18mm;
+                        height: 18mm;
+                        margin-bottom: 2mm;
                         display: flex;
-                        gap: 10px;
                         align-items: center;
+                        justify-content: center;
                     }
                     .qr-code img {
-                        width: 80px;
-                        height: 80px;
+                        width: 100%;
+                        height: 100%;
+                        opacity: 0;
+                        transition: opacity 0.3s;
+                    }
+                    .qr-code img.loaded {
+                        opacity: 1;
                     }
                     .item-info {
-                        flex: 1;
+                        text-align: center;
+                        width: 100%;
+                        overflow: hidden;
                     }
                     .item-name {
-                        font-size: 14px;
+                        font-size: 10pt;
                         font-weight: 700;
-                        margin-bottom: 4px;
                         color: #000;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
                         text-transform: uppercase;
+                        margin-bottom: 2px;
+                        line-height: 1.2;
                     }
                     .item-no {
-                        font-size: 11px;
-                        font-family: monospace;
-                        margin-bottom: 4px;
-                        color: #444;
-                    }
-                    .item-loc {
-                        font-size: 10px;
-                        color: #666;
-                        font-style: italic;
+                        font-size: 8pt;
+                        font-family: 'Courier New', Courier, monospace;
+                        color: #333;
+                        font-weight: 600;
+                        letter-spacing: 0.5px;
                     }
                     @media print {
                         body { background: white; padding: 0; }
-                        .print-grid { gap: 10px; }
-                        .label-card { border: 1px solid #ddd; } /* Thinner border for print */
+                        .print-grid { gap: 0; }
+                        .label-card { border: 0.1mm solid #f0f0f0; }
                     }
                 </style>
             </head>
@@ -1616,9 +1738,10 @@
                 </div>
                 <script>
                     window.onload = () => {
+                        // Wait slightly longer to ensure all QR images are rendered
                         setTimeout(() => {
                             window.print();
-                        }, 500);
+                        }, 1000);
                     };
                 </script>
             </body>
