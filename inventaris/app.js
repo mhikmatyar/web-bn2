@@ -25,6 +25,7 @@
         currentPhotoItem: null,
         syncQueue: [], // [{ action, payload, timestamp, id }]
         isSyncing: false,
+        isAdmin: false,
     };
 
     // =================== DOM REFS ===================
@@ -37,6 +38,7 @@
         loadSettings();
         loadLocalPhotos();
         bindNavigation();
+        bindAdminAuth();
         bindTheme();
         bindSettings();
         bindSearch();
@@ -52,6 +54,12 @@
         
         // Start background sync processor
         setInterval(processSyncQueue, 15000); // Check every 15s
+
+        // Admin session check
+        if (localStorage.getItem('inv-isAdmin') === 'true') {
+            state.isAdmin = true;
+        }
+        updateAdminUI();
 
         if (state.sheetUrl) {
             fetchData().then(() => {
@@ -133,6 +141,14 @@
         });
 
     function navigateTo(page) {
+        // Restriction for public users
+        const adminPages = ['settings', 'panduan'];
+        if (adminPages.includes(page) && !state.isAdmin) {
+            showToast('Akses ditolak. Silakan login sebagai Admin.', 'error');
+            openModal('authModal');
+            return;
+        }
+
         $$('.page').forEach(p => p.classList.remove('active'));
         $$('.nav-item').forEach(n => n.classList.remove('active'));
 
@@ -149,6 +165,65 @@
 
         // Close mobile sidebar
         $('#sidebar').classList.remove('open');
+    }
+
+    // =================== ADMIN AUTH ===================
+    function updateAdminUI() {
+        const adminElements = $$('.admin-only');
+        adminElements.forEach(el => {
+            el.style.setProperty('display', state.isAdmin ? (el.tagName === 'A' ? 'flex' : 'inline-flex') : 'none', 'important');
+        });
+
+        // Toggle Login/Logout buttons
+        $('#adminLoginBtn').style.display = state.isAdmin ? 'none' : 'flex';
+        $('#adminLogoutBtn').style.display = state.isAdmin ? 'flex' : 'none';
+
+        // If on admin page but logged out, go back to dashboard
+        const activePage = $('.page.active').id;
+        if ((activePage === 'page-settings' || activePage === 'page-panduan') && !state.isAdmin) {
+            navigateTo('dashboard');
+        }
+
+        renderTable(); // Refresh table to show/hide action buttons
+    }
+
+    function bindAdminAuth() {
+        $('#adminLoginBtn').addEventListener('click', () => openModal('authModal'));
+        
+        $('#adminLogoutBtn').addEventListener('click', () => {
+            if (confirm('Logout dari Mode Admin?')) {
+                state.isAdmin = false;
+                localStorage.removeItem('inv-isAdmin');
+                updateAdminUI();
+                showToast('Logout berhasil', 'info');
+            }
+        });
+
+        $('#authModalClose').addEventListener('click', () => closeModal('authModal'));
+        $('#authModalCancel').addEventListener('click', () => closeModal('authModal'));
+        
+        $('#authModalSubmit').addEventListener('click', performLogin);
+        $('#adminPasswordInp').addEventListener('keypress', e => {
+            if (e.key === 'Enter') performLogin();
+        });
+    }
+
+    function performLogin() {
+        const password = $('#adminPasswordInp').value;
+        
+        // Match Jimpitan's password check logic (adminbn2 -> YWRtaW5ibjI=)
+        if (btoa(password) === 'YWRtaW5ibjI=') {
+            state.isAdmin = true;
+            localStorage.setItem('inv-isAdmin', 'true');
+            $('#adminPasswordInp').value = '';
+            closeModal('authModal');
+            updateAdminUI();
+            showToast('Login Admin berhasil!', 'success');
+        } else {
+            showToast('Password salah!', 'error');
+            $('#adminPasswordInp').value = '';
+            $('#adminPasswordInp').focus();
+        }
     }
 
     // =================== THEME ===================
@@ -1119,6 +1194,12 @@
         const start = (state.currentPage - 1) * state.perPage;
         const pageItems = items.slice(start, start + state.perPage);
 
+        // Show/Hide Aksi Column
+        const actionHeader = $('.data-table th:last-child');
+        if (actionHeader) {
+            actionHeader.style.display = state.isAdmin ? 'table-cell' : 'none';
+        }
+
         tbody.innerHTML = pageItems.map((item, index) => {
             const kondisiClass = getKondisiClass(item.kondisi);
             const hasPhoto = state.localPhotos[item.noInventaris] || item.dokumentasi;
@@ -1136,6 +1217,7 @@
                     <td data-label="Jumlah">${item.jumlah}</td>
                     <td data-label="Kondisi"><span class="kondisi-badge ${kondisiClass}">${escapeHtml(item.kondisi)}</span></td>
                     <td data-label="Lokasi">${escapeHtml(item.lokasi)}</td>
+                    ${state.isAdmin ? `
                     <td data-label="Aksi">
                         <div class="action-btns">
                             <button title="Lihat Detail" class="detail-action" data-no-inv="${escapeHtml(item.noInventaris)}">
@@ -1151,7 +1233,9 @@
                                 <i class="fas fa-trash"></i> <span class="btn-label">Hapus</span>
                             </button>
                         </div>
-                    </td>
+                    </td>` : `
+                    <td style="display: none;"></td>
+                    `}
                 </tr>
             `;
         }).join('');
@@ -1159,34 +1243,57 @@
         // Pagination info
         $('#pageInfo').textContent = `Halaman ${state.currentPage} dari ${totalPages} (${items.length} barang)`;
 
-        // Bind actions
-        tbody.querySelectorAll('.detail-action').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const item = state.items.find(i => i.noInventaris === btn.dataset.noInv);
-                if (item) showDetailModal(item);
+        // Bind actions (if admin)
+        if (state.isAdmin) {
+            tbody.querySelectorAll('.detail-action').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const item = state.items.find(i => i.noInventaris === btn.dataset.noInv);
+                    if (item) showDetailModal(item);
+                });
             });
-        });
 
-        tbody.querySelectorAll('.edit-action').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const item = state.items.find(i => i.noInventaris === btn.dataset.noInv);
-                if (item) handleEditItem(item);
+            tbody.querySelectorAll('.edit-action').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const item = state.items.find(i => i.noInventaris === btn.dataset.noInv);
+                    if (item) handleEditItem(item);
+                });
             });
-        });
 
-        tbody.querySelectorAll('.photo-action').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const item = state.items.find(i => i.noInventaris === btn.dataset.noInv);
-                if (item) showPhotoModal(item);
+            tbody.querySelectorAll('.photo-action').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const item = state.items.find(i => i.noInventaris === btn.dataset.noInv);
+                    if (item) showPhotoModal(item);
+                });
             });
-        });
 
-        tbody.querySelectorAll('.delete-action').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const item = state.items.find(i => i.noInventaris === btn.dataset.noInv);
-                if (item) handleDeleteItem(item);
+            tbody.querySelectorAll('.delete-action').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const item = state.items.find(i => i.noInventaris === btn.dataset.noInv);
+                    if (item) handleDeleteItem(item);
+                });
             });
-        });
+        }
+        
+        // Always bind detail click for recent items or dashboard clicks if needed, 
+        // but here we allow public detail view through the dashboard list if I want,
+        // however the table row should probably still allow detail view for public?
+        // Let's add a "View" button for public too.
+        if (!state.isAdmin) {
+             tbody.querySelectorAll('tr').forEach(tr => {
+                 tr.style.cursor = 'pointer';
+                 tr.addEventListener('click', (e) => {
+                     // Get noInv from the row's child if possible or just use state
+                     // For simplicity, let's keep the Eye icon but maybe outside action column?
+                     // Actually, the user asked to hide CRUD, print, export. 
+                     // They didn't explicitly say hide detail. 
+                     // But hiding the whole action column is cleaner.
+                     // Let's make the whole row clickable for detail in public mode.
+                     const noInv = tr.querySelector('td[data-label="No Inventaris"]').textContent.split(' ')[0];
+                     const item = state.items.find(i => i.noInventaris === noInv);
+                     if (item) showDetailModal(item);
+                 });
+             });
+        }
     }
 
     // =================== SORTING ===================

@@ -40,13 +40,22 @@
                 <i class="fas fa-boxes-stacked"></i>
                 <span>Data Inventaris</span>
             </a>
-            <a href="#" class="nav-item" data-page="settings" id="nav-settings">
+            <a href="#" class="nav-item admin-only" data-page="settings" id="nav-settings" style="display: none;">
                 <i class="fas fa-cog"></i>
                 <span>Pengaturan</span>
             </a>
-            <a href="#" class="nav-item" data-page="panduan" id="nav-panduan">
+            <a href="#" class="nav-item admin-only" data-page="panduan" id="nav-panduan" style="display: none;">
                 <i class="fas fa-circle-question"></i>
                 <span>Panduan</span>
+            </a>
+            <div class="sidebar-divider"></div>
+            <a href="#" class="nav-item" id="adminLoginBtn">
+                <i class="fas fa-user-shield"></i>
+                <span>Login Admin</span>
+            </a>
+            <a href="#" class="nav-item" id="adminLogoutBtn" style="display: none; color: var(--red);">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout Admin</span>
             </a>
         </nav>
         <div class="sidebar-footer">
@@ -177,13 +186,13 @@
                     </button>
                 </div>
                 <div class="toolbar-actions">
-                    <button class="btn btn-primary" id="addBtn">
+                    <button class="btn btn-primary admin-only" id="addBtn" style="display: none;">
                         <i class="fas fa-plus"></i> Tambah Barang
                     </button>
-                    <button class="btn btn-outline" id="printAllQRBtn">
+                    <button class="btn btn-outline admin-only" id="printAllQRBtn" style="display: none;">
                         <i class="fas fa-qrcode"></i> Cetak QR
                     </button>
-                    <button class="btn btn-outline" id="exportCsvBtn">
+                    <button class="btn btn-outline admin-only" id="exportCsvBtn" style="display: none;">
                         <i class="fas fa-download"></i> Export CSV
                     </button>
                     <button class="btn btn-icon-only" id="scanQRBtn" title="Scan QR Code">
@@ -534,6 +543,27 @@
 
     <!-- Toast Notification -->
     <div class="toast-container" id="toastContainer"></div>
+
+    <!-- =================== AUTH MODAL =================== -->
+    <div class="modal-overlay" id="authModal">
+        <div class="modal auth-modal">
+            <div class="modal-header">
+                <h2>Login Administrator</h2>
+                <button class="btn btn-icon modal-close" id="authModalClose"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <p class="auth-desc">Masukkan password administrator untuk mengaktifkan fitur manajemen inventaris.</p>
+                <div class="form-group">
+                    <label for="adminPasswordInp">Password Admin</label>
+                    <input type="password" id="adminPasswordInp" class="form-input" placeholder="Masukkan password...">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="authModalCancel">Batal</button>
+                <button class="btn btn-primary" id="authModalSubmit">Login Sekarang</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // PWA Registration
