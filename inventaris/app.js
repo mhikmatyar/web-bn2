@@ -321,12 +321,6 @@
     }
 
     function unlockSettings() {
-        const password = prompt("PENGAMANAN: Masukkan password Admin untuk mengubah konfigurasi:");
-        if (password !== "adminbn2") {
-            if (password !== null) showToast("Password salah!", "error");
-            return;
-        }
-
         const sheetInp = $('#sheetUrl');
         const scriptInp = $('#scriptUrl');
         const btn = $('#editConfigBtn');
@@ -1172,13 +1166,9 @@
                 return;
             }
             
-            const password = prompt("PENGAMANAN: Masukkan password Admin untuk cetak massal:");
-            if (password !== "adminbn2") {
-                if (password !== null) showToast("Password salah! Akses ditolak.", "error");
-                return;
+            if (confirm(`Cetak label QR untuk ${state.filteredItems.length} barang yang tampil?`)) {
+                printLabels(state.filteredItems);
             }
-
-            printLabels(state.filteredItems);
         });
     }
 
