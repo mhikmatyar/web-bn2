@@ -565,14 +565,23 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
             
             const isEdit = state.editingIdx !== null;
             const typeRaw = $('#entryType').value;
+            const entryType = typeRaw === 'JIMPITAN' ? 'Pemasukan' : (typeRaw === 'PENGELUARAN' ? 'Pengeluaran' : typeRaw);
             const entryDate = new Date($('#entryDate').value);
             const monthShort = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
             const formattedDate = `${entryDate.getDate()}-${monthShort[entryDate.getMonth()]}-${entryDate.getFullYear()}`;
 
+            // --- DUPLICATE CHECK (Untuk Tambah Baru) ---
+            if (!isEdit) {
+                const isDuplicate = state.data.some(d => d.tanggal === formattedDate && d.tipe === entryType);
+                if (isDuplicate) {
+                    return showToast(`Data ${entryType} untuk tanggal ${formattedDate} sudah ada!`, 'error');
+                }
+            }
+
             const payload = {
                 action: isEdit ? 'editItem' : 'addItem',
                 tanggal: formattedDate,
-                tipe: typeRaw === 'JIMPITAN' ? 'Pemasukan' : (typeRaw === 'PENGELUARAN' ? 'Pengeluaran' : typeRaw),
+                tipe: entryType,
                 nominal: parseInt($('#entryNominal').value),
                 keterangan: $('#entryKeterangan').value.trim() || '-',
                 password: 'adminbn2',
@@ -608,9 +617,13 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
                     // Tambah baru ke layar secara manual
                     const [d, m, y] = payload.tanggal.split('-');
                     const monthIdx = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'].indexOf(m);
+                    
+                    // Cari rowNum tertinggi untuk menentukan rowNum baru
+                    const maxRow = state.data.reduce((max, item) => Math.max(max, item.rowNum || 0), 0);
+                    
                     const newItem = {
-                        idx: Date.now(), // Gunakan timestamp sebagai ID unik sementara
-                        rowNum: state.data.length + 2, // Estimasi baris baru
+                        idx: Date.now(),
+                        rowNum: maxRow + 1, // Baris berikutnya di Google Sheets
                         tanggal: payload.tanggal,
                         tipe: payload.tipe,
                         nominal: payload.nominal,
