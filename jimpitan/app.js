@@ -587,7 +587,8 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
                 tipe: typeRaw === 'JIMPITAN' ? 'Pemasukan' : (typeRaw === 'PENGELUARAN' ? 'Pengeluaran' : typeRaw),
                 nominal: parseInt($('#entryNominal').value),
                 keterangan: $('#entryKeterangan').value.trim() || '-',
-                password: 'adminbn2'
+                password: 'adminbn2',
+                source: 'jimpitan'
             };
 
             if (isEdit) {
