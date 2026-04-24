@@ -520,8 +520,13 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
                     showToast('Semua data Jimpitan berhasil disinkronkan', 'success');
                     showSyncStatus(false);
                     updateGlobalSyncStatus('connected');
-                    // Refresh data after full sync with a small delay for Google Sheets CSV to update
-                    setTimeout(() => fetchData(), 3000);
+                    // UPDATE LOKAL: Tandai semua data sebagai OK (tidak perlu fetch ulang agar tidak hilang)
+                    state.data.forEach(d => {
+                        if (d.pelapor && d.pelapor.includes('Pending')) {
+                            d.pelapor = d.pelapor.replace(' (Pending)', '').replace(' (Syncing...)', '');
+                        }
+                    });
+                    renderAll();
                 } else {
                     // Process next item
                     state.isSyncing = false;
@@ -648,16 +653,20 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
             saveSyncQueue();
 
             if (isEdit) {
-                const idx = state.data.findIndex(d => d.idx === state.editingIdx);
-                if (idx !== -1) {
-                    state.data[idx].nominal = payload.nominal;
-                    state.data[idx].keterangan = payload.keterangan;
-                    state.data[idx].tipe = payload.tipe;
+                const item = state.data.find(d => d.idx === state.editingIdx);
+                if (item) {
+                    payload.row = item.rowNum; // Gunakan rowNum asli
+                    item.nominal = payload.nominal;
+                    item.keterangan = payload.keterangan;
+                    item.tipe = payload.tipe;
+                    item.tanggal = payload.tanggal;
+                    item.pelapor = 'Admin (Syncing...)';
+                    
                     const [d, m, y] = payload.tanggal.split('-');
                     const monthIdx = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'].indexOf(m);
-                    state.data[idx].dateObj = new Date(y, monthIdx, d);
-                    state.data[idx].tanggal = payload.tanggal;
-                    state.data[idx].pelapor = 'Admin (Syncing...)';
+                    item.dateObj = new Date(y, monthIdx, d);
+                } else {
+                    return showToast('Gagal menemukan data untuk diupdate', 'error');
                 }
             } else {
                 const [d, m, y] = payload.tanggal.split('-');
@@ -691,10 +700,13 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
         if (!state.scriptUrl) return showToast('Script URL belum diatur', 'error');
         if (!confirm('Yakin ingin menghapus data ini? Data di Google Sheets juga akan terhapus.')) return;
 
+        const item = state.data.find(d => d.idx === idx);
+        if (!item) return;
+
         // --- OPTIMISTIC UI UPDATE & QUEUEING ---
         const payload = {
             action: 'deleteItem',
-            row: idx + 2,
+            row: item.rowNum, // Gunakan rowNum asli
             source: 'jimpitan',
             password: 'adminbn2'
         };
@@ -1118,6 +1130,7 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
 
             return {
                 idx,
+                rowNum: idx + 2, // Baris di Google Sheet
                 tanggal: tglStr || '-',
                 dateObj,
                 tipe: isPengeluaran ? 'Pengeluaran' : 'Pemasukan',
