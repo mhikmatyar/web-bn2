@@ -149,11 +149,19 @@
             return;
         }
 
+        const targetPage = $(`#page-${page}`);
+        const targetNav = $(`[data-page="${page}"]`);
+
+        if (!targetPage) {
+            console.error(`Page section #page-${page} not found`);
+            return;
+        }
+
         $$('.page').forEach(p => p.classList.remove('active'));
         $$('.nav-item').forEach(n => n.classList.remove('active'));
 
-        $(`#page-${page}`).classList.add('active');
-        $(`[data-page="${page}"]`).classList.add('active');
+        targetPage.classList.add('active');
+        if (targetNav) targetNav.classList.add('active');
 
         const titles = {
             dashboard: 'Dashboard',
@@ -165,6 +173,10 @@
 
         // Close mobile sidebar
         $('#sidebar').classList.remove('open');
+        
+        // Trigger specific render if needed
+        if (page === 'inventaris') renderTable();
+        if (page === 'dashboard' && state.items.length > 0) renderDashboard();
     }
 
     // =================== ADMIN AUTH ===================
@@ -175,13 +187,16 @@
         });
 
         // Toggle Login/Logout buttons
-        $('#adminLoginBtn').style.display = state.isAdmin ? 'none' : 'flex';
-        $('#adminLogoutBtn').style.display = state.isAdmin ? 'flex' : 'none';
+        if ($('#adminLoginBtn')) $('#adminLoginBtn').style.display = state.isAdmin ? 'none' : 'flex';
+        if ($('#adminLogoutBtn')) $('#adminLogoutBtn').style.display = state.isAdmin ? 'flex' : 'none';
 
         // If on admin page but logged out, go back to dashboard
-        const activePage = $('.page.active').id;
-        if ((activePage === 'page-settings' || activePage === 'page-panduan') && !state.isAdmin) {
-            navigateTo('dashboard');
+        const activePageEl = $('.page.active');
+        if (activePageEl) {
+            const activePageId = activePageEl.id;
+            if ((activePageId === 'page-settings' || activePageId === 'page-panduan') && !state.isAdmin) {
+                navigateTo('dashboard');
+            }
         }
 
         renderTable(); // Refresh table to show/hide action buttons
