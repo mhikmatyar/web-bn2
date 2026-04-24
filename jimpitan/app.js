@@ -174,10 +174,36 @@
 
         const success = await syncToGoogle(payload);
         if (success) {
+            if (isEdit) {
+                const item = state.data.find(d => d.idx === state.editingIdx);
+                if (item) {
+                    item.tanggal = tglStr;
+                    item.tipe = tipe;
+                    item.nominal = nominal;
+                    item.keterangan = keterangan;
+                    item.dateObj = dRaw;
+                }
+            } else {
+                // Tambah ke layar secara instan (Optimistic)
+                const newItem = {
+                    idx: Date.now(),
+                    tanggal: tglStr,
+                    tipe: tipe,
+                    nominal: nominal,
+                    keterangan: keterangan,
+                    pelapor: 'Admin',
+                    dateObj: dRaw
+                };
+                state.data.unshift(newItem);
+            }
+
             $('#entryModal').classList.add('hidden');
             $('#entryForm').reset();
             state.editingIdx = null;
-            fetchData(); // Full refresh after direct sync
+            renderAll(); // Langsung muncul di layar
+            
+            // Tetap lakukan fetch di latar belakang (opsional)
+            setTimeout(() => fetchData(), 5000);
         }
     }
 
