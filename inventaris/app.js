@@ -1509,19 +1509,15 @@
 
         // Delete photo
         $('#deletePhotoBtn').addEventListener('click', () => {
-            const password = prompt("PENGAMANAN: Masukkan password Admin untuk menghapus foto:");
-            if (password !== "adminbn2") {
-                if (password !== null) showToast("Password salah! Akses ditolak.", "error");
-                return;
-            }
-
             if (state.currentPhotoItem) {
-                delete state.localPhotos[state.currentPhotoItem.noInventaris];
-                saveLocalPhotos();
-                updateLocalStorageInfo();
-                showPhotoPreview(state.currentPhotoItem);
-                renderTable();
-                showToast('Foto lokal telah dihapus', 'success');
+                if (confirm('Hapus foto barang ini?')) {
+                    delete state.localPhotos[state.currentPhotoItem.noInventaris];
+                    saveLocalPhotos();
+                    updateLocalStorageInfo();
+                    showPhotoPreview(state.currentPhotoItem);
+                    renderTable();
+                    showToast('Foto lokal telah dihapus', 'success');
+                }
             }
         });
 
@@ -1697,13 +1693,6 @@
 
     // =================== PHOTO UPLOAD ===================
     function handlePhotoUpload(e) {
-        const password = prompt("PENGAMANAN: Masukkan password Admin untuk mengunggah foto:");
-        if (password !== "adminbn2") {
-            if (password !== null) showToast("Password salah! Akses ditolak.", "error");
-            e.target.value = '';
-            return;
-        }
-
         const file = e.target.files[0];
         if (!file || !state.currentPhotoItem) return;
 
@@ -1832,16 +1821,6 @@
 
         $('#itemForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const mode = $('#itemFormMode').value;
-            const actionText = mode === 'edit' ? 'menyimpan perubahan' : 'menambah barang baru';
-            
-            const password = prompt(`PENGAMANAN: Masukkan password Admin untuk ${actionText}:`);
-            if (password !== "adminbn2") {
-                if (password !== null) showToast("Password salah! Akses ditolak.", "error");
-                return;
-            }
-            
             await submitItemForm();
         });
     }
@@ -2100,12 +2079,6 @@
             return;
         }
 
-        const password = prompt("PENGAMANAN: Masukkan password Admin untuk menghapus barang:");
-        if (password !== "adminbn2") {
-            if (password !== null) showToast("Password salah! Akses ditolak.", "error");
-            return;
-        }
-
         if (!confirm(`Yakin ingin menghapus barang "${item.namaBarang}"? Tindakan ini akan menghapus data dari Google Sheet secara permanen.`)) {
             return;
         }
@@ -2126,7 +2099,7 @@
             payload: {
                 action: 'deleteItem',
                 noInventaris: item.noInventaris,
-                password: password
+                password: "adminbn2"
             },
             timestamp: Date.now()
         });
@@ -2173,12 +2146,6 @@
     }
 
     function exportCSV() {
-        const password = prompt("PENGAMANAN: Masukkan password Admin untuk export data:");
-        if (password !== "adminbn2") {
-            if (password !== null) showToast("Password salah! Akses ditolak.", "error");
-            return;
-        }
-
         if (state.filteredItems.length === 0) {
             showToast('Tidak ada data untuk di-export', 'error');
             return;
