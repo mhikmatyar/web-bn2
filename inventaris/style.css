@@ -1801,3 +1801,14 @@ body {
         justify-content: center;
     }
 }
+
+/* Animations */
+.spinner {
+    animation: rotate-spinner 1s linear infinite;
+    display: inline-block;
+}
+
+@keyframes rotate-spinner {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

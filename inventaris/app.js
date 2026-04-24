@@ -6,7 +6,8 @@
 (function () {
     'use strict';
 
-    const DEFAULT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQfPsk4L2qxshegLjX6zTdY4mPv0e4xYFqbzYFKgqwHJrMuSXAeDJuIFAhdyK2vi4SwyJ2HXZX4h0un/pubhtml?gid=0&single=true';
+    const DEFAULT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQfPsk4L2qxshegLjX6zTdY4mPv0e4xYFqbzYFKgqwHJrMuSXAeDJuIFAhdyK2vi4SwyJ2HXZX4h0un/pub?gid=0&single=true&output=csv';
+    const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwmioyEqF1-e0N48L__8tZiGrYJ3fQx4hI5rr2X3YY3nFQ8yWhcuiebhjEMO2ajOlwh/exec';
 
     // =================== STATE ===================
     const state = {
@@ -30,6 +31,7 @@
 
     // =================== INIT ===================
     function init() {
+        checkSetupParams(); // Handle auto-setup via URL
         loadSettings();
         loadLocalPhotos();
         bindNavigation();
@@ -172,7 +174,7 @@
 
     function loadSettings() {
         state.sheetUrl = localStorage.getItem('inv-sheetUrl') || DEFAULT_SHEET_URL;
-        state.scriptUrl = localStorage.getItem('inv-scriptUrl') || '';
+        state.scriptUrl = localStorage.getItem('inv-scriptUrl') || DEFAULT_SCRIPT_URL;
         state.refreshInterval = parseInt(localStorage.getItem('inv-refreshInterval')) || 5;
 
         if (state.sheetUrl) {
@@ -190,6 +192,8 @@
         $('#connectSheetBtn').addEventListener('click', connectSheet);
         $('#testConnectionBtn').addEventListener('click', testConnection);
         $('#disconnectBtn').addEventListener('click', disconnectSheet);
+        $('#shareConfigBtn').addEventListener('click', shareConfiguration);
+        $('#resetDefaultBtn').addEventListener('click', resetToDefault);
         $('#refreshBtn').addEventListener('click', () => {
             if (state.sheetUrl) fetchData();
             else showToast('Belum terhubung ke Google Sheet', 'error');
@@ -300,6 +304,54 @@
         el.className = 'connection-result ' + type;
     }
 
+    // =================== AUTO SETUP & SHARING ===================
+    function checkSetupParams() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const setupSheet = urlParams.get('setup_sheet');
+        const setupScript = urlParams.get('setup_script');
+
+        if (setupSheet) {
+            localStorage.setItem('inv-sheetUrl', setupSheet);
+            if (setupScript) localStorage.setItem('inv-scriptUrl', setupScript);
+            
+            showToast('Konfigurasi berhasil diterapkan otomatis!', 'success');
+            
+            // Clean URL
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, newUrl);
+        }
+    }
+
+    function shareConfiguration() {
+        const sheet = $('#sheetUrl').value.trim();
+        const script = $('#scriptUrl').value.trim();
+
+        if (!sheet) {
+            showToast('Belum ada koneksi yang bisa dibagikan', 'error');
+            return;
+        }
+
+        const baseUrl = window.location.origin + window.location.pathname;
+        const setupUrl = `${baseUrl}?setup_sheet=${encodeURIComponent(sheet)}&setup_script=${encodeURIComponent(script)}`;
+
+        navigator.clipboard.writeText(setupUrl).then(() => {
+            showToast('Link setup berhasil disalin! Bagikan ke perangkat lain.', 'success');
+        }).catch(() => {
+            prompt('Salin link setup ini:', setupUrl);
+        });
+    }
+
+    function resetToDefault() {
+        if (confirm('Kembalikan semua pengaturan ke default sistem?')) {
+            localStorage.removeItem('inv-sheetUrl');
+            localStorage.removeItem('inv-scriptUrl');
+            localStorage.removeItem('inv-refreshInterval');
+            loadSettings();
+            fetchData();
+            showToast('Pengaturan telah direset ke default', 'success');
+        }
+    }
+
     function updateSyncStatus(status, text) {
         const dot = $('.sync-dot');
         const txt = $('.sync-text');
@@ -318,21 +370,41 @@
 
     // =================== DATA FETCHING ===================
     function normalizeSheetUrl(url) {
-        // Handle "Publish to the web" links
-        if (url.includes('/pubhtml')) {
-            return url.replace(/\/pubhtml([?#]?)/, '/pub$1') + (url.includes('?') ? '&output=csv' : '?output=csv');
+        if (!url) return '';
+        url = url.trim();
+
+        // Handle "Publish to the web" links (both /pub and /pubhtml)
+        if (url.includes('/pubhtml') || url.includes('/pub')) {
+            let baseUrl = url.split(/[?#]/)[0].replace('/pubhtml', '/pub');
+            const gidMatch = url.match(/[#&?]gid=([0-9]+)/);
+            const gid = gidMatch ? gidMatch[1] : '0';
+            // Ensure output=csv is present
+            return `${baseUrl}?gid=${gid}&single=true&output=csv`;
         }
         
-        // Handle regular editing links
-        const match = url.match(/\/d\/(?!e\/)([a-zA-Z0-9-_]+)/);
-        if (match) {
-            let csvUrl = `https://docs.google.com/spreadsheets/d/${match[1]}/export?format=csv`;
+        // Handle regular editing links (NOT published /e/ links)
+        const match = url.match(/\/d\/([a-zA-Z0-9-_]{20,})/);
+        if (match && !url.includes('/d/e/')) {
+            const sheetId = match[1];
+            let csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
             const gidMatch = url.match(/[#&?]gid=([0-9]+)/);
             if (gidMatch) {
                 csvUrl += `&gid=${gidMatch[1]}`;
             }
             return csvUrl;
         }
+        
+        // If it's a published link in /d/e/ format but not yet using /pub
+        if (url.includes('/d/e/')) {
+            const matchPub = url.match(/\/d\/e\/([a-zA-Z0-9-_]+)/);
+            if (matchPub) {
+                const pubId = matchPub[1];
+                const gidMatch = url.match(/[#&?]gid=([0-9]+)/);
+                const gid = gidMatch ? gidMatch[1] : '0';
+                return `https://docs.google.com/spreadsheets/d/e/${pubId}/pub?gid=${gid}&single=true&output=csv`;
+            }
+        }
+
         return url;
     }
 
@@ -377,9 +449,15 @@
             await fetchCSV(state.sheetUrl);
             updateSyncStatus('connected', `Terakhir: ${new Date().toLocaleTimeString('id-ID')}`);
             renderAll();
-        } catch {
+        } catch (err) {
+            console.error('Fetch Error:', err);
             updateSyncStatus('error', 'Gagal refresh');
-            showToast('Gagal memuat data dari Google Sheet', 'error');
+            showToast('Gagal memuat data dari Google Sheet. Periksa koneksi internet atau link Anda.', 'error');
+            
+            // If it fails on first load, maybe suggest reset
+            if (state.items.length === 0) {
+                showConnectionResult('Koneksi gagal. Coba klik "Reset Default" di Pengaturan jika Link tidak valid.', 'error');
+            }
         }
 
         refreshBtn.querySelector('i').classList.remove('spinner');

@@ -51,6 +51,7 @@
     function init() {
         try {
             console.log("Jimpitan App: Initializing components...");
+            checkSetupParams(); // Handle auto-setup via URL
 
             // --- Splash Screen ---
             const splash = document.getElementById('splashScreen');
@@ -733,6 +734,12 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
             }
         });
 
+        const shareBtn = $('#shareConfigBtn');
+        if (shareBtn) shareBtn.addEventListener('click', shareConfiguration);
+
+        const resetBtn = $('#resetDefaultBtn');
+        if (resetBtn) resetBtn.addEventListener('click', resetToDefault);
+
         $('#logoutBtn').addEventListener('click', () => {
             if (confirm('Keluar dari mode Admin?')) {
                 state.isAdmin = false;
@@ -753,6 +760,53 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
                 location.reload();
             }
         });
+    }
+
+    // =================== AUTO SETUP & SHARING ===================
+    function checkSetupParams() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const setupSheet = urlParams.get('setup_sheet');
+        const setupScript = urlParams.get('setup_script');
+
+        if (setupSheet) {
+            localStorage.setItem('bn2-jimpitanUrl', setupSheet);
+            if (setupScript) localStorage.setItem('bn2-scriptUrl', setupScript);
+            
+            showToast('Konfigurasi Jimpitan berhasil diterapkan!', 'success');
+            
+            // Clean URL
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, newUrl);
+        }
+    }
+
+    function shareConfiguration() {
+        const sheet = $('#sheetUrl').value.trim();
+        const script = $('#scriptUrl').value.trim();
+
+        if (!sheet) {
+            showToast('Belum ada koneksi yang bisa dibagikan', 'info');
+            return;
+        }
+
+        const baseUrl = window.location.origin + window.location.pathname;
+        const setupUrl = `${baseUrl}?setup_sheet=${encodeURIComponent(sheet)}&setup_script=${encodeURIComponent(script)}`;
+
+        navigator.clipboard.writeText(setupUrl).then(() => {
+            showToast('Link setup Jimpitan disalin!', 'success');
+        }).catch(() => {
+            prompt('Salin link setup ini:', setupUrl);
+        });
+    }
+
+    function resetToDefault() {
+        if (confirm('Reset pengaturan Jimpitan ke default sistem?')) {
+            localStorage.removeItem('bn2-jimpitanUrl');
+            localStorage.removeItem('bn2-scriptUrl');
+            loadSettings();
+            fetchData();
+            showToast('Pengaturan Jimpitan telah direset', 'success');
+        }
     }
 
     // =================== FETCH DATA ===================
