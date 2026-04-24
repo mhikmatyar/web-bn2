@@ -591,7 +591,10 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
             if (isEdit) {
                 const currentItem = state.data.find(d => d.idx === state.editingIdx);
                 if (currentItem) {
-                    payload.row = state.editingIdx + 2; 
+                    if (!currentItem.rowNum) {
+                        return showToast('Data sedang disinkronkan, mohon tunggu sebentar', 'info');
+                    }
+                    payload.row = currentItem.rowNum; 
                 } else {
                     return showToast('Gagal menemukan data untuk diupdate', 'error');
                 }
@@ -663,6 +666,9 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
             state.data = state.data.filter(d => d.idx !== idx);
             if ($('#detailModal')) $('#detailModal').classList.add('hidden');
             renderAll();
+            
+            // Re-sync row numbers after a small delay to allow GAS to finish
+            setTimeout(() => fetchData(), 2000);
         }
     }
 
