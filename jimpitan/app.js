@@ -24,7 +24,6 @@
         deleteBlacklist: new Set(), // Menyimpan ID data yang baru dihapus agar tidak muncul lagi dari cache
         monthsNames: ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'],
         dayNames: ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'],
-        syncQueue: [],
         isSyncing: false
     };
 
@@ -486,19 +485,17 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
         }
     }
 
-    async function processSyncQueue() {
-        if (state.isSyncing || state.syncQueue.length === 0 || !state.scriptUrl) {
-            updateGlobalSyncStatus('connected');
-            return;
+    // =================== DATA SYNC (DIRECT) ===================
+    async function sendToGoogle(payload) {
+        if (!state.scriptUrl) {
+            showToast('Apps Script URL belum diatur', 'error');
+            return false;
         }
 
-        state.isSyncing = true;
-        updateGlobalSyncStatus('syncing');
+        showLoading();
+        updateSyncOverlayText('Menyimpan ke Google Sheets...');
         showSyncStatus(true);
-        updateSyncOverlayText(`Sinkronisasi ${state.syncQueue.length} data...`);
 
-        const item = state.syncQueue[0];
-        
         try {
             const response = await fetch(state.scriptUrl, {
                 method: 'POST',
@@ -506,86 +503,23 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
                 cache: 'no-cache',
                 credentials: 'omit',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(item.payload)
+                body: JSON.stringify(payload)
             });
 
             const result = await response.json();
             if (result.success) {
-                // Success! Remove from queue
-                state.syncQueue.shift();
-                saveSyncQueue();
-                console.log(`Jimpitan Sync success: ${item.action}`, item.payload);
-                
-                if (state.syncQueue.length === 0) {
-                    showToast('Semua data Jimpitan berhasil disinkronkan', 'success');
-                    showSyncStatus(false);
-                    updateGlobalSyncStatus('connected');
-                    // UPDATE LOKAL: Tandai semua data sebagai OK (tidak perlu fetch ulang agar tidak hilang)
-                    state.data.forEach(d => {
-                        if (d.pelapor && d.pelapor.includes('Pending')) {
-                            d.pelapor = d.pelapor.replace(' (Pending)', '').replace(' (Syncing...)', '');
-                        }
-                    });
-                    renderAll();
-                } else {
-                    // Process next item
-                    state.isSyncing = false;
-                    setTimeout(processSyncQueue, 1000);
-                    return;
-                }
+                showToast('Data berhasil disimpan ke Google Sheets', 'success');
+                return true;
             } else {
-                throw new Error(result.error || 'Server error');
+                throw new Error(result.error || 'Gagal menyimpan ke server');
             }
         } catch (err) {
-            console.error('Jimpitan Sync Error:', err);
-            updateGlobalSyncStatus('error');
-            
-            // Jika error karena data tidak valid (NaN atau undefined), jangan stop antrean selamanya
-            if (err.message.includes('NaN') || err.message.includes('undefined')) {
-                console.warn('Skipping invalid sync item to unblock queue');
-                state.syncQueue.shift();
-                saveSyncQueue();
-            }
-            
-            updateSyncOverlayText(`Error: ${err.message.substring(0, 20)}... (Retry)`);
-            // Retry after 15 seconds
-            state.isSyncing = false;
-            setTimeout(processSyncQueue, 15000);
-            return;
+            console.error('Direct Sync Error:', err);
+            showToast(`Gagal: ${err.message}`, 'error');
+            return false;
         } finally {
-            state.isSyncing = false;
-        }
-    }
-
-    function updateGlobalSyncStatus(status) {
-        const icon = $('#syncStatusIcon');
-        const timeEl = $('#lastSyncTime');
-        if (!icon) return;
-
-        if (status === 'connected') {
-            icon.innerHTML = '<i data-lucide="cloud-check" class="w-4 h-4"></i>';
-            icon.className = 'text-emerald-300';
-            if (timeEl) {
-                timeEl.textContent = `| ${new Date().toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'})}`;
-                timeEl.classList.remove('hidden');
-            }
-        } else if (status === 'syncing') {
-            icon.innerHTML = '<i data-lucide="cloud-upload" class="w-4 h-4 animate-bounce"></i>';
-            icon.className = 'text-amber-300';
-        } else if (status === 'error') {
-            icon.innerHTML = '<i data-lucide="cloud-off" class="w-4 h-4"></i>';
-            icon.className = 'text-rose-300';
-        }
-        if (window.lucide) lucide.createIcons();
-    }
-
-    window.clearSyncQueue = function() {
-        if (confirm('Hapus semua antrean data yang belum terkirim? Data ini tidak akan masuk ke Google Sheets.')) {
-            state.syncQueue = [];
-            saveSyncQueue();
+            hideLoading();
             showSyncStatus(false);
-            showToast('Antrean berhasil dibersihkan', 'success');
-            renderAll();
         }
     }
 
@@ -656,53 +590,13 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
 
             if (isNaN(payload.nominal)) return showToast('Nominal tidak valid', 'error');
 
-            // --- OPTIMISTIC UI UPDATE & QUEUEING ---
-            state.syncQueue.push({ action: payload.action, payload: payload });
-            saveSyncQueue();
-
-            if (isEdit) {
-                const item = state.data.find(d => d.idx === state.editingIdx);
-                if (item) {
-                    if (!item.rowNum) {
-                        return showToast('Data sedang disinkronkan, mohon tunggu sebentar sebelum mengedit', 'info');
-                    }
-                    payload.row = item.rowNum;
-                    item.nominal = payload.nominal;
-                    item.keterangan = payload.keterangan;
-                    item.tipe = payload.tipe;
-                    item.tanggal = payload.tanggal;
-                    item.pelapor = 'Admin (Syncing...)';
-                    
-                    const [d, m, y] = payload.tanggal.split('-');
-                    const monthIdx = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'].indexOf(m);
-                    item.dateObj = new Date(y, monthIdx, d);
-                } else {
-                    return showToast('Gagal menemukan data untuk diupdate', 'error');
-                }
-            } else {
-                const [d, m, y] = payload.tanggal.split('-');
-                const monthIdx = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'].indexOf(m);
-                const newItem = {
-                    idx: state.data.length > 0 ? Math.max(...state.data.map(i => i.idx)) + 1 : 0,
-                    tanggal: payload.tanggal,
-                    tipe: payload.tipe,
-                    nominal: payload.nominal,
-                    keterangan: payload.keterangan,
-                    pelapor: 'Admin (Pending)',
-                    dateObj: new Date(y, monthIdx, d)
-                };
-                state.data.unshift(newItem);
+            const success = await sendToGoogle(payload);
+            if (success) {
+                modal.classList.add('hidden');
+                form.reset();
+                state.editingIdx = null;
+                fetchData(); // Langsung ambil data terbaru
             }
-
-            modal.classList.add('hidden');
-            form.reset();
-            state.editingIdx = null;
-            renderAll();
-            
-            showToast(isEdit ? 'Update disimpan lokal' : 'Data disimpan lokal', 'success');
-            
-            // Start sync process
-            processSyncQueue();
         });
     }
 
@@ -714,17 +608,6 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
         const item = state.data.find(d => d.idx === idx);
         if (!item) return;
 
-        // Jika data baru (belum ada rowNum), tidak perlu kirim perintah hapus ke GS, cukup hapus lokal dan buang dari queue
-        if (!item.rowNum) {
-            state.data = state.data.filter(d => d.idx !== idx);
-            state.syncQueue = state.syncQueue.filter(q => q.payload.idx !== idx); // Bersihkan dari antrean jika ada
-            saveSyncQueue();
-            renderAll();
-            showToast('Data dibatalkan (Belum masuk Google Sheets)', 'info');
-            return;
-        }
-
-        // --- OPTIMISTIC UI UPDATE & QUEUEING ---
         const payload = {
             action: 'deleteItem',
             row: item.rowNum,
@@ -732,18 +615,11 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
             password: 'adminbn2'
         };
 
-        state.syncQueue.push({ action: 'deleteItem', payload: payload });
-        saveSyncQueue();
-
-        // Remove from local state
-        state.data = state.data.filter(d => d.idx !== idx);
-        renderAll();
-        
-        if ($('#detailModal')) $('#detailModal').classList.add('hidden');
-        showToast('Penghapusan disimpan lokal', 'info');
-
-        // Start sync process
-        processSyncQueue();
+        const success = await sendToGoogle(payload);
+        if (success) {
+            if ($('#detailModal')) $('#detailModal').classList.add('hidden');
+            fetchData(); // Langsung ambil data terbaru
+        }
     }
 
     // Export to window for onclick handlers
@@ -1422,13 +1298,7 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
                                         <i data-lucide="${!isPengeluaranItem ? 'trending-up' : 'receipt'}" class="w-5 h-5"></i>
                                     </div>
                                     <div class="flex-1">
-                                        <div class="flex items-center gap-2">
-                                            <div class="text-xs font-bold text-slate-800 line-clamp-1">${item.keterangan !== '-' ? item.keterangan : (!isPengeluaranItem ? 'Jimpitan Warga' : 'Pengeluaran')}</div>
-                                            ${item.pelapor && item.pelapor.includes('Pending') ? 
-                                                `<span class="bg-amber-100 text-amber-600 text-[8px] px-1.5 py-0.5 rounded flex items-center gap-1 font-bold"><i data-lucide="clock" class="w-2 h-2"></i> LOKAL</span>` : 
-                                                `<span class="bg-emerald-50 text-emerald-600 text-[8px] px-1.5 py-0.5 rounded flex items-center gap-1 font-bold"><i data-lucide="check" class="w-2 h-2"></i> OK</span>`
-                                            }
-                                        </div>
+                                        <div class="text-xs font-bold text-slate-800 line-clamp-1">${item.keterangan !== '-' ? item.keterangan : (!isPengeluaranItem ? 'Jimpitan Warga' : 'Pengeluaran')}</div>
                                         <div class="text-[10px] text-slate-400 font-medium">${dayName}, ${dateDisplay}</div>
                                     </div>
                                     <div class="flex flex-col items-end gap-1">
