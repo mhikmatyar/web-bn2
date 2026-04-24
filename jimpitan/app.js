@@ -481,6 +481,11 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify(payload)
+                }).catch(err => {
+                    if (err.message === 'Failed to fetch') {
+                        throw new Error('Koneksi diblokir atau URL Script salah. Pastikan URL diawali https://script.google.com dan Apps Script sudah di-deploy sebagai "Anyone".');
+                    }
+                    throw err;
                 });
 
                 const result = await response.json();
@@ -564,6 +569,11 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
                     source: 'jimpitan',
                     password: 'adminbn2'
                 })
+            }).catch(err => {
+                if (err.message === 'Failed to fetch') {
+                    throw new Error('Koneksi diblokir atau URL Script salah.');
+                }
+                throw err;
             });
 
             const result = await response.json();

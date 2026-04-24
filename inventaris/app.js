@@ -1563,12 +1563,12 @@
             e.preventDefault();
             
             const mode = $('#itemFormMode').value;
-            if (mode === 'edit') {
-                const password = prompt("PENGAMANAN: Masukkan password Admin untuk menyimpan perubahan:");
-                if (password !== "adminbn2") {
-                    if (password !== null) showToast("Password salah! Akses ditolak.", "error");
-                    return;
-                }
+            const actionText = mode === 'edit' ? 'menyimpan perubahan' : 'menambah barang baru';
+            
+            const password = prompt(`PENGAMANAN: Masukkan password Admin untuk ${actionText}:`);
+            if (password !== "adminbn2") {
+                if (password !== null) showToast("Password salah! Akses ditolak.", "error");
+                return;
             }
             
             await submitItemForm();
