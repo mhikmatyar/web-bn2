@@ -22,9 +22,10 @@
         currentWeekPage: 0, // 0 is latest week
         isAdmin: false,
         deleteBlacklist: new Set(), // Menyimpan ID data yang baru dihapus agar tidak muncul lagi dari cache
-        editingIdx: null,
         monthsNames: ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'],
-        dayNames: ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+        dayNames: ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'],
+        syncQueue: [],
+        isSyncing: false
     };
 
     const $ = (sel) => document.querySelector(sel);
@@ -74,6 +75,7 @@
             initPullToRefresh();
             bindEntryForm();
             bindManualRefresh();
+            loadSyncQueue();
             
             switchTab(state.activeTab);
             
@@ -118,8 +120,21 @@
     }
 
     function loadSettings() {
-        state.sheetUrl = localStorage.getItem('bn2-jimpitanUrl') || DEFAULT_SHEET_URL;
-        state.scriptUrl = localStorage.getItem('bn2-scriptUrl') || DEFAULT_SCRIPT_URL;
+        let savedSheet = localStorage.getItem('bn2-jimpitanUrl');
+        let savedScript = localStorage.getItem('bn2-scriptUrl');
+
+        // SELF-REPAIR: Jika tersimpan link bermasalah (titik-titik), hapus dan gunakan default
+        if (savedSheet && savedSheet.includes('••••')) {
+            localStorage.removeItem('bn2-jimpitanUrl');
+            savedSheet = null;
+        }
+        if (savedScript && savedScript.includes('••••')) {
+            localStorage.removeItem('bn2-scriptUrl');
+            savedScript = null;
+        }
+
+        state.sheetUrl = savedSheet || DEFAULT_SHEET_URL;
+        state.scriptUrl = savedScript || DEFAULT_SCRIPT_URL;
         
         // Display masked URLs
         if (state.sheetUrl) {
@@ -154,12 +169,6 @@
     }
 
     function unlockSettings() {
-        const password = prompt("PENGAMANAN: Masukkan password Admin untuk mengubah konfigurasi:");
-        if (password !== "adminbn2") {
-            if (password !== null) showToast("Password salah!", "error");
-            return;
-        }
-
         const sheetInp = $('#sheetUrl');
         const scriptInp = $('#scriptUrl');
         const btn = $('#editConfigBtn');
@@ -460,6 +469,77 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
         });
     }
 
+    // =================== SYNC QUEUE LOGIC ===================
+    function saveSyncQueue() {
+        localStorage.setItem('bn2-syncQueue', JSON.stringify(state.syncQueue));
+    }
+
+    function loadSyncQueue() {
+        try {
+            const saved = localStorage.getItem('bn2-syncQueue');
+            if (saved) state.syncQueue = JSON.parse(saved);
+        } catch (e) { state.syncQueue = []; }
+        
+        // Start processing if queue is not empty
+        if (state.syncQueue.length > 0) {
+            setTimeout(processSyncQueue, 3000);
+        }
+    }
+
+    async function processSyncQueue() {
+        if (state.isSyncing || state.syncQueue.length === 0 || !state.scriptUrl) return;
+
+        state.isSyncing = true;
+        showSyncStatus(true);
+        updateSyncOverlayText(`Sinkronisasi ${state.syncQueue.length} data...`);
+
+        const item = state.syncQueue[0];
+        
+        try {
+            const response = await fetch(state.scriptUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(item.payload)
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                // Success! Remove from queue
+                state.syncQueue.shift();
+                saveSyncQueue();
+                console.log(`Jimpitan Sync success: ${item.action}`, item.payload);
+                
+                if (state.syncQueue.length === 0) {
+                    showToast('Semua data Jimpitan berhasil disinkronkan', 'success');
+                    showSyncStatus(false);
+                    // Refresh data after full sync
+                    fetchData();
+                } else {
+                    // Process next item
+                    state.isSyncing = false;
+                    setTimeout(processSyncQueue, 1000);
+                    return;
+                }
+            } else {
+                throw new Error(result.error || 'Server error');
+            }
+        } catch (err) {
+            console.error('Jimpitan Sync Error:', err);
+            updateSyncOverlayText('Koneksi terganggu (Menunggu online)');
+            // Retry after 15 seconds
+            state.isSyncing = false;
+            setTimeout(processSyncQueue, 15000);
+            return;
+        } finally {
+            state.isSyncing = false;
+        }
+    }
+
+    function updateSyncOverlayText(text) {
+        const span = $('#syncOverlay span');
+        if (span) span.textContent = text;
+    }
+
     // =================== DATA ENTRY FORM ===================
     function bindEntryForm() {
         const addBtn   = $('#addDataBtn');
@@ -495,10 +575,7 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const btn = $('#submitEntryBtn');
-            const originalHtml = btn.innerHTML;
             const isEdit = state.editingIdx !== null;
-            
             const typeRaw = $('#entryType').value;
             const entryDate = new Date($('#entryDate').value);
             const monthShort = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
@@ -514,10 +591,8 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
             };
 
             if (isEdit) {
-                // IMPORTANT: Re-find the latest row index in case it changed
                 const currentItem = state.data.find(d => d.idx === state.editingIdx);
                 if (currentItem) {
-                    // This is still a bit risky if multiple people edit, but better than nothing
                     payload.row = state.editingIdx + 2; 
                 } else {
                     return showToast('Gagal menemukan data untuk diupdate', 'error');
@@ -526,144 +601,76 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
 
             if (isNaN(payload.nominal)) return showToast('Nominal tidak valid', 'error');
 
-            btn.disabled = true;
-            btn.innerHTML = '<i class="w-4 h-4 animate-spin border-2 border-white border-t-transparent rounded-full"></i> Menyimpan...';
-            showSyncStatus(true);
+            // --- OPTIMISTIC UI UPDATE & QUEUEING ---
+            state.syncQueue.push({ action: payload.action, payload: payload });
+            saveSyncQueue();
 
-            try {
-                const response = await fetch(state.scriptUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload)
-                }).catch(err => {
-                    if (err.message === 'Failed to fetch') {
-                        throw new Error('Koneksi diblokir atau URL Script salah. Pastikan URL diawali https://script.google.com dan Apps Script sudah di-deploy sebagai "Anyone".');
-                    }
-                    throw err;
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    showToast(isEdit ? 'Data berhasil diperbarui!' : 'Data berhasil disimpan!', 'success');
-                    modal.classList.add('hidden');
-                    form.reset();
-                    
-                    // --- OPTIMISTIC UI UPDATE ---
-                    if (isEdit) {
-                        const idx = state.data.findIndex(d => d.idx === state.editingIdx);
-                        if (idx !== -1) {
-                            state.data[idx].nominal = payload.nominal;
-                            state.data[idx].keterangan = payload.keterangan;
-                            state.data[idx].tipe = payload.tipe;
-                            // Update dateObj too
-                            const [d, m, y] = payload.tanggal.split('-');
-                            const monthIdx = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'].indexOf(m);
-                            state.data[idx].dateObj = new Date(y, monthIdx, d);
-                            state.data[idx].tanggal = payload.tanggal;
-                        }
-                    } else {
-                        // Optimistic Add
-                        const [d, m, y] = payload.tanggal.split('-');
-                        const monthIdx = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'].indexOf(m);
-                        const newItem = {
-                            idx: state.data.length > 0 ? Math.max(...state.data.map(i => i.idx)) + 1 : 0,
-                            tanggal: payload.tanggal,
-                            tipe: payload.tipe,
-                            nominal: payload.nominal,
-                            keterangan: payload.keterangan,
-                            pelapor: 'Admin (Pending)',
-                            dateObj: new Date(y, monthIdx, d)
-                        };
-                        state.data.unshift(newItem);
-                    }
-                    
-                    state.editingIdx = null;
-                    renderAll();
-
-                    // Longer delay with clearer status
-                    updateSyncOverlayText('Menunggu sinkronisasi server...');
-                    setTimeout(() => {
-                        fetchData().finally(() => {
-                            showSyncStatus(false);
-                            updateSyncOverlayText('Sinkronisasi...');
-                        });
-                    }, 5000); // Increased to 5s for better safety
-                } else {
-                    throw new Error(result.error || 'Gagal menyimpan data');
+            if (isEdit) {
+                const idx = state.data.findIndex(d => d.idx === state.editingIdx);
+                if (idx !== -1) {
+                    state.data[idx].nominal = payload.nominal;
+                    state.data[idx].keterangan = payload.keterangan;
+                    state.data[idx].tipe = payload.tipe;
+                    const [d, m, y] = payload.tanggal.split('-');
+                    const monthIdx = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'].indexOf(m);
+                    state.data[idx].dateObj = new Date(y, monthIdx, d);
+                    state.data[idx].tanggal = payload.tanggal;
+                    state.data[idx].pelapor = 'Admin (Syncing...)';
                 }
-            } catch (err) {
-                console.error('Entry Error:', err);
-                showToast('Gagal: ' + err.message, 'error');
-                showSyncStatus(false);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = isEdit ? '<i data-lucide="save" class="w-4 h-4"></i> Update Data' : '<i data-lucide="save" class="w-4 h-4"></i> Simpan Data';
-                if (window.lucide) lucide.createIcons();
+            } else {
+                const [d, m, y] = payload.tanggal.split('-');
+                const monthIdx = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'].indexOf(m);
+                const newItem = {
+                    idx: state.data.length > 0 ? Math.max(...state.data.map(i => i.idx)) + 1 : 0,
+                    tanggal: payload.tanggal,
+                    tipe: payload.tipe,
+                    nominal: payload.nominal,
+                    keterangan: payload.keterangan,
+                    pelapor: 'Admin (Pending)',
+                    dateObj: new Date(y, monthIdx, d)
+                };
+                state.data.unshift(newItem);
             }
+
+            modal.classList.add('hidden');
+            form.reset();
+            state.editingIdx = null;
+            renderAll();
+            
+            showToast(isEdit ? 'Update disimpan lokal' : 'Data disimpan lokal', 'success');
+            
+            // Start sync process
+            processSyncQueue();
         });
     }
 
     async function deleteEntry(idx, clickedBtn = null) {
         if (!state.scriptUrl) return showToast('Script URL belum diatur', 'error');
+        if (!confirm('Yakin ingin menghapus data ini? Data di Google Sheets juga akan terhapus.')) return;
 
-        const btn = clickedBtn || $('#deleteEntryBtn');
-        const originalHtml = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<i class="w-4 h-4 animate-spin border-2 border-rose-600 border-t-transparent rounded-full"></i>';
-        showSyncStatus(true);
+        // --- OPTIMISTIC UI UPDATE & QUEUEING ---
+        const payload = {
+            action: 'deleteItem',
+            row: idx + 2,
+            source: 'jimpitan',
+            password: 'adminbn2'
+        };
 
-        try {
-            const response = await fetch(state.scriptUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({
-                    action: 'deleteItem',
-                    row: idx + 2,
-                    source: 'jimpitan',
-                    password: 'adminbn2'
-                })
-            }).catch(err => {
-                if (err.message === 'Failed to fetch') {
-                    throw new Error('Koneksi diblokir atau URL Script salah.');
-                }
-                throw err;
-            });
+        state.syncQueue.push({ action: 'deleteItem', payload: payload });
+        saveSyncQueue();
 
-            const result = await response.json();
-            if (result.success) {
-                showToast('Data berhasil dihapus!', 'success');
-                if ($('#detailModal')) $('#detailModal').classList.add('hidden');
-                
-                // Tambahkan ke Blacklist agar tidak muncul lagi jika server masih mengirim cache lama
-                state.deleteBlacklist.add(idx);
-                setTimeout(() => state.deleteBlacklist.delete(idx), 60000); // Hapus dari blacklist setelah 1 menit
-                
-                // Optimistic UI: Remove from local state
-                state.data = state.data.filter(d => d.idx !== idx);
-                renderAll();
+        // Remove from local state
+        state.data = state.data.filter(d => d.idx !== idx);
+        renderAll();
+        
+        if ($('#detailModal')) $('#detailModal').classList.add('hidden');
+        showToast('Penghapusan disimpan lokal', 'info');
 
-                // Delay refresh
-                setTimeout(() => {
-                    fetchData().finally(() => showSyncStatus(false));
-                }, 2500);
-            } else {
-                throw new Error(result.error);
-            }
-        } catch (err) {
-            showToast('Gagal menghapus: ' + err.message, 'error');
-            showSyncStatus(false);
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = originalHtml;
-            if (window.lucide) lucide.createIcons();
-        }
+        // Start sync process
+        processSyncQueue();
     }
 
-    function updateSyncOverlayText(text) {
-        const el = $('#syncOverlay span');
-        if (el) el.textContent = text;
-    }
+
 
     function showSyncStatus(show) {
         const el = $('#syncOverlay');
@@ -781,7 +788,19 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
         $('#connectBtn').addEventListener('click', async () => {
             const url = $('#sheetUrl').value.trim();
             const scriptUrl = $('#scriptUrl').value.trim();
-            if (!url) return;
+            
+            if (!url) return showToast('URL Spreadsheet tidak boleh kosong', 'error');
+            
+            // CEK APAKAH URL TERMASKING (Ada titik-titik)
+            if (url.includes('••••')) {
+                showToast('Gagal: Konfigurasi terkunci atau format salah. Klik "Ubah Konfigurasi" dulu.', 'error');
+                return;
+            }
+
+            if (!url.includes('/pub') || !url.includes('output=csv')) {
+                showToast('Format URL salah. Pastikan link dipublish sebagai CSV.', 'error');
+                return;
+            }
             
             localStorage.setItem('bn2-jimpitanUrl', url);
             localStorage.setItem('bn2-scriptUrl', scriptUrl);
@@ -794,7 +813,7 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
                 $('#connectionStatus').textContent = 'Konfigurasi disimpan & Data diperbarui!';
                 setTimeout(() => $('#connectionStatus').textContent = '', 3000);
             } catch (err) {
-                $('#connectionStatus').textContent = 'Gagal memuat data!';
+                $('#connectionStatus').textContent = 'Gagal memuat data! Periksa URL.';
             }
         });
 
