@@ -23,6 +23,8 @@
         charts: {},
         localPhotos: {},  // { noInventaris: base64String }
         currentPhotoItem: null,
+        syncQueue: [], // [{ action, payload, timestamp, id }]
+        isSyncing: false,
     };
 
     // =================== DOM REFS ===================
@@ -45,7 +47,11 @@
         bindAddItem();
         bindSidebarToggle();
         bindQRScanner();
+        loadSyncQueue();
         updateLocalStorageInfo();
+        
+        // Start background sync processor
+        setInterval(processSyncQueue, 15000); // Check every 15s
 
         if (state.sheetUrl) {
             fetchData().then(() => {
@@ -186,6 +192,7 @@
             updateSyncStatus('connected', 'Terhubung');
         }
         $('#refreshInterval').value = state.refreshInterval;
+        setupAutoRefresh();
     }
 
     function maskUrl(url) {
@@ -249,7 +256,7 @@
             else showToast('Belum terhubung ke Google Sheet', 'error');
         });
         $('#refreshInterval').addEventListener('change', e => {
-            state.refreshInterval = parseInt(e.target.value);
+            state.refreshInterval = parseFloat(e.target.value);
             localStorage.setItem('inv-refreshInterval', state.refreshInterval);
             setupAutoRefresh();
             showToast(`Auto refresh diatur ke ${state.refreshInterval} menit`, 'info');
@@ -406,6 +413,13 @@
         const dot = $('.sync-dot');
         const txt = $('.sync-text');
         dot.className = 'sync-dot ' + status;
+        
+        if (status === 'syncing') {
+            dot.innerHTML = '<i class="fas fa-sync-alt fa-spin" style="font-size: 8px; color: white;"></i>';
+        } else {
+            dot.innerHTML = '';
+        }
+        
         txt.textContent = text;
     }
 
@@ -413,8 +427,71 @@
         if (state.refreshTimer) clearInterval(state.refreshTimer);
         if (state.sheetUrl) {
             state.refreshTimer = setInterval(() => {
-                fetchData();
+                // Only auto-fetch if queue is empty to avoid overwriting pending changes
+                if (state.syncQueue.length === 0) {
+                    fetchData();
+                } else {
+                    processSyncQueue();
+                }
             }, state.refreshInterval * 60 * 1000);
+        }
+    }
+
+    // =================== SYNC QUEUE LOGIC ===================
+    function saveSyncQueue() {
+        localStorage.setItem('inv-syncQueue', JSON.stringify(state.syncQueue));
+    }
+
+    function loadSyncQueue() {
+        try {
+            const saved = localStorage.getItem('inv-syncQueue');
+            if (saved) state.syncQueue = JSON.parse(saved);
+        } catch (e) { state.syncQueue = []; }
+    }
+
+    async function processSyncQueue() {
+        if (state.isSyncing || state.syncQueue.length === 0 || !state.scriptUrl) return;
+
+        state.isSyncing = true;
+        updateSyncStatus('syncing', `Mensinkronkan ${state.syncQueue.length} data...`);
+
+        // Process one by one
+        const item = state.syncQueue[0];
+        
+        try {
+            const response = await fetch(state.scriptUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(item.payload)
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                // Success! Remove from queue
+                state.syncQueue.shift();
+                saveSyncQueue();
+                console.log(`Sync success: ${item.action}`, item.payload);
+                
+                if (state.syncQueue.length === 0) {
+                    showToast('Semua data berhasil disinkronkan ke Google Sheets', 'success');
+                    updateSyncStatus('connected', `Terakhir sync: ${new Date().toLocaleTimeString('id-ID')}`);
+                    // Fetch fresh data after full sync
+                    fetchData();
+                } else {
+                    // Process next item
+                    state.isSyncing = false;
+                    setTimeout(processSyncQueue, 1000);
+                    return;
+                }
+            } else {
+                throw new Error(result.error || 'Server error');
+            }
+        } catch (err) {
+            console.error('Sync Error:', err);
+            updateSyncStatus('error', 'Koneksi terganggu (Menunggu online)');
+        } finally {
+            state.isSyncing = false;
+            renderTable(); // Update badges if any
         }
     }
 
@@ -1050,7 +1127,10 @@
             return `
                 <tr>
                     <td data-label="No">${displayNo}</td>
-                    <td data-label="Nama Barang" title="${escapeHtml(item.namaBarang)}"><strong>${escapeHtml(item.namaBarang)}</strong></td>
+                    <td data-label="Nama Barang" title="${escapeHtml(item.namaBarang)}">
+                        <strong>${escapeHtml(item.namaBarang)}</strong>
+                        ${item.isPending ? ' <span class="kondisi-badge badge-pending" title="Menunggu Sinkronisasi"><i class="fas fa-sync-alt fa-spin"></i> Pending</span>' : ''}
+                    </td>
                     <td data-label="No Inventaris">${escapeHtml(item.noInventaris)}${item.autoGenerated ? ' <span class="auto-badge" title="Nomor ini di-generate otomatis">auto</span>' : ''}</td>
                     <td data-label="Kategori">${escapeHtml(item.kategori)}</td>
                     <td data-label="Jumlah">${item.jumlah}</td>
@@ -1667,8 +1747,8 @@
                 kategori: $('#addKategori').value,
                 merkType: $('#addMerkType').value.trim(),
                 tahun: $('#addTahun').value || new Date().getFullYear(),
-                jumlah: $('#addJumlah').value || 1,
-                harga: $('#addHarga').value || 0,
+                jumlah: parseInt($('#addJumlah').value) || 1,
+                harga: parseInt($('#addHarga').value) || 0,
                 kondisi: $('#addKondisi').value,
                 lokasi: $('#addLokasi').value,
                 keterangan: $('#addKeterangan').value.trim()
@@ -1676,21 +1756,16 @@
 
             let payload = {
                 action: mode === 'edit' ? 'editItem' : 'addItem',
-                namaBarang: formData.namaBarang,
-                kategori: formData.kategori,
-                merkType: formData.merkType,
-                tahun: formData.tahun,
-                jumlah: formData.jumlah,
-                harga: formData.harga,
-                kondisi: formData.kondisi,
-                lokasi: formData.lokasi,
-                keterangan: formData.keterangan,
+                ...formData,
                 password: "adminbn2" // Password server
             };
+
+            let targetNoInv = '';
 
             if (mode === 'edit') {
                 payload.no = $('#itemFormNo').value;
                 payload.noInventaris = $('#itemFormNoInv').value;
+                targetNoInv = payload.noInventaris;
             } else {
                 // ADD logic
                 const nextNo = state.items.length > 0 ? Math.max(...state.items.map(i => parseInt(i.no) || 0)) + 1 : 1;
@@ -1709,53 +1784,53 @@
                 
                 payload.no = nextNo;
                 payload.noInventaris = noInv;
+                targetNoInv = noInv;
             }
 
-            const response = await fetch(state.scriptUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(payload)
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                showToast(mode === 'edit' ? 'Data berhasil di-update!' : 'Barang berhasil ditambahkan!', 'success');
-                
-                if (mode === 'edit') {
-                    // Update lokal segera
-                    const idx = state.items.findIndex(i => i.noInventaris === payload.noInventaris);
-                    if (idx !== -1) {
-                        state.items[idx] = { 
-                            ...state.items[idx], 
-                            ...formData, 
-                            tahunPerolehan: formData.tahun,
-                            hargaSatuan: formData.harga
-                        };
-                    }
-                } else {
-                    const newItem = {
-                        no: payload.no,
-                        ...formData,
+            // LOCAL-FIRST: Update local state immediately
+            if (mode === 'edit') {
+                const idx = state.items.findIndex(i => i.noInventaris === targetNoInv);
+                if (idx !== -1) {
+                    state.items[idx] = { 
+                        ...state.items[idx], 
+                        ...formData, 
                         tahunPerolehan: formData.tahun,
                         hargaSatuan: formData.harga,
-                        noInventaris: payload.noInventaris,
-                        dokumentasi: ""
+                        isPending: true // Mark as pending sync
                     };
-                    state.items.push(newItem);
                 }
-                
-                renderAll();
-                closeModal('itemModal');
-                
-                // Refresh data final
-                setTimeout(() => fetchData(), 3000);
             } else {
-                throw new Error(result.error || 'Gagal menyimpan data');
+                const newItem = {
+                    no: payload.no,
+                    ...formData,
+                    tahunPerolehan: formData.tahun,
+                    hargaSatuan: formData.harga,
+                    noInventaris: payload.noInventaris,
+                    dokumentasi: "",
+                    isPending: true // Mark as pending sync
+                };
+                state.items.push(newItem);
             }
+
+            // Add to Sync Queue
+            state.syncQueue.push({
+                action: payload.action,
+                payload: payload,
+                timestamp: Date.now()
+            });
+            saveSyncQueue();
+
+            // Refresh UI
+            renderAll();
+            closeModal('itemModal');
+            showToast('Data disimpan secara lokal. Sinkronisasi berjalan di latar belakang...', 'success');
+
+            // Trigger background sync
+            processSyncQueue();
+
         } catch (err) {
             console.error('Submit Error:', err);
-            showToast('Gagal menyimpan data: ' + err.message, 'error');
+            showToast('Gagal memproses data: ' + err.message, 'error');
         } finally {
             btn.disabled = false;
             btn.innerHTML = originalHtml;
@@ -1895,46 +1970,31 @@
             return;
         }
 
-        const btn = document.querySelector(`.delete-action[data-no-inv="${item.noInventaris}"]`);
-        if (btn) btn.innerHTML = '<i class="fas fa-spinner spinner"></i>';
+        // LOCAL-FIRST: Hapus dari state lokal segera
+        state.items = state.items.filter(i => i.noInventaris !== item.noInventaris);
+        
+        // Hapus foto lokal jika ada
+        if (state.localPhotos[item.noInventaris]) {
+            delete state.localPhotos[item.noInventaris];
+            saveLocalPhotos();
+            updateLocalStorageInfo();
+        }
 
-        try {
-            const payload = {
+        // Add to Sync Queue
+        state.syncQueue.push({
+            action: 'deleteItem',
+            payload: {
                 action: 'deleteItem',
                 noInventaris: item.noInventaris,
-                password: password // Mengirim password ke server untuk keamanan ekstra (jika diterapkan di Apps Script)
-            };
+                password: password
+            },
+            timestamp: Date.now()
+        });
+        saveSyncQueue();
 
-            const response = await fetch(state.scriptUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(payload)
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                showToast('Barang berhasil dihapus!', 'success');
-                
-                // Hapus dari state lokal
-                state.items = state.items.filter(i => i.noInventaris !== item.noInventaris);
-                
-                // Hapus foto lokal jika ada
-                if (state.localPhotos[item.noInventaris]) {
-                    delete state.localPhotos[item.noInventaris];
-                    saveLocalPhotos();
-                    updateLocalStorageInfo();
-                }
-
-                renderAll();
-            } else {
-                throw new Error(result.error || 'Gagal menghapus barang');
-            }
-        } catch (err) {
-            console.error('Delete Item Error:', err);
-            showToast('Gagal menghapus barang: ' + err.message, 'error');
-            if (btn) btn.innerHTML = '<i class="fas fa-trash"></i>';
-        }
+        renderAll();
+        showToast('Barang dihapus secara lokal. Sinkronisasi sedang diproses...', 'info');
+        processSyncQueue();
     }
 
     function loadLocalPhotos() {

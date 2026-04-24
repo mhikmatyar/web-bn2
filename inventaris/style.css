@@ -433,20 +433,37 @@ body {
     animation: pulse 2s infinite;
 }
 
+.sync-dot.syncing {
+    background: var(--blue);
+    box-shadow: 0 0 8px rgba(52, 171, 69, 0.4);
+    animation: syncRotate 1s linear infinite;
+}
+
 .sync-dot.error {
     background: var(--red);
 }
 
+.badge-pending {
+    background: #e2e8f0;
+    color: #64748b;
+    border: 1px dashed #94a3b8;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.badge-pending i {
+    font-size: 10px;
+}
+
+@keyframes syncRotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
 @keyframes pulse {
-
-    0%,
-    100% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0.5;
-    }
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
 }
 
 /* ========================================
