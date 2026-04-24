@@ -487,9 +487,13 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
     }
 
     async function processSyncQueue() {
-        if (state.isSyncing || state.syncQueue.length === 0 || !state.scriptUrl) return;
+        if (state.isSyncing || state.syncQueue.length === 0 || !state.scriptUrl) {
+            updateGlobalSyncStatus('connected');
+            return;
+        }
 
         state.isSyncing = true;
+        updateGlobalSyncStatus('syncing');
         showSyncStatus(true);
         updateSyncOverlayText(`Sinkronisasi ${state.syncQueue.length} data...`);
 
@@ -515,6 +519,7 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
                 if (state.syncQueue.length === 0) {
                     showToast('Semua data Jimpitan berhasil disinkronkan', 'success');
                     showSyncStatus(false);
+                    updateGlobalSyncStatus('connected');
                     // Refresh data after full sync with a small delay for Google Sheets CSV to update
                     setTimeout(() => fetchData(), 3000);
                 } else {
@@ -528,6 +533,7 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
             }
         } catch (err) {
             console.error('Jimpitan Sync Error:', err);
+            updateGlobalSyncStatus('error');
             updateSyncOverlayText(`Error: ${err.message.substring(0, 20)}... (Retry)`);
             // Retry after 15 seconds
             state.isSyncing = false;
@@ -536,6 +542,28 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
         } finally {
             state.isSyncing = false;
         }
+    }
+
+    function updateGlobalSyncStatus(status) {
+        const icon = $('#syncStatusIcon');
+        const timeEl = $('#lastSyncTime');
+        if (!icon) return;
+
+        if (status === 'connected') {
+            icon.innerHTML = '<i data-lucide="cloud-check" class="w-4 h-4"></i>';
+            icon.className = 'text-emerald-300';
+            if (timeEl) {
+                timeEl.textContent = `| ${new Date().toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'})}`;
+                timeEl.classList.remove('hidden');
+            }
+        } else if (status === 'syncing') {
+            icon.innerHTML = '<i data-lucide="cloud-upload" class="w-4 h-4 animate-bounce"></i>';
+            icon.className = 'text-amber-300';
+        } else if (status === 'error') {
+            icon.innerHTML = '<i data-lucide="cloud-off" class="w-4 h-4"></i>';
+            icon.className = 'text-rose-300';
+        }
+        if (window.lucide) lucide.createIcons();
     }
 
     window.clearSyncQueue = function() {
@@ -1360,7 +1388,13 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
                                         <i data-lucide="${!isPengeluaranItem ? 'trending-up' : 'receipt'}" class="w-5 h-5"></i>
                                     </div>
                                     <div class="flex-1">
-                                        <div class="text-xs font-bold text-slate-800 line-clamp-1">${item.keterangan !== '-' ? item.keterangan : (!isPengeluaranItem ? 'Jimpitan Warga' : 'Pengeluaran')}</div>
+                                        <div class="flex items-center gap-2">
+                                            <div class="text-xs font-bold text-slate-800 line-clamp-1">${item.keterangan !== '-' ? item.keterangan : (!isPengeluaranItem ? 'Jimpitan Warga' : 'Pengeluaran')}</div>
+                                            ${item.pelapor && item.pelapor.includes('Pending') ? 
+                                                `<span class="bg-amber-100 text-amber-600 text-[8px] px-1.5 py-0.5 rounded flex items-center gap-1 font-bold"><i data-lucide="clock" class="w-2 h-2"></i> LOKAL</span>` : 
+                                                `<span class="bg-emerald-50 text-emerald-600 text-[8px] px-1.5 py-0.5 rounded flex items-center gap-1 font-bold"><i data-lucide="check" class="w-2 h-2"></i> OK</span>`
+                                            }
+                                        </div>
                                         <div class="text-[10px] text-slate-400 font-medium">${dayName}, ${dateDisplay}</div>
                                     </div>
                                     <div class="flex flex-col items-end gap-1">
