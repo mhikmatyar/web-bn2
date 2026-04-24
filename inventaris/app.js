@@ -218,6 +218,10 @@
             $('#adminPasswordInp').value = '';
             closeModal('authModal');
             updateAdminUI();
+            
+            // Redirect to inventory table after login
+            navigateTo('inventaris');
+            
             showToast('Login Admin berhasil!', 'success');
         } else {
             showToast('Password salah!', 'error');
@@ -1576,27 +1580,29 @@
 
         $('#modalTitle').textContent = item.namaBarang;
         
-        // Update footer to include Delete button
+        // Update footer visibility
         const footer = $('#detailModalFooter');
         footer.innerHTML = `
             <button class="btn btn-outline" id="modalCloseBtnDetail">Tutup</button>
-            <button class="btn btn-danger-outline" id="modalDeleteBtn">
-                <i class="fas fa-trash"></i> Hapus Barang
-            </button>
+            ${state.isAdmin ? `
+                <button class="btn btn-outline" id="modalPrintBtn">
+                    <i class="fas fa-print"></i> Cetak Label QR
+                </button>
+                <button class="btn btn-danger-outline" id="modalDeleteBtn">
+                    <i class="fas fa-trash"></i> Hapus Barang
+                </button>
+            ` : ''}
         `;
         
         $('#modalCloseBtnDetail').onclick = () => closeModal('detailModal');
-        $('#modalDeleteBtn').onclick = () => {
-            closeModal('detailModal');
-            handleDeleteItem(item);
-        };
         
-        // Add Print QR button
-        const printBtn = document.createElement('button');
-        printBtn.className = 'btn btn-outline';
-        printBtn.innerHTML = '<i class="fas fa-print"></i> Cetak Label QR';
-        printBtn.onclick = () => printLabels([item]);
-        footer.insertBefore(printBtn, $('#modalCloseBtnDetail').nextSibling);
+        if (state.isAdmin) {
+            $('#modalDeleteBtn').onclick = () => {
+                closeModal('detailModal');
+                handleDeleteItem(item);
+            };
+            $('#modalPrintBtn').onclick = () => printLabels([item]);
+        }
 
         openModal('detailModal');
     }
