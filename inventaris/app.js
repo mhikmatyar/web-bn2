@@ -183,20 +183,26 @@
     function updateAdminUI() {
         const adminElements = $$('.admin-only');
         adminElements.forEach(el => {
-            el.style.setProperty('display', state.isAdmin ? (el.tagName === 'A' ? 'flex' : 'inline-flex') : 'none', 'important');
+            // Use inline-flex for buttons/links, block for others unless specified
+            let displayVal = 'inline-flex';
+            if (el.tagName === 'A' || el.tagName === 'BUTTON') displayVal = 'inline-flex';
+            if (el.tagName === 'DIV' && el.classList.contains('sidebar-divider')) displayVal = 'block';
+            
+            el.style.setProperty('display', state.isAdmin ? displayVal : 'none', 'important');
         });
 
         // Toggle Login/Logout buttons
         if ($('#adminLoginBtn')) $('#adminLoginBtn').style.display = state.isAdmin ? 'none' : 'flex';
         if ($('#adminLogoutBtn')) $('#adminLogoutBtn').style.display = state.isAdmin ? 'flex' : 'none';
 
-        // If on admin page but logged out, go back to dashboard
+        // Re-navigate to current page to ensure classes are applied correctly
         const activePageEl = $('.page.active');
         if (activePageEl) {
-            const activePageId = activePageEl.id;
-            if ((activePageId === 'page-settings' || activePageId === 'page-panduan') && !state.isAdmin) {
-                navigateTo('dashboard');
-            }
+            const activePageId = activePageEl.id.replace('page-', '');
+            navigateTo(activePageId);
+        } else {
+            // Fallback to dashboard if nothing is active
+            navigateTo('dashboard');
         }
 
         renderTable(); // Refresh table to show/hide action buttons
@@ -232,9 +238,11 @@
             localStorage.setItem('inv-isAdmin', 'true');
             $('#adminPasswordInp').value = '';
             closeModal('authModal');
+            
+            // updateAdminUI will handle UI updates and current page re-nav
             updateAdminUI();
             
-            // Redirect to inventory table after login
+            // Force move to inventaris after login
             navigateTo('inventaris');
             
             showToast('Login Admin berhasil!', 'success');
@@ -799,12 +807,16 @@
 
     // =================== RENDER ALL ===================
     function renderAll() {
-        applyFilters();
-        renderDashboard();
-        renderCharts();
-        renderTable();
-        renderRecentItems();
-        populateFilterOptions();
+        try {
+            applyFilters();
+            renderDashboard();
+            renderCharts();
+            renderTable();
+            renderRecentItems();
+            populateFilterOptions();
+        } catch (err) {
+            console.error('Render Error:', err);
+        }
     }
 
     // =================== DASHBOARD ===================
