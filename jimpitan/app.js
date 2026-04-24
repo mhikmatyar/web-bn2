@@ -539,6 +539,14 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
         } catch (err) {
             console.error('Jimpitan Sync Error:', err);
             updateGlobalSyncStatus('error');
+            
+            // Jika error karena data tidak valid (NaN atau undefined), jangan stop antrean selamanya
+            if (err.message.includes('NaN') || err.message.includes('undefined')) {
+                console.warn('Skipping invalid sync item to unblock queue');
+                state.syncQueue.shift();
+                saveSyncQueue();
+            }
+            
             updateSyncOverlayText(`Error: ${err.message.substring(0, 20)}... (Retry)`);
             // Retry after 15 seconds
             state.isSyncing = false;
@@ -655,7 +663,10 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
             if (isEdit) {
                 const item = state.data.find(d => d.idx === state.editingIdx);
                 if (item) {
-                    payload.row = item.rowNum; // Gunakan rowNum asli
+                    if (!item.rowNum) {
+                        return showToast('Data sedang disinkronkan, mohon tunggu sebentar sebelum mengedit', 'info');
+                    }
+                    payload.row = item.rowNum;
                     item.nominal = payload.nominal;
                     item.keterangan = payload.keterangan;
                     item.tipe = payload.tipe;
@@ -703,10 +714,20 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
         const item = state.data.find(d => d.idx === idx);
         if (!item) return;
 
+        // Jika data baru (belum ada rowNum), tidak perlu kirim perintah hapus ke GS, cukup hapus lokal dan buang dari queue
+        if (!item.rowNum) {
+            state.data = state.data.filter(d => d.idx !== idx);
+            state.syncQueue = state.syncQueue.filter(q => q.payload.idx !== idx); // Bersihkan dari antrean jika ada
+            saveSyncQueue();
+            renderAll();
+            showToast('Data dibatalkan (Belum masuk Google Sheets)', 'info');
+            return;
+        }
+
         // --- OPTIMISTIC UI UPDATE & QUEUEING ---
         const payload = {
             action: 'deleteItem',
-            row: item.rowNum, // Gunakan rowNum asli
+            row: item.rowNum,
             source: 'jimpitan',
             password: 'adminbn2'
         };
