@@ -1740,6 +1740,9 @@ body {
         display: flex;
         align-items: center;
         justify-content: flex-end;
+        max-width: none;
+        white-space: normal;
+        word-break: break-word;
     }
 
     .data-table td::before {
