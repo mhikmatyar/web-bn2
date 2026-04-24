@@ -1654,11 +1654,17 @@ body {
 
     .toolbar-actions {
         width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
     }
 
     .toolbar-actions .btn {
-        flex: 1;
+        flex: 1 1 calc(50% - 8px);
+        min-width: 120px;
         justify-content: center;
+        padding: 10px 8px;
+        font-size: 13px;
     }
 
     .detail-grid {
@@ -1727,24 +1733,25 @@ body {
 
     .data-table td {
         text-align: right;
-        padding: 10px 16px 10px 40%;
+        padding: 12px 16px 12px 140px;
         position: relative;
         border-bottom: 1px dashed var(--border-light);
-        max-width: 100%;
-        white-space: normal;
-        word-break: break-word;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
     }
 
     .data-table td::before {
         content: attr(data-label);
         position: absolute;
         left: 16px;
-        width: 35%;
-        padding-right: 10px;
+        width: 120px;
         white-space: nowrap;
         text-align: left;
         font-weight: 600;
         color: var(--text-secondary);
+        font-size: 13px;
     }
 
     .data-table td:last-child {
@@ -1777,6 +1784,17 @@ body {
 
     .form-row .btn {
         width: 100%;
+        justify-content: center;
+    }
+
+    .modal-footer {
+        flex-direction: column;
+        padding: 16px;
+    }
+
+    .modal-footer .btn {
+        width: 100% !important;
+        margin: 0 !important;
         justify-content: center;
     }
 }
