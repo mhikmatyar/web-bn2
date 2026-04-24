@@ -124,11 +124,11 @@
         let savedScript = localStorage.getItem('bn2-scriptUrl');
 
         // SELF-REPAIR: Jika tersimpan link bermasalah (titik-titik), hapus dan gunakan default
-        if (savedSheet && savedSheet.includes('••••')) {
+        if (savedSheet && (savedSheet.includes('••') || savedSheet.includes('...'))) {
             localStorage.removeItem('bn2-jimpitanUrl');
             savedSheet = null;
         }
-        if (savedScript && savedScript.includes('••••')) {
+        if (savedScript && (savedScript.includes('••') || savedScript.includes('...'))) {
             localStorage.removeItem('bn2-scriptUrl');
             savedScript = null;
         }
