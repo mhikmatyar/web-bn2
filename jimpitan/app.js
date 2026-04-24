@@ -121,12 +121,66 @@
         state.sheetUrl = localStorage.getItem('bn2-jimpitanUrl') || DEFAULT_SHEET_URL;
         state.scriptUrl = localStorage.getItem('bn2-scriptUrl') || DEFAULT_SCRIPT_URL;
         
+        // Display masked URLs
         if (state.sheetUrl) {
-            $('#sheetUrl').value = state.sheetUrl;
+            $('#sheetUrl').value = maskUrl(state.sheetUrl);
         }
         if (state.scriptUrl) {
-            $('#scriptUrl').value = state.scriptUrl;
+            $('#scriptUrl').value = maskUrl(state.scriptUrl);
         }
+    }
+
+    function maskUrl(url) {
+        if (!url || url.length < 20) return url;
+        try {
+            // For Sheets /d/ID/ and Script /s/ID/
+            const idMatch = url.match(/\/([a-zA-Z0-9-_]{20,})\//);
+            if (idMatch) {
+                const id = idMatch[1];
+                const maskedId = id.substring(0, 6) + '••••••••' + id.substring(id.length - 6);
+                return url.replace(id, maskedId);
+            }
+            // For Published links (/d/e/ID/pub)
+            const pubMatch = url.match(/\/d\/e\/([a-zA-Z0-9-_]{20,})\//);
+            if (pubMatch) {
+                const id = pubMatch[1];
+                const maskedId = id.substring(0, 6) + '••••••••' + id.substring(id.length - 6);
+                return url.replace(id, maskedId);
+            }
+            return url.substring(0, 15) + '••••••••' + url.substring(url.length - 10);
+        } catch {
+            return '••••••••••••••••';
+        }
+    }
+
+    function unlockSettings() {
+        const password = prompt("PENGAMANAN: Masukkan password Admin untuk mengubah konfigurasi:");
+        if (password !== "adminbn2") {
+            if (password !== null) showToast("Password salah!", "error");
+            return;
+        }
+
+        const sheetInp = $('#sheetUrl');
+        const scriptInp = $('#scriptUrl');
+        const btn = $('#editConfigBtn');
+
+        sheetInp.readOnly = false;
+        scriptInp.readOnly = false;
+        sheetInp.value = state.sheetUrl;
+        scriptInp.value = state.scriptUrl;
+        
+        sheetInp.classList.remove('bg-slate-100', 'text-slate-400');
+        sheetInp.classList.add('bg-white', 'text-slate-600');
+        scriptInp.classList.remove('bg-slate-100', 'text-slate-400');
+        scriptInp.classList.add('bg-white', 'text-slate-600');
+        
+        btn.innerHTML = '<i data-lucide="lock-open" class="w-3 h-3"></i> Konfigurasi Terbuka';
+        btn.classList.remove('text-slate-400');
+        btn.classList.add('text-emerald-600');
+        btn.disabled = true;
+        
+        if (window.lucide) lucide.createIcons();
+        showToast("Konfigurasi terbuka. Anda bisa mengubah URL sekarang.", "info");
     }
 
     // =================== NAVIGATION ===================
@@ -749,6 +803,9 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
 
         const resetBtn = $('#resetDefaultBtn');
         if (resetBtn) resetBtn.addEventListener('click', resetToDefault);
+
+        const editBtn = $('#editConfigBtn');
+        if (editBtn) editBtn.addEventListener('click', unlockSettings);
 
         $('#logoutBtn').addEventListener('click', () => {
             if (confirm('Keluar dari mode Admin?')) {

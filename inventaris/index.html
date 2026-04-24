@@ -234,11 +234,16 @@
                 <p class="settings-desc">Masukkan URL Google Sheets (untuk baca data) dan URL Google Apps Script (opsional, untuk upload foto otomatis). Lihat halaman <strong>Panduan</strong> untuk cara lengkapnya.</p>
                 <div class="form-group">
                     <label for="sheetUrl">URL Google Sheet (Published CSV)</label>
-                    <input type="url" id="sheetUrl" class="form-input" placeholder="https://docs.google.com/spreadsheets/d/e/2PACX-.../pub?output=csv">
+                    <input type="url" id="sheetUrl" class="form-input" readonly placeholder="Terhubung ke Database BN2">
                 </div>
                 <div class="form-group">
                     <label for="scriptUrl">URL Google Apps Script (Auto-Upload API)</label>
-                    <input type="url" id="scriptUrl" class="form-input" placeholder="https://script.google.com/macros/s/.../exec">
+                    <input type="url" id="scriptUrl" class="form-input" readonly placeholder="Terhubung ke Server BN2">
+                </div>
+                <div class="form-row" style="margin-bottom: 20px;">
+                    <button class="btn btn-outline btn-sm" id="editConfigBtn" style="font-size: 11px; padding: 6px 12px;">
+                        <i class="fas fa-lock"></i> Ubah Konfigurasi
+                    </button>
                 </div>
                 <div class="form-row">
                     <button class="btn btn-primary" id="connectSheetBtn">

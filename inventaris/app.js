@@ -177,15 +177,64 @@
         state.scriptUrl = localStorage.getItem('inv-scriptUrl') || DEFAULT_SCRIPT_URL;
         state.refreshInterval = parseInt(localStorage.getItem('inv-refreshInterval')) || 5;
 
+        // Display masked URLs
+        $('#sheetUrl').value = maskUrl(state.sheetUrl);
+        $('#scriptUrl').value = maskUrl(state.scriptUrl);
+        
         if (state.sheetUrl) {
-            $('#sheetUrl').value = state.sheetUrl;
             $('#disconnectBtn').style.display = 'inline-flex';
             updateSyncStatus('connected', 'Terhubung');
         }
-        if (state.scriptUrl) {
-            $('#scriptUrl').value = state.scriptUrl;
-        }
         $('#refreshInterval').value = state.refreshInterval;
+    }
+
+    function maskUrl(url) {
+        if (!url || url.length < 20) return url;
+        try {
+            // For Sheets /d/ID/ and Script /s/ID/
+            const idMatch = url.match(/\/([a-zA-Z0-9-_]{20,})\//);
+            if (idMatch) {
+                const id = idMatch[1];
+                const maskedId = id.substring(0, 6) + '••••••••' + id.substring(id.length - 6);
+                return url.replace(id, maskedId);
+            }
+            // For Published links (/d/e/ID/pub)
+            const pubMatch = url.match(/\/d\/e\/([a-zA-Z0-9-_]{20,})\//);
+            if (pubMatch) {
+                const id = pubMatch[1];
+                const maskedId = id.substring(0, 6) + '••••••••' + id.substring(id.length - 6);
+                return url.replace(id, maskedId);
+            }
+            return url.substring(0, 15) + '••••••••' + url.substring(url.length - 10);
+        } catch {
+            return '••••••••••••••••';
+        }
+    }
+
+    function unlockSettings() {
+        const password = prompt("PENGAMANAN: Masukkan password Admin untuk mengubah konfigurasi:");
+        if (password !== "adminbn2") {
+            if (password !== null) showToast("Password salah!", "error");
+            return;
+        }
+
+        const sheetInp = $('#sheetUrl');
+        const scriptInp = $('#scriptUrl');
+        const btn = $('#editConfigBtn');
+
+        sheetInp.readOnly = false;
+        scriptInp.readOnly = false;
+        sheetInp.value = state.sheetUrl;
+        scriptInp.value = state.scriptUrl;
+        
+        sheetInp.style.background = 'var(--bg-secondary)';
+        scriptInp.style.background = 'var(--bg-secondary)';
+        
+        btn.innerHTML = '<i class="fas fa-lock-open"></i> Konfigurasi Terbuka';
+        btn.style.color = 'var(--success)';
+        btn.disabled = true;
+        
+        showToast("Konfigurasi terbuka. Anda bisa mengubah URL sekarang.", "info");
     }
 
     function bindSettings() {
@@ -194,6 +243,7 @@
         $('#disconnectBtn').addEventListener('click', disconnectSheet);
         $('#shareConfigBtn').addEventListener('click', shareConfiguration);
         $('#resetDefaultBtn').addEventListener('click', resetToDefault);
+        $('#editConfigBtn').addEventListener('click', unlockSettings);
         $('#refreshBtn').addEventListener('click', () => {
             if (state.sheetUrl) fetchData();
             else showToast('Belum terhubung ke Google Sheet', 'error');

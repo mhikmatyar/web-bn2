@@ -325,14 +325,20 @@
                         <i data-lucide="link" class="w-4 h-4 text-emerald-600"></i> Sumber Data
                     </h3>
                     <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-4">Pastikan spreadsheet Google Anda sudah di-publish ke web dalam format CSV.</p>
-                    <textarea id="sheetUrl" class="w-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-lg p-4 text-xs font-mono text-slate-600 dark:text-slate-300 outline-none focus:ring-2 focus:ring-emerald-500/20 mb-4 no-scrollbar h-24" placeholder="Link Google Sheets CSV..."></textarea>
+                    <textarea id="sheetUrl" readonly class="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 rounded-lg p-4 text-[10px] font-mono text-slate-400 dark:text-slate-500 outline-none mb-4 no-scrollbar h-16" placeholder="Terhubung ke Database BN2"></textarea>
                     
                     <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
                         <i data-lucide="cpu" class="w-4 h-4 text-emerald-600"></i> Apps Script URL (Input)
                     </h3>
                     <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-4">Link Apps Script untuk fitur input data langsung dari aplikasi.</p>
-                    <textarea id="scriptUrl" class="w-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-lg p-4 text-xs font-mono text-slate-600 dark:text-slate-300 outline-none focus:ring-2 focus:ring-emerald-500/20 mb-4 no-scrollbar h-24" placeholder="https://script.google.com/macros/s/.../exec"></textarea>
+                    <textarea id="scriptUrl" readonly class="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 rounded-lg p-4 text-[10px] font-mono text-slate-400 dark:text-slate-500 outline-none mb-4 no-scrollbar h-16" placeholder="Terhubung ke Server BN2"></textarea>
                     
+                    <div class="flex justify-start mb-6">
+                        <button id="editConfigBtn" class="text-[10px] font-bold text-slate-400 hover:text-emerald-600 flex items-center gap-1 transition-colors">
+                            <i data-lucide="lock" class="w-3 h-3"></i> Ubah Konfigurasi
+                        </button>
+                    </div>
+
                     <button id="connectBtn" class="w-full bg-emerald-700 text-white font-bold py-4 rounded-lg shadow-lg shadow-emerald-700/20 hover:bg-emerald-800 transition-all">Simpan Konfigurasi</button>
                     <div id="connectionStatus" class="mt-4 text-center text-xs font-bold"></div>
 
