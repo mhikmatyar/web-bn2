@@ -515,8 +515,8 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
                 if (state.syncQueue.length === 0) {
                     showToast('Semua data Jimpitan berhasil disinkronkan', 'success');
                     showSyncStatus(false);
-                    // Refresh data after full sync
-                    fetchData();
+                    // Refresh data after full sync with a small delay for Google Sheets CSV to update
+                    setTimeout(() => fetchData(), 3000);
                 } else {
                     // Process next item
                     state.isSyncing = false;
@@ -658,7 +658,8 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
         });
     }
 
-    async function deleteEntry(idx, clickedBtn = null) {
+    async function deleteEntry(e, idx) {
+        if (e) e.stopPropagation();
         if (!state.scriptUrl) return showToast('Script URL belum diatur', 'error');
         if (!confirm('Yakin ingin menghapus data ini? Data di Google Sheets juga akan terhapus.')) return;
 
@@ -683,6 +684,9 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
         // Start sync process
         processSyncQueue();
     }
+
+    // Export to window for onclick handlers
+    window.deleteEntry = deleteEntry;
 
 
 
