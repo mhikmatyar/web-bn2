@@ -1059,16 +1059,16 @@
                     <td data-label="Aksi">
                         <div class="action-btns">
                             <button title="Lihat Detail" class="detail-action" data-no-inv="${escapeHtml(item.noInventaris)}">
-                                <i class="fas fa-eye"></i>
+                                <i class="fas fa-eye"></i> <span class="btn-label">Detail</span>
                             </button>
                             <button title="Edit Barang" class="edit-action" data-no-inv="${escapeHtml(item.noInventaris)}" style="color: var(--blue); background: rgba(59, 130, 246, 0.1);">
-                                <i class="fas fa-edit"></i>
+                                <i class="fas fa-edit"></i> <span class="btn-label">Edit</span>
                             </button>
                             <button title="Upload/Lihat Foto" class="photo-action" data-no-inv="${escapeHtml(item.noInventaris)}">
-                                <i class="fas fa-camera${hasPhoto ? '' : '-retro'}"></i>
+                                <i class="fas fa-camera${hasPhoto ? '' : '-retro'}"></i> <span class="btn-label">Foto</span>
                             </button>
                             <button title="Hapus Barang" class="delete-action" data-no-inv="${escapeHtml(item.noInventaris)}" style="color: #ef4444; background: rgba(239, 68, 68, 0.1);">
-                                <i class="fas fa-trash"></i>
+                                <i class="fas fa-trash"></i> <span class="btn-label">Hapus</span>
                             </button>
                         </div>
                     </td>

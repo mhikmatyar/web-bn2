@@ -956,6 +956,10 @@ body {
     gap: 6px;
 }
 
+.btn-label {
+    display: none;
+}
+
 .action-btns button {
     width: 32px;
     height: 32px;
@@ -1772,7 +1776,29 @@ body {
     }
 
     .action-btns {
-        justify-content: center;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        width: 100%;
+        margin-top: 5px;
+    }
+
+    .action-btns button {
+        width: 100% !important;
+        height: 56px !important;
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        flex-direction: row !important;
+        gap: 10px !important;
+        border-radius: var(--radius) !important;
+        background: white !important;
+        border: 1px solid var(--border-color) !important;
+        box-shadow: var(--shadow-sm) !important;
+        padding: 0 16px !important;
+    }
+
+    .btn-label {
+        display: inline !important;
     }
 }
 
