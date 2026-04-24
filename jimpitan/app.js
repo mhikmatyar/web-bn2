@@ -592,10 +592,39 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
 
             const success = await sendToGoogle(payload);
             if (success) {
+                if (isEdit) {
+                    const item = state.data.find(d => d.idx === state.editingIdx);
+                    if (item) {
+                        item.nominal = payload.nominal;
+                        item.keterangan = payload.keterangan;
+                        item.tipe = payload.tipe;
+                        item.tanggal = payload.tanggal;
+                        
+                        const [d, m, y] = payload.tanggal.split('-');
+                        const monthIdx = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'].indexOf(m);
+                        item.dateObj = new Date(y, monthIdx, d);
+                    }
+                } else {
+                    // Tambah baru ke layar secara manual
+                    const [d, m, y] = payload.tanggal.split('-');
+                    const monthIdx = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'].indexOf(m);
+                    const newItem = {
+                        idx: Date.now(), // Gunakan timestamp sebagai ID unik sementara
+                        rowNum: state.data.length + 2, // Estimasi baris baru
+                        tanggal: payload.tanggal,
+                        tipe: payload.tipe,
+                        nominal: payload.nominal,
+                        keterangan: payload.keterangan,
+                        pelapor: 'Admin',
+                        dateObj: new Date(y, monthIdx, d)
+                    };
+                    state.data.unshift(newItem);
+                }
+
                 modal.classList.add('hidden');
                 form.reset();
                 state.editingIdx = null;
-                fetchData(); // Langsung ambil data terbaru
+                renderAll(); // Render ulang dari data lokal yang sudah kita update
             }
         });
     }
@@ -603,10 +632,11 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
     async function deleteEntry(e, idx) {
         if (e) e.stopPropagation();
         if (!state.scriptUrl) return showToast('Script URL belum diatur', 'error');
-        if (!confirm('Yakin ingin menghapus data ini? Data di Google Sheets juga akan terhapus.')) return;
-
+        
         const item = state.data.find(d => d.idx === idx);
         if (!item) return;
+
+        if (!confirm(`Yakin ingin menghapus data Rp ${formatRp(item.nominal)}?`)) return;
 
         const payload = {
             action: 'deleteItem',
@@ -617,8 +647,9 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
 
         const success = await sendToGoogle(payload);
         if (success) {
+            state.data = state.data.filter(d => d.idx !== idx);
             if ($('#detailModal')) $('#detailModal').classList.add('hidden');
-            fetchData(); // Langsung ambil data terbaru
+            renderAll();
         }
     }
 
