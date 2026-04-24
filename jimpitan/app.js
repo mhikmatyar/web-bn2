@@ -657,6 +657,9 @@ _Laporan ini dibuat otomatis melalui aplikasi Jimpitan BN2_`;
         const payload = {
             action: 'deleteItem',
             row: item.rowNum,
+            tanggal: item.tanggal, // Kirim identitas lengkap
+            tipe: item.tipe,
+            nominal: item.nominal,
             source: 'jimpitan',
             password: 'adminbn2'
         };
