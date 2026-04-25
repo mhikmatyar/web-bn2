@@ -310,6 +310,29 @@
         $('#statKeluar').textContent = formatRp(totalKeluar);
         $('#entriDataCount').textContent = `${currentTabItems.length} Hari`;
 
+        // Trend calculation (Compare with previous month)
+        const prevMonth = state.selectedMonth === 1 ? 12 : state.selectedMonth - 1;
+        const prevYear = state.selectedMonth === 1 ? state.selectedYear - 1 : state.selectedYear;
+        const prevData = state.data.filter(it => it.dateObj.getMonth() + 1 === prevMonth && it.dateObj.getFullYear() === prevYear);
+        const prevMasuk = prevData.filter(it => it.tipe === 'Pemasukan').reduce((s, i) => s + i.nominal, 0);
+        
+        const trendDiv = $('#balanceTrend');
+        if (prevMasuk > 0 && trendDiv) {
+            const diff = ((totalMasuk - prevMasuk) / prevMasuk) * 100;
+            trendDiv.classList.remove('hidden');
+            if (diff >= 0) {
+                trendDiv.className = 'flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-black bg-white/20 text-white';
+                $('#trendIcon').setAttribute('data-lucide', 'trending-up');
+                $('#trendValue').textContent = `+${diff.toFixed(1)}%`;
+            } else {
+                trendDiv.className = 'flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-black bg-rose-500/50 text-white';
+                $('#trendIcon').setAttribute('data-lucide', 'trending-down');
+                $('#trendValue').textContent = `${diff.toFixed(1)}%`;
+            }
+        } else if (trendDiv) {
+            trendDiv.classList.add('hidden');
+        }
+
         renderList(currentTabItems);
         updateCharts();
         if (window.lucide) lucide.createIcons();

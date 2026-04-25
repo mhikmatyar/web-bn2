@@ -74,7 +74,13 @@
             <!-- STATS CARD -->
             <div class="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/10">
                 <p class="text-[10px] font-bold uppercase tracking-widest text-emerald-200 mb-1">Saldo Kas Bulan Ini</p>
-                <h2 id="totalSaldo" class="text-3xl font-black mb-4">Rp 0</h2>
+                <div class="flex items-baseline gap-3 mb-4">
+                    <h2 id="totalSaldo" class="text-3xl font-black">Rp 0</h2>
+                    <div id="balanceTrend" class="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-black hidden">
+                        <i id="trendIcon" data-lucide="trending-up" class="w-3 h-3"></i>
+                        <span id="trendValue">0%</span>
+                    </div>
+                </div>
                 
                 <div class="grid grid-cols-3 gap-2 pt-4 border-t border-white/10">
                     <div>
