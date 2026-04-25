@@ -753,10 +753,10 @@
         // Update UI buttons
         $$('.chart-scale-btn').forEach(btn => {
             if (btn.dataset.scale === scale) {
-                btn.classList.add('bg-white/20', 'text-white');
+                btn.classList.add('bg-emerald-500', 'text-white');
                 btn.classList.remove('text-white/50');
             } else {
-                btn.classList.remove('bg-white/20', 'text-white');
+                btn.classList.remove('bg-emerald-500', 'text-white');
                 btn.classList.add('text-white/50');
             }
         });
@@ -836,7 +836,7 @@
                 scales: {
                     y: { display: false },
                     x: {
-                        ticks: { color: 'rgba(255,255,255,0.7)', font: { size: 9, weight: 'bold' } },
+                        ticks: { color: 'rgba(255,255,255,0.7)', font: { size: 10, weight: 'bold' } },
                         grid: { display: false }
                     }
                 }

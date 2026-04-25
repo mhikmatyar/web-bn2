@@ -78,43 +78,42 @@
                 
                 <div class="grid grid-cols-3 gap-2 pt-4 border-t border-white/10">
                     <div>
-                        <p class="text-[8px] font-bold text-emerald-200 uppercase mb-1">Masuk</p>
-                        <p id="statMasuk" class="text-xs font-bold">Rp 0</p>
+                        <p class="text-[10px] font-bold text-emerald-200 uppercase mb-1">Masuk</p>
+                        <p id="statMasuk" class="text-sm font-bold">Rp 0</p>
                     </div>
                     <div>
-                        <p class="text-[8px] font-bold text-emerald-200 uppercase mb-1">Keluar</p>
-                        <p id="statKeluar" class="text-xs font-bold">Rp 0</p>
+                        <p class="text-[10px] font-bold text-emerald-200 uppercase mb-1">Keluar</p>
+                        <p id="statKeluar" class="text-sm font-bold">Rp 0</p>
                     </div>
                     <div>
-                        <p class="text-[8px] font-bold text-emerald-200 uppercase mb-1">Data</p>
-                        <p id="entriDataCount" class="text-xs font-bold">0 Hari</p>
+                        <p class="text-[10px] font-bold text-emerald-200 uppercase mb-1">Data</p>
+                        <p id="entriDataCount" class="text-sm font-bold">0 Hari</p>
                     </div>
                 </div>
 
                 <!-- CHART AREA WITH FILTER -->
-                <div class="mt-4 pt-4 border-t border-white/10">
-                    <div class="flex justify-between items-center mb-2">
-                        <p class="text-[8px] font-bold text-emerald-200 uppercase tracking-widest">Grafik Jimpitan</p>
-                        <div class="flex bg-white/10 rounded-lg p-0.5">
-                            <button onclick="window.setChartScale('day')" class="chart-scale-btn px-1.5 py-0.5 text-[7px] font-bold rounded-md transition-all text-white/50 hover:text-white" data-scale="day">H</button>
-                            <button onclick="window.setChartScale('week')" class="chart-scale-btn active px-1.5 py-0.5 text-[7px] font-bold rounded-md transition-all bg-white/20 text-white" data-scale="week">M</button>
-                            <button onclick="window.setChartScale('month')" class="chart-scale-btn px-1.5 py-0.5 text-[7px] font-bold rounded-md transition-all text-white/50 hover:text-white" data-scale="month">B</button>
-                            <button onclick="window.setChartScale('year')" class="chart-scale-btn px-1.5 py-0.5 text-[7px] font-bold rounded-md transition-all text-white/50 hover:text-white" data-scale="year">T</button>
+                <div class="mt-6 pt-6 border-t border-white/10">
+                    <div class="flex justify-between items-center mb-4">
+                        <p class="text-[10px] font-black text-emerald-200 uppercase tracking-widest">Statistik Jimpitan</p>
+                        <div class="flex bg-white/10 rounded-xl p-1 gap-1">
+                            <button onclick="window.setChartScale('day')" class="chart-scale-btn px-3 py-1.5 text-xs font-black rounded-lg transition-all text-white/50 hover:text-white" data-scale="day">Hari</button>
+                            <button onclick="window.setChartScale('week')" class="chart-scale-btn active px-3 py-1.5 text-xs font-black rounded-lg transition-all bg-emerald-500 text-white" data-scale="week">Minggu</button>
+                            <button onclick="window.setChartScale('month')" class="chart-scale-btn px-3 py-1.5 text-xs font-black rounded-lg transition-all text-white/50 hover:text-white" data-scale="month">Bulan</button>
+                            <button onclick="window.setChartScale('year')" class="chart-scale-btn px-3 py-1.5 text-xs font-black rounded-lg transition-all text-white/50 hover:text-white" data-scale="year">Tahun</button>
                         </div>
                     </div>
-                    <div class="h-28">
+                    <div class="h-48">
                         <canvas id="jimpitanChart"></canvas>
                     </div>
                 </div>
             </div>
-            </div>
         </header>
 
         <!-- FILTERS -->
-        <div class="px-6 -mt-6">
-            <div class="bg-white rounded-2xl shadow-xl p-2 flex gap-1 border border-slate-100">
-                <button class="tab-btn active flex-1 py-3 rounded-xl text-xs font-bold transition-all bg-emerald-700 text-white" data-tab="jimpitan">Jimpitan</button>
-                <button class="tab-btn flex-1 py-3 rounded-xl text-xs font-bold transition-all text-slate-500" data-tab="pengeluaran">Pengeluaran</button>
+        <div class="px-6 -mt-8 pb-4 relative z-10">
+            <div class="bg-white rounded-[2rem] shadow-2xl p-2 flex gap-1 border border-slate-100">
+                <button class="tab-btn active flex-1 py-4 rounded-2xl text-sm font-black transition-all bg-emerald-700 text-white" data-tab="jimpitan">Jimpitan</button>
+                <button class="tab-btn flex-1 py-4 rounded-2xl text-sm font-black transition-all text-slate-500" data-tab="pengeluaran">Pengeluaran</button>
             </div>
         </div>
 
