@@ -20,6 +20,7 @@
         isAdmin: false,
         editingIdx: null,
         currentWeek: null,
+        chart: null,
         monthsNames: ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
     };
 
@@ -69,15 +70,21 @@
         const badge = $('#adminBadge');
         const addBtn = $('#addDataBtn');
         const adminBtn = $('#adminBtn');
+        const setBtn = $('#settingsBtn');
+        const refBtn = $('#refreshBtn');
 
         if (state.isAdmin) {
             badge.classList.remove('hidden');
             addBtn.classList.remove('hidden');
+            if (setBtn) setBtn.classList.remove('hidden');
+            if (refBtn) refBtn.classList.remove('hidden');
             adminBtn.classList.add('bg-emerald-500/30', 'text-emerald-300');
             adminBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4"></i>';
         } else {
             badge.classList.add('hidden');
             addBtn.classList.add('hidden');
+            if (setBtn) setBtn.classList.add('hidden');
+            if (refBtn) refBtn.classList.add('hidden');
             adminBtn.classList.remove('bg-emerald-500/30', 'text-emerald-300');
             adminBtn.innerHTML = '<i data-lucide="lock" class="w-4 h-4"></i>';
         }
@@ -740,7 +747,54 @@
     }
 
     function updateCharts() {
-        // Chart logic here (if needed)
+        const ctx = $('#jimpitanChart');
+        if (!ctx || !window.Chart) return;
+
+        // Group data by week for the current month
+        const weeksData = {};
+        state.filteredData.filter(d => d.tipe === 'Pemasukan').forEach(it => {
+            const w = getWeekOfMonth(it.dateObj);
+            weeksData[w] = (weeksData[w] || 0) + it.nominal;
+        });
+
+        const labels = Object.keys(weeksData).sort().map(w => `W${w}`);
+        const data = Object.keys(weeksData).sort().map(w => weeksData[w]);
+
+        if (state.chart) state.chart.destroy();
+
+        state.chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Jimpitan',
+                    data: data,
+                    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+                    borderColor: 'rgba(255, 255, 255, 0.8)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => formatRp(context.raw)
+                        }
+                    }
+                },
+                scales: {
+                    y: { display: false },
+                    x: {
+                        ticks: { color: 'rgba(255,255,255,0.7)', font: { size: 9, weight: 'bold' } },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
     }
 
 })();
