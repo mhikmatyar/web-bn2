@@ -289,6 +289,9 @@
             return;
         }
 
+        // Sort ALL items descending first
+        items.sort((a, b) => b.dateObj - a.dateObj);
+
         // Group by week
         const weeks = {};
         items.forEach(item => {
@@ -297,7 +300,8 @@
             weeks[weekNum].push(item);
         });
 
-        let html = '<div class="space-y-6 pb-20">';
+        let html = '<div class="space-y-8 pb-24">';
+        // Show newest week first
         Object.keys(weeks).sort((a, b) => b - a).forEach(w => {
             const weekItems = weeks[w];
             const weekTotal = weekItems.reduce((s, i) => s + i.nominal, 0);
@@ -316,7 +320,7 @@
                                 </div>
                                 <div class="flex-1">
                                     <div class="text-xs font-bold text-slate-800">${item.keterangan !== '-' ? item.keterangan : (item.tipe === 'Pemasukan' ? 'Jimpitan Warga' : 'Pengeluaran')}</div>
-                                    <div class="text-[10px] text-slate-400 font-medium">${item.tanggal}</div>
+                                    <div class="text-[10px] text-slate-400 font-bold">${getDayName(item.dateObj)}, ${item.tanggal}</div>
                                 </div>
                                 <div class="text-right">
                                     <div class="text-sm font-black ${item.tipe === 'Pemasukan' ? 'text-emerald-600' : 'text-rose-600'}">${formatRp(item.nominal)}</div>
@@ -405,6 +409,11 @@
 
     function formatRp(num) {
         return 'Rp ' + num.toLocaleString('id-ID');
+    }
+
+    function getDayName(date) {
+        const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        return days[date.getDay()];
     }
 
     function getWeekOfMonth(date) {
