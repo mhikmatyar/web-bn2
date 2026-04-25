@@ -235,8 +235,16 @@
 
         const success = await syncToGoogle(payload);
         if (success) {
+            state.data = state.data.filter(d => d.idx !== idx);
             if ($('#detailModal')) $('#detailModal').classList.add('hidden');
-            fetchData();
+            
+            const lastSyncTime = $('#lastSyncTime');
+            if (lastSyncTime) {
+                lastSyncTime.textContent = `| Terupdate`;
+                lastSyncTime.classList.remove('hidden');
+            }
+            
+            renderAll();
         }
     }
 
