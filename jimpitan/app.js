@@ -36,6 +36,7 @@
         bindEntryForm();
         bindFilters();
         bindSettings();
+        bindReports();
         
         if (state.sheetUrl) fetchData();
         
@@ -495,6 +496,79 @@
     }
 
     // =================== BINDERS ===================
+    function bindReports() {
+        $('#shareBtn').addEventListener('click', () => $('#shareModal').classList.remove('hidden'));
+        $('#closeShareModal').addEventListener('click', () => $('#shareModal').classList.add('hidden'));
+        
+        $('#shareWeekBtn').addEventListener('click', () => handleShareWA('week'));
+        $('#shareMonthBtn').addEventListener('click', () => handleShareWA('month'));
+        $('#exportBtn').addEventListener('click', handleExportCSV);
+    }
+
+    function handleShareWA(type) {
+        const monthName = state.monthsNames[state.selectedMonth - 1];
+        const year = state.selectedYear;
+        let text = `*LAPORAN JIMPITAN BN2*\n📅 *${monthName} ${year}*\n\n`;
+
+        if (type === 'week') {
+            const currentTabItems = state.filteredData.filter(d => d.tipe === (state.activeTab === 'jimpitan' ? 'Pemasukan' : 'Pengeluaran'));
+            const weeks = {};
+            currentTabItems.forEach(item => {
+                const weekNum = getWeekOfMonth(item.dateObj);
+                if (!weeks[weekNum]) weeks[weekNum] = [];
+                weeks[weekNum].push(item);
+            });
+            
+            const items = weeks[state.currentWeek] || [];
+            const total = items.reduce((s, i) => s + i.nominal, 0);
+            
+            text += `📍 *MINGGU ${state.currentWeek}*\n`;
+            text += `--------------------------\n`;
+            items.forEach(it => {
+                text += `• ${getDayName(it.dateObj)}, ${it.tanggal.split('-')[0]} ${it.tanggal.split('-')[1]}: *${formatRp(it.nominal)}*\n  _${it.keterangan !== '-' ? it.keterangan : it.tipe}_\n`;
+            });
+            text += `--------------------------\n`;
+            text += `💰 *TOTAL MINGGU INI: ${formatRp(total)}*`;
+        } else {
+            const masuk = state.filteredData.filter(d => d.tipe === 'Pemasukan');
+            const keluar = state.filteredData.filter(d => d.tipe === 'Pengeluaran');
+            const totalMasuk = masuk.reduce((s, i) => s + i.nominal, 0);
+            const totalKeluar = keluar.reduce((s, i) => s + i.nominal, 0);
+
+            text += `📊 *REKAP BULANAN*\n`;
+            text += `--------------------------\n`;
+            text += `✅ Pemasukan: *${formatRp(totalMasuk)}*\n`;
+            text += `❌ Pengeluaran: *${formatRp(totalKeluar)}*\n`;
+            text += `--------------------------\n`;
+            text += `💰 *SALDO AKHIR: ${formatRp(totalMasuk - totalKeluar)}*`;
+        }
+
+        const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+        window.open(url, '_blank');
+        $('#shareModal').classList.add('hidden');
+    }
+
+    function handleExportCSV() {
+        if (state.data.length === 0) return showToast('Tidak ada data untuk diexport', 'error');
+        
+        let csv = 'Tanggal,Tipe,Nominal,Keterangan,Pelapor\n';
+        state.data.sort((a, b) => a.dateObj - b.dateObj).forEach(it => {
+            csv += `"${it.tanggal}","${it.tipe}","${it.nominal}","${it.keterangan}","${it.pelapor}"\n`;
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `Rekap_Jimpitan_BN2_${state.selectedMonth}_${state.selectedYear}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showToast('CSV Berhasil diunduh', 'success');
+    }
+
     function bindNavigation() {
         $$('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
