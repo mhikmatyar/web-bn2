@@ -544,16 +544,17 @@
                 weeks[weekNum].push(item);
             });
             
-            const items = weeks[state.currentWeek] || [];
+            const items = (weeks[state.currentWeek] || []).sort((a, b) => a.dateObj - b.dateObj);
             const total = items.reduce((s, i) => s + i.nominal, 0);
             
-            text += `📍 *MINGGU ${state.currentWeek}*\n`;
+            text += `📍 *RINGKASAN MINGGU ${state.currentWeek}*\n`;
             text += `--------------------------\n`;
             items.forEach(it => {
-                text += `• ${getDayName(it.dateObj)}, ${it.tanggal.split('-')[0]} ${it.tanggal.split('-')[1]}: *${formatRp(it.nominal)}*\n  _${it.keterangan !== '-' ? it.keterangan : it.tipe}_\n`;
+                const d = it.tanggal.split('-');
+                text += `• ${getDayName(it.dateObj)}, ${d[0]} ${d[1]} : *${formatRp(it.nominal)}*\n`;
             });
             text += `--------------------------\n`;
-            text += `💰 *TOTAL MINGGU INI: ${formatRp(total)}*`;
+            text += `💰 *TOTAL: ${formatRp(total)}*`;
         } else {
             const masuk = state.filteredData.filter(d => d.tipe === 'Pemasukan');
             const keluar = state.filteredData.filter(d => d.tipe === 'Pengeluaran');
@@ -562,9 +563,20 @@
 
             text += `📊 *REKAP BULANAN*\n`;
             text += `--------------------------\n`;
-            text += `✅ Pemasukan: *${formatRp(totalMasuk)}*\n`;
-            text += `❌ Pengeluaran: *${formatRp(totalKeluar)}*\n`;
-            text += `--------------------------\n`;
+            text += `✅ Total Masuk: *${formatRp(totalMasuk)}*\n`;
+            text += `❌ Total Keluar: *${formatRp(totalKeluar)}*\n`;
+            text += `--------------------------\n\n`;
+            
+            text += `📍 *PENDAPATAN PER MINGGU:*\n`;
+            const weeklyMasuk = {};
+            masuk.forEach(it => {
+                const w = getWeekOfMonth(it.dateObj);
+                weeklyMasuk[w] = (weeklyMasuk[w] || 0) + it.nominal;
+            });
+            Object.keys(weeklyMasuk).sort().forEach(w => {
+                text += `• Minggu ${w} : *${formatRp(weeklyMasuk[w])}*\n`;
+            });
+            text += `\n--------------------------\n`;
             text += `💰 *SALDO AKHIR: ${formatRp(totalMasuk - totalKeluar)}*`;
         }
 
