@@ -7,7 +7,7 @@
     'use strict';
 
     const DEFAULT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQfPsk4L2qxshegLjX6zTdY4mPv0e4xYFqbzYFKgqwHJrMuSXAeDJuIFAhdyK2vi4SwyJ2HXZX4h0un/pub?gid=0&single=true&output=csv';
-    const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwjc-EF5w7dVt7eBkb1k4W4yyubDTSN3PAOaqzmRkmDbpmAlUF58HYmb1uAO0JFCB3_/exec';
+    const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxSb3F1apIZ1TGxKC2v5BinPsWE2DTRA843kILk0NtQcwealsRHLaB3yfodJtTkVrhV/exec';
 
     // =================== STATE ===================
     const state = {
