@@ -38,6 +38,7 @@
         bindSettings();
         bindReports();
         bindAdminAuth();
+        bindConfig();
         
         if (state.sheetUrl) fetchData();
         
@@ -58,6 +59,25 @@
         
         $('#sheetUrl').value = state.sheetUrl;
         $('#scriptUrl').value = state.scriptUrl;
+    }
+
+    function updateAdminUI() {
+        const badge = $('#adminBadge');
+        const addBtn = $('#addDataBtn');
+        const adminBtn = $('#adminBtn');
+
+        if (state.isAdmin) {
+            badge.classList.remove('hidden');
+            addBtn.classList.remove('hidden');
+            adminBtn.classList.add('bg-emerald-500/30', 'text-emerald-300');
+            adminBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4"></i>';
+        } else {
+            badge.classList.add('hidden');
+            addBtn.classList.add('hidden');
+            adminBtn.classList.remove('bg-emerald-500/30', 'text-emerald-300');
+            adminBtn.innerHTML = '<i data-lucide="lock" class="w-4 h-4"></i>';
+        }
+        if (window.lucide) lucide.createIcons();
     }
 
     // =================== DATA FETCHING ===================
@@ -614,6 +634,10 @@
                 renderAll();
             }
         });
+    }
+
+    function bindConfig() {
+        $('#settingsBtn').addEventListener('click', () => $('#settingsModal').classList.remove('hidden'));
     }
 
     function bindNavigation() {
