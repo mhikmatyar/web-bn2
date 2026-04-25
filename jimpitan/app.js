@@ -19,6 +19,7 @@
         selectedYear: new Date().getFullYear(),
         isAdmin: false,
         editingIdx: null,
+        currentWeek: null,
         monthsNames: ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
     };
 
@@ -300,46 +301,90 @@
             weeks[weekNum].push(item);
         });
 
-        let html = '<div class="space-y-8 pb-24">';
-        // Show newest week first
-        Object.keys(weeks).sort((a, b) => b - a).forEach(w => {
-            const weekItems = weeks[w];
-            const weekTotal = weekItems.reduce((s, i) => s + i.nominal, 0);
-            
-            html += `
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between px-1">
-                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Minggu ${w}</span>
-                        <span class="text-[10px] font-bold text-emerald-600">${formatRp(weekTotal)}</span>
-                    </div>
-                    <div class="space-y-2">
-                        ${weekItems.map(item => `
-                            <div class="bg-white p-4 rounded-xl border border-slate-100 flex items-center gap-4 shadow-sm active:scale-95 transition-all" onclick="window.showDetail(${item.idx})">
-                                <div class="w-10 h-10 rounded-lg flex items-center justify-center ${item.tipe === 'Pemasukan' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}">
-                                    <i data-lucide="${item.tipe === 'Pemasukan' ? 'trending-up' : 'trending-down'}" class="w-5 h-5"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <div class="text-xs font-bold text-slate-800">${item.keterangan !== '-' ? item.keterangan : (item.tipe === 'Pemasukan' ? 'Jimpitan Warga' : 'Pengeluaran')}</div>
-                                    <div class="text-[10px] text-slate-400 font-bold">${getDayName(item.dateObj)}, ${item.tanggal}</div>
-                                </div>
-                                <div class="text-right">
-                                    <div class="text-sm font-black ${item.tipe === 'Pemasukan' ? 'text-emerald-600' : 'text-rose-600'}">${formatRp(item.nominal)}</div>
-                                    ${state.isAdmin ? `
-                                        <div class="flex gap-2 mt-1 justify-end">
-                                            <button onclick="event.stopPropagation(); window.handleEdit(${item.idx})" class="text-slate-400 hover:text-emerald-600"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
-                                            <button onclick="event.stopPropagation(); window.handleDelete(${item.idx})" class="text-slate-400 hover:text-rose-600"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
-                                        </div>
-                                    ` : ''}
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
+        const sortedWeeks = Object.keys(weeks).map(Number).sort((a, b) => b - a);
+        
+        // Auto-select latest week if none selected or if month changed
+        if (!state.currentWeek || !weeks[state.currentWeek]) {
+            state.currentWeek = sortedWeeks[0];
+        }
+
+        const activeWeekItems = weeks[state.currentWeek];
+        const weekTotal = activeWeekItems.reduce((s, i) => s + i.nominal, 0);
+
+        let html = '<div class="space-y-6 pb-24">';
+        
+        // PAGINATION NAVIGATION
+        html += `
+            <div class="flex items-center justify-between bg-slate-50 p-2 rounded-2xl border border-slate-100">
+                <button onclick="window.changeWeek(-1)" ${sortedWeeks.indexOf(state.currentWeek) === sortedWeeks.length - 1 ? 'disabled class="opacity-20"' : 'class="p-2 bg-white rounded-xl shadow-sm text-slate-600 active:scale-90"'} title="Minggu Sebelumnya">
+                    <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                </button>
+                <div class="text-center">
+                    <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Minggu ${state.currentWeek}</div>
+                    <div class="text-xs font-bold text-emerald-600">${formatRp(weekTotal)}</div>
                 </div>
-            `;
-        });
+                <button onclick="window.changeWeek(1)" ${sortedWeeks.indexOf(state.currentWeek) === 0 ? 'disabled class="opacity-20"' : 'class="p-2 bg-white rounded-xl shadow-sm text-slate-600 active:scale-90"'} title="Minggu Selanjutnya">
+                    <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+        `;
+
+        html += `
+            <div class="space-y-3">
+                <div class="space-y-2">
+                    ${activeWeekItems.map(item => `
+                        <div class="bg-white p-4 rounded-xl border border-slate-100 flex items-center gap-4 shadow-sm active:scale-95 transition-all" onclick="window.showDetail(${item.idx})">
+                            <div class="w-10 h-10 rounded-lg flex items-center justify-center ${item.tipe === 'Pemasukan' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}">
+                                <i data-lucide="${item.tipe === 'Pemasukan' ? 'trending-up' : 'trending-down'}" class="w-5 h-5"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="text-xs font-bold text-slate-800">${item.keterangan !== '-' ? item.keterangan : (item.tipe === 'Pemasukan' ? 'Jimpitan Warga' : 'Pengeluaran')}</div>
+                                <div class="text-[10px] text-slate-400 font-bold">${getDayName(item.dateObj)}, ${item.tanggal}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-sm font-black ${item.tipe === 'Pemasukan' ? 'text-emerald-600' : 'text-rose-600'}">${formatRp(item.nominal)}</div>
+                                ${state.isAdmin ? `
+                                    <div class="flex gap-2 mt-1 justify-end">
+                                        <button onclick="event.stopPropagation(); window.handleEdit(${item.idx})" class="text-slate-400 hover:text-emerald-600"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+                                        <button onclick="event.stopPropagation(); window.handleDelete(${item.idx})" class="text-slate-400 hover:text-rose-600"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+
         html += '</div>';
         container.innerHTML = html;
     }
+
+    window.changeWeek = (direction) => {
+        const typeFilter = state.activeTab === 'jimpitan' ? 'Pemasukan' : 'Pengeluaran';
+        const currentTabItems = state.filteredData.filter(d => d.tipe === typeFilter);
+        
+        const weeks = {};
+        currentTabItems.forEach(item => {
+            const weekNum = getWeekOfMonth(item.dateObj);
+            if (!weeks[weekNum]) weeks[weekNum] = [];
+            weeks[weekNum].push(item);
+        });
+
+        const sortedWeeks = Object.keys(weeks).map(Number).sort((a, b) => b - a);
+        const currentIndex = sortedWeeks.indexOf(state.currentWeek);
+        
+        // direction -1 (prev) means go to higher index in sortedWeeks (e.g. index 1 is Week 3 if index 0 is Week 4)
+        // Wait, the logic for 'Next/Prev' depends on how we view it.
+        // User said: "Next/Prev untuk melihat minggu2 lain, yang ditampilkan adalah minggu terbaru".
+        // So 'Prev' means older week? Let's say Prev = older.
+        
+        const nextIndex = currentIndex - direction; // direction 1 is 'Next' (newer), direction -1 is 'Prev' (older)
+        if (nextIndex >= 0 && nextIndex < sortedWeeks.length) {
+            state.currentWeek = sortedWeeks[nextIndex];
+            renderAll();
+        }
+    };
 
     // =================== INTERACTIVE ===================
     window.showDetail = (idx) => {
