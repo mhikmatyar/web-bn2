@@ -773,22 +773,36 @@
         const scale = state.chartScale || 'week';
         const filteredPemasukan = state.data.filter(d => d.tipe === 'Pemasukan');
 
+        let fullLabels = [];
+
         if (scale === 'day') {
             const daysData = {};
+            const dayMeta = {};
             state.filteredData.filter(d => d.tipe === 'Pemasukan').forEach(it => {
                 const d = it.dateObj.getDate();
                 daysData[d] = (daysData[d] || 0) + it.nominal;
+                if (!dayMeta[d]) dayMeta[d] = `${getDayName(it.dateObj)}, ${it.tanggal}`;
             });
-            labels = Object.keys(daysData).sort((a, b) => a - b).map(d => `${d}`);
+            labels = Object.keys(daysData).sort((a, b) => a - b);
             dataValues = labels.map(d => daysData[d]);
+            fullLabels = labels.map(d => dayMeta[d]);
         } else if (scale === 'week') {
             const weeksData = {};
-            state.filteredData.filter(d => d.tipe === 'Pemasukan').forEach(it => {
+            const weekMeta = {};
+            state.filteredData.filter(d => d.tipe === 'Pemasukan').sort((a,b) => a.dateObj - b.dateObj).forEach(it => {
                 const w = getWeekOfMonth(it.dateObj);
                 weeksData[w] = (weeksData[w] || 0) + it.nominal;
+                if (!weekMeta[w]) weekMeta[w] = { start: it.tanggal, end: it.tanggal };
+                else weekMeta[w].end = it.tanggal;
             });
             labels = Object.keys(weeksData).sort().map(w => `W${w}`);
             dataValues = Object.keys(weeksData).sort().map(w => weeksData[w]);
+            fullLabels = Object.keys(weeksData).sort().map(w => {
+                const m = weekMeta[w];
+                const s = m.start.split('-').slice(0, 2).join(' ');
+                const e = m.end.split('-').slice(0, 2).join(' ');
+                return `Minggu ${w} (${s} - ${e})`;
+            });
         } else if (scale === 'month') {
             const monthsData = {};
             filteredPemasukan.filter(it => it.dateObj.getFullYear() === state.selectedYear).forEach(it => {
@@ -797,6 +811,7 @@
             });
             labels = Object.keys(monthsData).sort((a, b) => a - b).map(m => state.monthsNames[m - 1].substring(0, 3));
             dataValues = Object.keys(monthsData).sort((a, b) => a - b).map(m => monthsData[m]);
+            fullLabels = Object.keys(monthsData).sort((a, b) => a - b).map(m => state.monthsNames[m-1] + ' ' + state.selectedYear);
         } else if (scale === 'year') {
             const yearsData = {};
             filteredPemasukan.forEach(it => {
@@ -805,6 +820,7 @@
             });
             labels = Object.keys(yearsData).sort();
             dataValues = labels.map(y => yearsData[y]);
+            fullLabels = labels.map(y => `Tahun ${y}`);
         }
 
         if (state.chart) state.chart.destroy();
@@ -829,7 +845,8 @@
                     legend: { display: false },
                     tooltip: {
                         callbacks: {
-                            label: (context) => formatRp(context.raw)
+                            title: (items) => fullLabels[items[0].dataIndex],
+                            label: (context) => `Total: ${formatRp(context.raw)}`
                         }
                     }
                 },
