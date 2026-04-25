@@ -35,7 +35,6 @@
         bindNavigation();
         bindEntryForm();
         bindFilters();
-        bindSettings();
         bindReports();
         bindAdminAuth();
         bindConfig();
@@ -49,7 +48,8 @@
         }
         
         setTimeout(() => {
-            $('#splashScreen').classList.add('fade-out');
+            const splash = $('#splashScreen');
+            if (splash) splash.classList.add('fade-out');
         }, 1500);
     }
 
@@ -701,45 +701,20 @@
         });
     }
 
-    function bindSettings() {
-        $('#adminBtn').addEventListener('click', () => {
-            if (state.isAdmin) {
-                $('#settingsModal').classList.remove('hidden');
-            } else {
-                const pass = prompt('Masukkan Password Admin:');
-                if (pass === 'adminbn2') {
-                    state.isAdmin = true;
-                    localStorage.setItem('bn2-isAdmin', 'true');
-                    updateAdminUI();
-                    showToast('Admin Terverifikasi', 'success');
-                } else {
-                    showToast('Password Salah', 'error');
-                }
-            }
-        });
-
-        $('#closeSettingsModal').addEventListener('click', () => $('#settingsModal').classList.add('hidden'));
-        
-        $('#saveConfigBtn').addEventListener('click', () => {
-            localStorage.setItem('bn2-jimpitanUrl', $('#sheetUrl').value);
-            localStorage.setItem('bn2-scriptUrl', $('#scriptUrl').value);
-            state.sheetUrl = $('#sheetUrl').value;
-            state.scriptUrl = $('#scriptUrl').value;
-            showToast('Konfigurasi disimpan', 'success');
-            fetchData();
-        });
-    }
-
-    function updateAdminUI() {
-        if (state.isAdmin) {
-            $('#adminBadge').classList.remove('hidden');
-            $('#addDataBtn').classList.remove('hidden');
-            renderAll();
-        }
-    }
-
     function updateCharts() {
         // Chart logic here (if needed)
     }
+
+    $('#saveConfigBtn').addEventListener('click', () => {
+        localStorage.setItem('bn2-jimpitanUrl', $('#sheetUrl').value);
+        localStorage.setItem('bn2-scriptUrl', $('#scriptUrl').value);
+        state.sheetUrl = $('#sheetUrl').value;
+        state.scriptUrl = $('#scriptUrl').value;
+        showToast('Konfigurasi disimpan', 'success');
+        fetchData();
+        $('#settingsModal').classList.add('hidden');
+    });
+
+    $('#closeSettingsModal').addEventListener('click', () => $('#settingsModal').classList.add('hidden'));
 
 })();
