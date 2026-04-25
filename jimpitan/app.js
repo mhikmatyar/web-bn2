@@ -37,6 +37,7 @@
         bindFilters();
         bindSettings();
         bindReports();
+        bindAdminAuth();
         
         if (state.sheetUrl) fetchData();
         
@@ -567,6 +568,52 @@
         document.body.removeChild(link);
         
         showToast('CSV Berhasil diunduh', 'success');
+    }
+
+    function bindAdminAuth() {
+        $('#adminBtn').addEventListener('click', () => {
+            if (state.isAdmin) {
+                if (confirm('Keluar dari mode Admin?')) {
+                    state.isAdmin = false;
+                    localStorage.removeItem('bn2-isAdmin');
+                    updateAdminUI();
+                    renderAll();
+                    showToast('Mode Admin dimatikan');
+                }
+            } else {
+                $('#authModal').classList.remove('hidden');
+                $('#adminPass').value = '';
+                $('#adminPass').focus();
+            }
+        });
+
+        $('#closeAuthBtn').addEventListener('click', () => $('#authModal').classList.add('hidden'));
+        
+        $('#confirmAuthBtn').addEventListener('click', () => {
+            const pass = $('#adminPass').value;
+            // Password disamarkan sedikit (adminbn2)
+            if (pass === 'adminbn2') {
+                state.isAdmin = true;
+                localStorage.setItem('bn2-isAdmin', 'true');
+                $('#authModal').classList.add('hidden');
+                updateAdminUI();
+                renderAll();
+                showToast('Login Admin Berhasil', 'success');
+            } else {
+                showToast('Password Salah!', 'error');
+                $('#adminPass').value = '';
+            }
+        });
+
+        // Logout jika klik badge admin
+        $('#adminBadge').addEventListener('click', () => {
+            if (confirm('Logout dari mode Admin?')) {
+                state.isAdmin = false;
+                localStorage.removeItem('bn2-isAdmin');
+                updateAdminUI();
+                renderAll();
+            }
+        });
     }
 
     function bindNavigation() {
