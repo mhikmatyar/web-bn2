@@ -91,9 +91,20 @@
                     </div>
                 </div>
 
-                <!-- CHART AREA -->
-                <div class="mt-4 pt-4 border-t border-white/10 h-32">
-                    <canvas id="jimpitanChart"></canvas>
+                <!-- CHART AREA WITH FILTER -->
+                <div class="mt-4 pt-4 border-t border-white/10">
+                    <div class="flex justify-between items-center mb-2">
+                        <p class="text-[8px] font-bold text-emerald-200 uppercase tracking-widest">Grafik Jimpitan</p>
+                        <div class="flex bg-white/10 rounded-lg p-0.5">
+                            <button onclick="window.setChartScale('day')" class="chart-scale-btn px-1.5 py-0.5 text-[7px] font-bold rounded-md transition-all text-white/50 hover:text-white" data-scale="day">H</button>
+                            <button onclick="window.setChartScale('week')" class="chart-scale-btn active px-1.5 py-0.5 text-[7px] font-bold rounded-md transition-all bg-white/20 text-white" data-scale="week">M</button>
+                            <button onclick="window.setChartScale('month')" class="chart-scale-btn px-1.5 py-0.5 text-[7px] font-bold rounded-md transition-all text-white/50 hover:text-white" data-scale="month">B</button>
+                            <button onclick="window.setChartScale('year')" class="chart-scale-btn px-1.5 py-0.5 text-[7px] font-bold rounded-md transition-all text-white/50 hover:text-white" data-scale="year">T</button>
+                        </div>
+                    </div>
+                    <div class="h-28">
+                        <canvas id="jimpitanChart"></canvas>
+                    </div>
                 </div>
             </div>
             </div>

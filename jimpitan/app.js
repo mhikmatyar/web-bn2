@@ -21,6 +21,7 @@
         editingIdx: null,
         currentWeek: null,
         chart: null,
+        chartScale: 'week',
         monthsNames: ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
     };
 
@@ -746,19 +747,65 @@
         }
     }
 
+    window.setChartScale = (scale) => {
+        state.chartScale = scale;
+        
+        // Update UI buttons
+        $$('.chart-scale-btn').forEach(btn => {
+            if (btn.dataset.scale === scale) {
+                btn.classList.add('bg-white/20', 'text-white');
+                btn.classList.remove('text-white/50');
+            } else {
+                btn.classList.remove('bg-white/20', 'text-white');
+                btn.classList.add('text-white/50');
+            }
+        });
+        
+        updateCharts();
+    };
+
     function updateCharts() {
         const ctx = $('#jimpitanChart');
         if (!ctx || !window.Chart) return;
 
-        // Group data by week for the current month
-        const weeksData = {};
-        state.filteredData.filter(d => d.tipe === 'Pemasukan').forEach(it => {
-            const w = getWeekOfMonth(it.dateObj);
-            weeksData[w] = (weeksData[w] || 0) + it.nominal;
-        });
+        let labels = [];
+        let dataValues = [];
+        const scale = state.chartScale || 'week';
+        const filteredPemasukan = state.data.filter(d => d.tipe === 'Pemasukan');
 
-        const labels = Object.keys(weeksData).sort().map(w => `W${w}`);
-        const data = Object.keys(weeksData).sort().map(w => weeksData[w]);
+        if (scale === 'day') {
+            const daysData = {};
+            state.filteredData.filter(d => d.tipe === 'Pemasukan').forEach(it => {
+                const d = it.dateObj.getDate();
+                daysData[d] = (daysData[d] || 0) + it.nominal;
+            });
+            labels = Object.keys(daysData).sort((a, b) => a - b).map(d => `${d}`);
+            dataValues = labels.map(d => daysData[d]);
+        } else if (scale === 'week') {
+            const weeksData = {};
+            state.filteredData.filter(d => d.tipe === 'Pemasukan').forEach(it => {
+                const w = getWeekOfMonth(it.dateObj);
+                weeksData[w] = (weeksData[w] || 0) + it.nominal;
+            });
+            labels = Object.keys(weeksData).sort().map(w => `W${w}`);
+            dataValues = Object.keys(weeksData).sort().map(w => weeksData[w]);
+        } else if (scale === 'month') {
+            const monthsData = {};
+            filteredPemasukan.filter(it => it.dateObj.getFullYear() === state.selectedYear).forEach(it => {
+                const m = it.dateObj.getMonth() + 1;
+                monthsData[m] = (monthsData[m] || 0) + it.nominal;
+            });
+            labels = Object.keys(monthsData).sort((a, b) => a - b).map(m => state.monthsNames[m - 1].substring(0, 3));
+            dataValues = Object.keys(monthsData).sort((a, b) => a - b).map(m => monthsData[m]);
+        } else if (scale === 'year') {
+            const yearsData = {};
+            filteredPemasukan.forEach(it => {
+                const y = it.dateObj.getFullYear();
+                yearsData[y] = (yearsData[y] || 0) + it.nominal;
+            });
+            labels = Object.keys(yearsData).sort();
+            dataValues = labels.map(y => yearsData[y]);
+        }
 
         if (state.chart) state.chart.destroy();
 
@@ -768,7 +815,7 @@
                 labels: labels,
                 datasets: [{
                     label: 'Jimpitan',
-                    data: data,
+                    data: dataValues,
                     backgroundColor: 'rgba(255, 255, 255, 0.4)',
                     borderColor: 'rgba(255, 255, 255, 0.8)',
                     borderWidth: 1,
