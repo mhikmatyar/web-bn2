@@ -31,26 +31,30 @@
     document.addEventListener('DOMContentLoaded', init);
 
     async function init() {
-        loadSettings();
-        bindNavigation();
-        bindEntryForm();
-        bindFilters();
-        bindReports();
-        bindAdminAuth();
-        bindConfig();
-        
-        if (state.sheetUrl) fetchData();
-        
-        // Check admin session
-        if (localStorage.getItem('bn2-isAdmin') === 'true') {
-            state.isAdmin = true;
-            updateAdminUI();
+        try {
+            loadSettings();
+            bindNavigation();
+            bindEntryForm();
+            bindFilters();
+            bindReports();
+            bindAdminAuth();
+            bindConfig();
+            
+            if (state.sheetUrl) fetchData();
+            
+            // Check admin session
+            if (localStorage.getItem('bn2-isAdmin') === 'true') {
+                state.isAdmin = true;
+                updateAdminUI();
+            }
+        } catch (e) {
+            console.error('Init Error:', e);
+        } finally {
+            setTimeout(() => {
+                const splash = $('#splashScreen');
+                if (splash) splash.classList.add('fade-out');
+            }, 1500);
         }
-        
-        setTimeout(() => {
-            const splash = $('#splashScreen');
-            if (splash) splash.classList.add('fade-out');
-        }, 1500);
     }
 
     function loadSettings() {
@@ -590,56 +594,6 @@
         showToast('CSV Berhasil diunduh', 'success');
     }
 
-    function bindAdminAuth() {
-        $('#adminBtn').addEventListener('click', () => {
-            if (state.isAdmin) {
-                if (confirm('Keluar dari mode Admin?')) {
-                    state.isAdmin = false;
-                    localStorage.removeItem('bn2-isAdmin');
-                    updateAdminUI();
-                    renderAll();
-                    showToast('Mode Admin dimatikan');
-                }
-            } else {
-                $('#authModal').classList.remove('hidden');
-                $('#adminPass').value = '';
-                $('#adminPass').focus();
-            }
-        });
-
-        $('#closeAuthBtn').addEventListener('click', () => $('#authModal').classList.add('hidden'));
-        
-        $('#confirmAuthBtn').addEventListener('click', () => {
-            const pass = $('#adminPass').value;
-            // Password disamarkan sedikit (adminbn2)
-            if (pass === 'adminbn2') {
-                state.isAdmin = true;
-                localStorage.setItem('bn2-isAdmin', 'true');
-                $('#authModal').classList.add('hidden');
-                updateAdminUI();
-                renderAll();
-                showToast('Login Admin Berhasil', 'success');
-            } else {
-                showToast('Password Salah!', 'error');
-                $('#adminPass').value = '';
-            }
-        });
-
-        // Logout jika klik badge admin
-        $('#adminBadge').addEventListener('click', () => {
-            if (confirm('Logout dari mode Admin?')) {
-                state.isAdmin = false;
-                localStorage.removeItem('bn2-isAdmin');
-                updateAdminUI();
-                renderAll();
-            }
-        });
-    }
-
-    function bindConfig() {
-        $('#settingsBtn').addEventListener('click', () => $('#settingsModal').classList.remove('hidden'));
-    }
-
     function bindNavigation() {
         $$('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -701,20 +655,80 @@
         });
     }
 
+    function bindAdminAuth() {
+        $('#adminBtn').addEventListener('click', () => {
+            if (state.isAdmin) {
+                if (confirm('Keluar dari mode Admin?')) {
+                    state.isAdmin = false;
+                    localStorage.removeItem('bn2-isAdmin');
+                    updateAdminUI();
+                    renderAll();
+                    showToast('Mode Admin dimatikan');
+                }
+            } else {
+                $('#authModal').classList.remove('hidden');
+                $('#adminPass').value = '';
+                $('#adminPass').focus();
+            }
+        });
+
+        $('#closeAuthBtn').addEventListener('click', () => $('#authModal').classList.add('hidden'));
+        
+        $('#confirmAuthBtn').addEventListener('click', () => {
+            const pass = $('#adminPass').value;
+            // Password disamarkan sedikit (adminbn2)
+            if (pass === 'adminbn2') {
+                state.isAdmin = true;
+                localStorage.setItem('bn2-isAdmin', 'true');
+                $('#authModal').classList.add('hidden');
+                updateAdminUI();
+                renderAll();
+                showToast('Login Admin Berhasil', 'success');
+            } else {
+                showToast('Password Salah!', 'error');
+                $('#adminPass').value = '';
+            }
+        });
+
+        // Logout jika klik badge admin
+        $('#adminBadge').addEventListener('click', () => {
+            if (confirm('Logout dari mode Admin?')) {
+                state.isAdmin = false;
+                localStorage.removeItem('bn2-isAdmin');
+                updateAdminUI();
+                renderAll();
+            }
+        });
+    }
+
+    function bindConfig() {
+        const sBtn = $('#settingsBtn');
+        const closeBtn = $('#closeSettingsModal');
+        const saveBtn = $('#saveConfigBtn');
+
+        if (sBtn) sBtn.addEventListener('click', () => $('#settingsModal').classList.remove('hidden'));
+        if (closeBtn) closeBtn.addEventListener('click', () => $('#settingsModal').classList.add('hidden'));
+        
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                const sUrl = $('#sheetUrl').value;
+                const scUrl = $('#scriptUrl').value;
+                
+                localStorage.setItem('bn2-jimpitanUrl', sUrl);
+                localStorage.setItem('bn2-scriptUrl', scUrl);
+                
+                state.sheetUrl = sUrl;
+                state.scriptUrl = scUrl;
+                
+                showToast('Konfigurasi disimpan', 'success');
+                $('#settingsModal').classList.add('hidden');
+                fetchData();
+            });
+        }
+    }
+
     function updateCharts() {
         // Chart logic here (if needed)
     }
-
-    $('#saveConfigBtn').addEventListener('click', () => {
-        localStorage.setItem('bn2-jimpitanUrl', $('#sheetUrl').value);
-        localStorage.setItem('bn2-scriptUrl', $('#scriptUrl').value);
-        state.sheetUrl = $('#sheetUrl').value;
-        state.scriptUrl = $('#scriptUrl').value;
-        showToast('Konfigurasi disimpan', 'success');
-        fetchData();
-        $('#settingsModal').classList.add('hidden');
-    });
-
-    $('#closeSettingsModal').addEventListener('click', () => $('#settingsModal').classList.add('hidden'));
 
 })();
