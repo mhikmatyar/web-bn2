@@ -177,6 +177,15 @@
             source: 'jimpitan'
         };
 
+        if (isEdit) {
+            const oldItem = state.data.find(d => d.idx === state.editingIdx);
+            if (oldItem) {
+                payload.oldTanggal = oldItem.tanggal;
+                payload.oldTipe = oldItem.tipe;
+                payload.oldNominal = oldItem.nominal;
+            }
+        }
+
         const success = await syncToGoogle(payload);
         if (success) {
             if (isEdit) {
