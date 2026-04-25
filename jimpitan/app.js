@@ -64,6 +64,11 @@
             const url = `${state.sheetUrl}&t=${Date.now()}`;
             const response = await fetch(url);
             const csvText = await response.text();
+            const lastSyncTime = $('#lastSyncTime');
+            if (lastSyncTime) {
+                lastSyncTime.textContent = `| ${new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`;
+                lastSyncTime.classList.remove('hidden');
+            }
             parseCSVData(csvText);
             localStorage.setItem('bn2-jimpitanCache', csvText);
         } catch (error) {
@@ -195,6 +200,12 @@
                     dateObj: dRaw
                 };
                 state.data.unshift(newItem);
+            }
+
+            const lastSyncTime = $('#lastSyncTime');
+            if (lastSyncTime) {
+                lastSyncTime.textContent = `| Terupdate`;
+                lastSyncTime.classList.remove('hidden');
             }
 
             $('#entryModal').classList.add('hidden');
