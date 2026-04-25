@@ -321,11 +321,11 @@
             const diff = ((totalMasuk - prevMasuk) / prevMasuk) * 100;
             trendDiv.classList.remove('hidden');
             if (diff >= 0) {
-                trendDiv.className = 'flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-black bg-white/20 text-white';
+                trendDiv.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-white/20 text-white';
                 $('#trendIcon').setAttribute('data-lucide', 'trending-up');
                 $('#trendValue').textContent = `+${diff.toFixed(1)}%`;
             } else {
-                trendDiv.className = 'flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-black bg-rose-500/50 text-white';
+                trendDiv.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-rose-500/50 text-white';
                 $('#trendIcon').setAttribute('data-lucide', 'trending-down');
                 $('#trendValue').textContent = `${diff.toFixed(1)}%`;
             }
