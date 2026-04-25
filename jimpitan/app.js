@@ -221,9 +221,6 @@
             $('#entryForm').reset();
             state.editingIdx = null;
             renderAll(); // Langsung muncul di layar
-            
-            // Tetap lakukan fetch di latar belakang (opsional)
-            setTimeout(() => fetchData(), 5000);
         }
     }
 
