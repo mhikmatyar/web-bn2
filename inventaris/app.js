@@ -571,8 +571,7 @@
                 if (state.syncQueue.length === 0) {
                     showToast('Semua data berhasil disinkronkan ke Google Sheets', 'success');
                     updateSyncStatus('connected', `Terakhir sync: ${new Date().toLocaleTimeString('id-ID')}`);
-                    // Fetch fresh data after full sync
-                    fetchData();
+                    // fetchData() removed to avoid Google Sheets CSV cache issues
                 } else {
                     // Process next item
                     state.isSyncing = false;
@@ -1771,8 +1770,7 @@
                 showPhotoPreview(item);
                 renderTable();
                 
-                // Fetch new data to ensure link is mapped
-                if (state.sheetUrl) fetchData();
+                // fetchData() removed to avoid Google Sheets CSV cache issues
             } else {
                 throw new Error(result.error || 'Gagal mengunggah foto');
             }
