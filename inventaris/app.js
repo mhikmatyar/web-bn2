@@ -16,6 +16,13 @@ let state = {
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
 
+function getBadgeStyle(kondisi) {
+    if (!kondisi) return 'bg-slate-100 text-slate-500';
+    if (kondisi.toLowerCase().includes('baik')) return 'bg-emerald-50 text-emerald-600';
+    if (kondisi.toLowerCase().includes('rusak')) return 'bg-rose-50 text-rose-600';
+    return 'bg-amber-50 text-amber-600';
+}
+
 // INITIALIZATION
 document.addEventListener('DOMContentLoaded', () => {
     fetchData();
@@ -117,13 +124,20 @@ function applyFilter() {
 function renderAll() {
     updateStats();
     const container = $('#inventoryGrid');
+    const paginContainer = $('#paginationContainer');
     
     if (state.filteredItems.length === 0) {
         container.innerHTML = `<div class="col-span-full py-20 text-center text-slate-400 font-bold">Tidak ada barang ditemukan.</div>`;
+        if (paginContainer) paginContainer.innerHTML = '';
         return;
     }
 
-    container.innerHTML = state.filteredItems.map(item => `
+    // PAGINATION LOGIC
+    const totalPages = Math.ceil(state.filteredItems.length / state.itemsPerPage);
+    const startIdx = (state.currentPage - 1) * state.itemsPerPage;
+    const paginatedItems = state.filteredItems.slice(startIdx, startIdx + state.itemsPerPage);
+
+    container.innerHTML = paginatedItems.map(item => `
         <div onclick="showDetail('${item.id}')" class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer active:scale-[0.98]">
             <div class="flex flex-col gap-4">
                 <div class="flex justify-between items-start">
@@ -157,10 +171,46 @@ function renderAll() {
         </div>
     `).join('');
 
+    renderPagination(totalPages);
+
     // Toggle FAB visibility
     $('#mobileAddBtn').style.display = state.isAdmin ? 'flex' : 'none';
     
     lucide.createIcons();
+}
+
+function renderPagination(totalPages) {
+    const container = $('#paginationContainer');
+    if (!container) return;
+    
+    if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+
+    container.innerHTML = `
+        <button onclick="changePage(-1)" ${state.currentPage === 1 ? 'disabled' : ''} 
+            class="flex-1 touch-target flex items-center justify-center gap-2 py-3 px-4 bg-slate-100 rounded-xl font-black text-[11px] uppercase tracking-widest text-slate-400 disabled:opacity-30">
+            <i data-lucide="chevron-left" class="w-4 h-4"></i> Prev
+        </button>
+        
+        <div class="px-4 text-center">
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Halaman</p>
+            <p class="text-sm font-black text-slate-800">${state.currentPage} <span class="text-slate-300 mx-1">/</span> ${totalPages}</p>
+        </div>
+
+        <button onclick="changePage(1)" ${state.currentPage === totalPages ? 'disabled' : ''} 
+            class="flex-1 touch-target flex items-center justify-center gap-2 py-3 px-4 bg-accent text-white rounded-xl font-black text-[11px] uppercase tracking-widest shadow-lg shadow-emerald-100 disabled:opacity-30">
+            Next <i data-lucide="chevron-right" class="w-4 h-4"></i>
+        </button>
+    `;
+    lucide.createIcons();
+}
+
+function changePage(delta) {
+    state.currentPage += delta;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    renderAll();
 }
 
 function updateStats() {
