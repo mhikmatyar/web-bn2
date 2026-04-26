@@ -51,6 +51,28 @@
         $('#openSidebar').onclick = () => $('#sidebar').classList.remove('sidebar-closed');
         $('#closeSidebar').onclick = () => $('#sidebar').classList.add('sidebar-closed');
         
+        // Navigation clicks
+        $$('.nav-item').forEach(item => {
+            item.onclick = (e) => {
+                e.preventDefault();
+                $$('.nav-item').forEach(nav => {
+                    nav.classList.remove('sidebar-active', 'bg-emerald-600', 'text-white');
+                    nav.classList.add('hover:bg-slate-800');
+                });
+                
+                item.classList.add('sidebar-active');
+                item.classList.remove('hover:bg-slate-800');
+                
+                const page = item.dataset.page;
+                if (page === 'inventaris') {
+                    $('#inventoryContainer').scrollIntoView({ behavior: 'smooth' });
+                }
+                
+                $('#sidebar').classList.add('sidebar-closed');
+                renderAll();
+            };
+        });
+
         // Refresh & Auth
         $('#refreshBtn').onclick = fetchData;
         $('#adminLoginBtn').onclick = () => {
@@ -172,14 +194,18 @@
         
         // Stats Calculation
         const totalItems = state.items.reduce((s, i) => s + i.jumlah, 0);
-        const totalNilai = state.items.reduce((s, i) => s + (i.jumlah * i.hargaSatuan), 0);
         const categories = new Set(state.items.map(i => i.kategori).filter(Boolean));
-        const rusakCount = state.items.filter(i => i.kondisi.toLowerCase().includes('rusak')).length;
+        
+        const baikCount = state.items.filter(i => i.kondisi.toLowerCase() === 'baik').reduce((s, i) => s + i.jumlah, 0);
+        const rusakCount = state.items.filter(i => i.kondisi.toLowerCase().includes('rusak')).reduce((s, i) => s + i.jumlah, 0);
+
+        const baikPersen = totalItems > 0 ? Math.round((baikCount / totalItems) * 100) : 0;
+        const rusakPersen = totalItems > 0 ? Math.round((rusakCount / totalItems) * 100) : 0;
 
         $('#statTotal').textContent = totalItems;
-        $('#statNilai').textContent = formatRp(totalNilai);
         $('#statKat').textContent = categories.size;
-        $('#statRusak').textContent = rusakCount;
+        $('#statBaikPersen').textContent = baikPersen + '%';
+        $('#statRusakPersen').textContent = rusakPersen + '%';
 
         // Filter Logic
         state.filteredItems = state.items.filter(i => {

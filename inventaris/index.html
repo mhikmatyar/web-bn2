@@ -35,14 +35,14 @@
             </div>
             
             <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
-                <a href="#" class="nav-item sidebar-active flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-all" data-page="inventaris">
+                <a href="#" id="nav-dashboard" class="nav-item sidebar-active flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-all" data-page="inventaris">
                     <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
                 </a>
-                <a href="#" class="nav-item flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-slate-800 transition-all font-bold" data-page="inventaris">
+                <a href="#" id="nav-inventaris" class="nav-item flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-slate-800 transition-all font-bold" data-page="inventaris">
                     <i data-lucide="boxes" class="w-5 h-5"></i> Data Inventaris
                 </a>
                 <div class="pt-4 pb-2 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Administrator</div>
-                <a href="#" id="settingsNav" class="nav-item flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-slate-800 transition-all font-bold" data-page="settings">
+                <a href="#" id="nav-settings" class="nav-item flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-slate-800 transition-all font-bold" data-page="settings">
                     <i data-lucide="settings" class="w-5 h-5"></i> Pengaturan
                 </a>
                 <a href="#" id="adminLoginBtn" class="flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-slate-800 transition-all font-bold text-emerald-400">
@@ -93,19 +93,9 @@
                             </div>
                             <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Barang</p>
                         </div>
-                        <h3 id="statTotal" class="text-3xl font-black text-slate-800">0 <span class="text-xs text-slate-400 font-bold uppercase ml-1">Item</span></h3>
+                        <h3 id="statTotal" class="text-3xl font-black text-slate-800">0</h3>
                     </div>
                     
-                    <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col justify-between">
-                        <div>
-                            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-4">
-                                <i data-lucide="banknote" class="w-6 h-6"></i>
-                            </div>
-                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Nilai Aset</p>
-                        </div>
-                        <h3 id="statNilai" class="text-2xl font-black text-slate-800 italic">Rp 0</h3>
-                    </div>
-
                     <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col justify-between">
                         <div>
                             <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mb-4">
@@ -113,17 +103,27 @@
                             </div>
                             <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Kategori</p>
                         </div>
-                        <h3 id="statKat" class="text-3xl font-black text-slate-800">0 <span class="text-xs text-slate-400 font-bold uppercase ml-1">Jenis</span></h3>
+                        <h3 id="statKat" class="text-3xl font-black text-slate-800">0</h3>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col justify-between">
+                        <div>
+                            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-4">
+                                <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                            </div>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Kondisi Baik</p>
+                        </div>
+                        <h3 id="statBaikPersen" class="text-3xl font-black text-emerald-600">0%</h3>
                     </div>
 
                     <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col justify-between">
                         <div>
                             <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mb-4">
-                                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                                <i data-lucide="alert-circle" class="w-6 h-6"></i>
                             </div>
                             <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Kondisi Rusak</p>
                         </div>
-                        <h3 id="statRusak" class="text-3xl font-black text-rose-600">0 <span class="text-xs text-rose-300 font-bold uppercase ml-1">Item</span></h3>
+                        <h3 id="statRusakPersen" class="text-3xl font-black text-rose-600">0%</h3>
                     </div>
                 </section>
 
