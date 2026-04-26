@@ -14,6 +14,11 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .sidebar-active { background-color: #047857; color: white; }
+        .sidebar-minimized { width: 5rem !important; }
+        .sidebar-minimized .sidebar-text, .sidebar-minimized .sidebar-header span { display: none; }
+        .sidebar-minimized .nav-item { justify-content: center; padding-left: 0; padding-right: 0; }
+        .sidebar-minimized .sidebar-header { justify-content: center; padding: 1.5rem 0; }
+        .sidebar-minimized .sidebar-divider-text { display: none; }
         @media (max-width: 768px) {
             .sidebar-closed { transform: translateX(-100%); }
         }
@@ -24,32 +29,33 @@
     <div class="flex h-screen overflow-hidden">
         <!-- SIDEBAR -->
         <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-slate-300 transform transition-transform duration-300 ease-in-out sidebar-closed md:relative md:translate-x-0 flex flex-col">
-            <div class="p-6 flex items-center justify-between border-b border-slate-800">
+            <div class="p-6 flex items-center justify-between border-b border-slate-800 sidebar-header">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-900/20">
+                    <div class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-900/20 shrink-0">
                         <i data-lucide="building-2" class="w-6 h-6 text-white"></i>
                     </div>
                     <span class="font-black text-white tracking-tight text-lg">InvenBN2</span>
                 </div>
+                <button id="minimizeSidebar" class="hidden md:block text-slate-500 hover:text-white transition-all"><i data-lucide="chevron-left" class="w-5 h-5" id="minimizeIcon"></i></button>
                 <button id="closeSidebar" class="md:hidden text-slate-400"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
             
             <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
                 <a href="#" id="nav-dashboard" class="nav-item sidebar-active flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-all" data-page="inventaris">
-                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+                    <i data-lucide="layout-dashboard" class="w-5 h-5 shrink-0"></i> <span class="sidebar-text">Dashboard</span>
                 </a>
                 <a href="#" id="nav-inventaris" class="nav-item flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-slate-800 transition-all font-bold" data-page="inventaris">
-                    <i data-lucide="boxes" class="w-5 h-5"></i> Data Inventaris
+                    <i data-lucide="boxes" class="w-5 h-5 shrink-0"></i> <span class="sidebar-text">Data Inventaris</span>
                 </a>
-                <div class="pt-4 pb-2 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Administrator</div>
+                <div class="pt-4 pb-2 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest sidebar-divider-text">Administrator</div>
                 <a href="#" id="nav-settings" class="nav-item flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-slate-800 transition-all font-bold" data-page="settings">
-                    <i data-lucide="settings" class="w-5 h-5"></i> Pengaturan
+                    <i data-lucide="settings" class="w-5 h-5 shrink-0"></i> <span class="sidebar-text">Pengaturan</span>
                 </a>
                 <a href="#" id="adminLoginBtn" class="flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-slate-800 transition-all font-bold text-emerald-400">
-                    <i data-lucide="user-cog" class="w-5 h-5"></i> Login Admin
+                    <i data-lucide="user-cog" class="w-5 h-5 shrink-0"></i> <span class="sidebar-text">Login Admin</span>
                 </a>
                 <a href="#" id="adminLogoutBtn" class="hidden flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-rose-900/30 text-rose-400 transition-all font-bold">
-                    <i data-lucide="log-out" class="w-5 h-5"></i> Logout
+                    <i data-lucide="log-out" class="w-5 h-5 shrink-0"></i> <span class="sidebar-text">Logout</span>
                 </a>
             </nav>
 
@@ -239,6 +245,24 @@
             </div>
             <div class="p-8 bg-slate-50 border-t border-slate-100">
                 <button id="submitBtn" class="w-full py-5 rounded-2xl bg-emerald-600 text-white font-black shadow-2xl shadow-emerald-200 active:scale-95 transition-all text-lg uppercase tracking-widest">Simpan Data</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DETAIL MODAL -->
+    <div id="detailModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[110] flex items-center justify-center p-6 hidden">
+        <div class="bg-white rounded-[3rem] w-full max-w-lg shadow-2xl overflow-hidden border border-white/20">
+            <div class="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h3 class="text-xl font-black text-slate-800 uppercase tracking-tight">Detail Inventaris</h3>
+                <button onclick="document.getElementById('detailModal').classList.add('hidden')" class="p-2 text-slate-400 hover:text-slate-600 transition-all">
+                    <i data-lucide="x" class="w-7 h-7"></i>
+                </button>
+            </div>
+            <div id="detailContent" class="p-8 space-y-6 max-h-[70vh] overflow-y-auto">
+                <!-- Content injected via JS -->
+            </div>
+            <div class="p-8 bg-slate-50 border-t border-slate-100 flex gap-4">
+                <button onclick="document.getElementById('detailModal').classList.add('hidden')" class="w-full py-5 rounded-2xl bg-slate-200 text-slate-600 font-black uppercase tracking-widest text-xs">Tutup</button>
             </div>
         </div>
     </div>
