@@ -240,58 +240,60 @@
     </div>
 
     <!-- ITEM MODAL -->
-    <div id="itemModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[100] flex items-end sm:items-center justify-center p-0 sm:p-6 hidden">
-        <div class="bg-white rounded-t-[3rem] sm:rounded-[3rem] w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border-t border-white/20">
-            <div class="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <h3 id="modalTitle" class="text-xl font-black text-slate-800 uppercase tracking-tight">Formulir Barang</h3>
+    <div id="itemModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[110] flex items-center justify-center p-6 hidden">
+        <div class="bg-white rounded-[2rem] w-full max-w-lg shadow-2xl overflow-hidden border border-white/20">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h3 id="modalTitle" class="text-lg font-black text-slate-800 uppercase tracking-tight">Tambah Barang</h3>
                 <button onclick="document.getElementById('itemModal').classList.add('hidden')" class="p-2 text-slate-400 hover:text-slate-600 transition-all">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
-            <div class="flex-1 overflow-y-auto p-8 space-y-6">
+            <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto no-scrollbar">
                 <input type="hidden" id="formMode" value="add">
                 <input type="hidden" id="formNo" value="">
                 <input type="hidden" id="formNoInv" value="">
                 
-                <div class="space-y-2">
+                <div class="space-y-1.5">
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nama Barang</label>
-                    <input type="text" id="addNama" placeholder="Misal: Bor Tangan Bosch" class="w-full p-5 rounded-2xl bg-slate-100 border-none font-bold text-slate-700 shadow-inner">
+                    <input type="text" id="addNama" placeholder="Contoh: Bor Tangan Bosch" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all font-bold text-slate-700">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-2">
+                    <div class="space-y-1.5">
                         <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Kategori</label>
-                        <select id="addKategori" class="w-full p-5 rounded-2xl bg-slate-100 border-none font-bold text-slate-700 shadow-inner appearance-none">
+                        <select id="addKategori" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 outline-none font-bold text-slate-700 appearance-none">
                             <option value="Elektronik">Elektronik</option>
-                            <option value="Furniture">Mebel</option>
-                            <option value="Perlengkapan">Perlengkapan</option>
+                            <option value="Mebel">Mebel</option>
+                            <option value="Kendaraan">Kendaraan</option>
+                            <option value="Aset">Aset</option>
+                            <option value="Lainnya">Lainnya</option>
                         </select>
                     </div>
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Jumlah</label>
-                        <input type="number" id="addJumlah" value="1" class="w-full p-5 rounded-2xl bg-slate-100 border-none font-bold text-slate-700 shadow-inner">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-2">
+                    <div class="space-y-1.5">
                         <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Kondisi</label>
-                        <select id="addKondisi" class="w-full p-5 rounded-2xl bg-slate-100 border-none font-bold text-slate-700 shadow-inner appearance-none">
+                        <select id="addKondisi" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 outline-none font-bold text-slate-700 appearance-none">
                             <option value="Baik">Baik</option>
                             <option value="Rusak Ringan">Rusak Ringan</option>
                             <option value="Rusak Berat">Rusak Berat</option>
                         </select>
                     </div>
-                    <div class="space-y-2">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Jumlah</label>
+                        <input type="number" id="addJumlah" value="1" min="1" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 outline-none font-bold text-slate-700">
+                    </div>
+                    <div class="space-y-1.5">
                         <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Lokasi</label>
-                        <input type="text" id="addLokasi" placeholder="Gudang B" class="w-full p-5 rounded-2xl bg-slate-100 border-none font-bold text-slate-700 shadow-inner">
+                        <input type="text" id="addLokasi" placeholder="Gudang B" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 outline-none font-bold text-slate-700">
                     </div>
                 </div>
-                <div class="space-y-2">
+                <div class="space-y-1.5">
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Keterangan</label>
-                    <textarea id="addKeterangan" placeholder="..." class="w-full p-5 rounded-2xl bg-slate-100 border-none font-bold text-slate-700 shadow-inner h-24"></textarea>
+                    <textarea id="addKeterangan" rows="2" placeholder="..." class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 outline-none font-bold text-slate-700 h-24 no-scrollbar"></textarea>
                 </div>
             </div>
-            <div class="p-8 bg-slate-50 border-t border-slate-100">
-                <button id="submitBtn" class="w-full py-5 rounded-2xl bg-emerald-600 text-white font-black shadow-2xl shadow-emerald-200 active:scale-95 transition-all text-lg uppercase tracking-widest">Simpan Data</button>
+            <div class="p-6 bg-slate-50 border-t border-slate-100">
+                <button id="submitBtn" class="w-full py-4 rounded-xl bg-emerald-600 text-white font-black shadow-lg shadow-emerald-900/20 active:scale-95 transition-all uppercase tracking-widest text-xs">Simpan Data</button>
             </div>
         </div>
     </div>
