@@ -48,25 +48,33 @@
 
     function bindEvents() {
         // Sidebar Toggle
-        $('#openSidebar').onclick = () => {
+        $('#openSidebar').onclick = openDrawer;
+        $('#closeSidebar').onclick = closeDrawer;
+        $('#sidebarBackdrop').onclick = closeDrawer;
+        
+        // Mobile Bottom Menu Toggle
+        if ($('#mobileMenuBtn')) {
+            $('#mobileMenuBtn').onclick = openDrawer;
+        }
+        
+        function openDrawer() {
             $('#sidebar').classList.remove('sidebar-closed');
             $('#sidebarBackdrop').classList.add('backdrop-active');
-        };
-        $('#closeSidebar').onclick = () => {
+        }
+        
+        function closeDrawer() {
             $('#sidebar').classList.add('sidebar-closed');
             $('#sidebarBackdrop').classList.remove('backdrop-active');
-        };
-        $('#sidebarBackdrop').onclick = () => {
-            $('#sidebar').classList.add('sidebar-closed');
-            $('#sidebarBackdrop').classList.remove('backdrop-active');
-        };
+        }
         
         $('#minimizeSidebar').onclick = (e) => {
             e.stopPropagation();
+            // Only minimize on desktop
+            if (window.innerWidth < 768) return;
+            
             const sidebar = $('#sidebar');
             const isMin = sidebar.classList.toggle('sidebar-minimized');
             
-            // Toggle icon with Lucide
             const icon = $('#minimizeIcon');
             if (icon) {
                 icon.setAttribute('data-lucide', isMin ? 'chevron-right' : 'chevron-left');
@@ -74,24 +82,28 @@
             }
         };
         
-        // Navigation clicks
+        // Navigation clicks (Desktop & Mobile Bottom Nav)
         $$('.nav-item').forEach(item => {
             item.onclick = (e) => {
                 e.preventDefault();
+                const page = item.dataset.page;
+                
+                // Update All Nav Items (Sidebar & Bottom)
                 $$('.nav-item').forEach(nav => {
-                    nav.classList.remove('sidebar-active', 'bg-emerald-600', 'text-white');
-                    nav.classList.add('hover:bg-slate-800');
+                    nav.classList.remove('sidebar-active', 'bg-emerald-600', 'text-white', 'text-emerald-600');
+                    nav.classList.add('text-slate-400');
+                    if (nav.tagName === 'A') nav.classList.add('hover:bg-slate-800');
                 });
                 
-                item.classList.add('sidebar-active');
-                item.classList.remove('hover:bg-slate-800');
+                // Set Active Class
+                item.classList.add('sidebar-active', 'text-emerald-600');
+                item.classList.remove('text-slate-400', 'hover:bg-slate-800');
                 
-                const page = item.dataset.page;
                 if (page === 'inventaris') {
                     $('#inventoryContainer').scrollIntoView({ behavior: 'smooth' });
                 }
                 
-                $('#sidebar').classList.add('sidebar-closed');
+                closeDrawer();
                 renderAll();
             };
         });
