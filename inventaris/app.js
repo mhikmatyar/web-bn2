@@ -52,16 +52,24 @@ function bindEvents() {
 
     // NAVIGATION
     $$('.nav-item, .mobile-nav-item').forEach(btn => {
-        btn.onclick = () => {
+        btn.onclick = (e) => {
+            e.preventDefault();
             const page = btn.dataset.page;
-            if (page === 'inventaris') {
+            if (page === 'pengaturan') {
+                showAuth();
+            } else if (page === 'inventaris') {
                 $('#inventoryGrid').scrollIntoView({ behavior: 'smooth' });
-            }
-            if (page === 'dashboard') {
+            } else {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         };
     });
+
+    // FORM SUBMIT
+    $('#itemForm').onsubmit = (e) => {
+        e.preventDefault();
+        saveItem();
+    };
 
     // ADMIN ACTIONS
     $('#mobileAddBtn').onclick = () => showItemForm();
@@ -98,33 +106,40 @@ function renderAll() {
     container.innerHTML = state.filteredItems.map(item => `
         <div onclick="showDetail('${item.id}')" class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer active:scale-[0.98]">
             <div class="flex flex-col gap-4">
-                <div>
-                    <span class="inline-block px-3 py-1 rounded-full bg-slate-100 text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">${item.kategori}</span>
-                    <h3 class="text-[18px] font-black text-slate-800 leading-tight">${item.namaBarang}</h3>
-                    <p class="text-[13px] font-bold text-slate-400 mt-1">${item.noInventaris}</p>
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <span class="inline-block px-3 py-1 rounded-full bg-slate-100 text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">${item.kategori}</span>
+                        <h3 class="text-[18px] font-black text-slate-800 leading-tight">${item.namaBarang}</h3>
+                        <p class="text-[13px] font-bold text-slate-400 mt-1">${item.noInventaris}</p>
+                    </div>
+                    ${state.isAdmin ? `
+                        <div class="flex gap-2">
+                            <button onclick="event.stopPropagation(); deleteItem('${item.id}')" class="w-10 h-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center">
+                                <i data-lucide="trash-2" class="w-5 h-5"></i>
+                            </button>
+                            <button onclick="event.stopPropagation(); showItemForm('${item.id}')" class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
+                                <i data-lucide="edit-3" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    ` : ''}
                 </div>
                 
                 <div class="flex items-center justify-between border-t border-slate-50 pt-4">
                     <div class="flex items-center gap-2">
                         <i data-lucide="map-pin" class="w-4 h-4 text-slate-300"></i>
-                        <span class="text-[14px] font-bold text-slate-600">${item.lokasi || '-'}</span>
+                        <span class="text-[14px] font-bold text-slate-600 truncate max-w-[120px]">${item.lokasi || '-'}</span>
                     </div>
                     <span class="px-4 py-1.5 rounded-full text-[12px] font-black uppercase tracking-wider ${getBadgeStyle(item.kondisi)}">
                         ${item.kondisi}
                     </span>
                 </div>
-
-                ${state.isAdmin ? `
-                    <div class="flex gap-2 pt-2">
-                        <button onclick="event.stopPropagation(); showItemForm('${item.id}')" class="flex-1 py-3 bg-emerald-50 text-emerald-600 rounded-xl font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2">
-                            <i data-lucide="edit-3" class="w-4 h-4"></i> EDIT
-                        </button>
-                    </div>
-                ` : ''}
             </div>
         </div>
     `).join('');
 
+    // Toggle FAB visibility
+    $('#mobileAddBtn').style.display = state.isAdmin ? 'flex' : 'none';
+    
     lucide.createIcons();
 }
 
@@ -146,7 +161,6 @@ function getBadgeStyle(kondisi) {
     return 'bg-rose-50 text-rose-600';
 }
 
-// DETAIL PANEL (BOTTOM SHEET)
 function showDetail(id) {
     const item = state.items.find(i => i.id === id);
     if (!item) return;
@@ -188,6 +202,13 @@ function showDetail(id) {
                 <p class="text-[18px] font-black tracking-widest relative z-10">${item.noInventaris}</p>
             </div>
 
+            ${item.keterangan ? `
+                <div class="p-5 bg-emerald-50/50 rounded-2xl border border-emerald-100">
+                    <p class="text-[12px] font-bold text-emerald-600 uppercase mb-2">Keterangan Tambahan</p>
+                    <p class="text-[14px] font-bold text-slate-600 leading-relaxed">${item.keterangan}</p>
+                </div>
+            ` : ''}
+
             <div class="pt-2">
                 <button onclick="hideDetail()" class="w-full py-5 bg-slate-100 rounded-2xl font-black text-slate-500 uppercase tracking-widest text-xs touch-target">Tutup Panel</button>
             </div>
@@ -228,7 +249,7 @@ function renderNumpad() {
 function handlePin(key) {
     if (key === 'C') state.pinInput = '';
     else if (key === '⌫') state.pinInput = state.pinInput.slice(0, -1);
-    else if (state.pinInput.length < 4) state.pinInput += key;
+    else if (state.pinInput.length < 6) state.pinInput += key;
     
     updatePinDots();
 }
@@ -241,7 +262,7 @@ function updatePinDots() {
 }
 
 function validatePIN() {
-    if (state.pinInput === '1234' || state.pinInput === ADMIN_PIN) { // Example PIN
+    if (state.pinInput === ADMIN_PIN) {
         state.isAdmin = true;
         hideAuth();
         renderAll();
@@ -263,17 +284,21 @@ function hideAuth() {
     $('#authModal').classList.add('hidden');
 }
 
-// FORM LOGIC
+// CRUD OPERATIONS
 function showItemForm(id = null) {
-    // Basic implementation for now
     $('#itemModal').classList.remove('hidden');
     $('#modalBackdrop').classList.remove('hidden');
+    
     if (id) {
         const item = state.items.find(i => i.id === id);
         $('#formTitle').innerText = 'Edit Barang';
         $('#formId').value = item.id;
         $('#inputNama').value = item.namaBarang;
-        // fill other fields...
+        $('#inputKategori').value = item.kategori;
+        $('#inputJumlah').value = item.jumlah;
+        $('#inputKondisi').value = item.kondisi;
+        $('#inputLokasi').value = item.lokasi;
+        $('#inputKeterangan').value = item.keterangan || '';
     } else {
         $('#formTitle').innerText = 'Tambah Barang Baru';
         $('#itemForm').reset();
@@ -284,4 +309,67 @@ function showItemForm(id = null) {
 function hideItemForm() {
     $('#itemModal').classList.add('hidden');
     $('#modalBackdrop').classList.add('hidden');
+}
+
+async function saveItem() {
+    const submitBtn = $('#submitBtn');
+    const originalText = submitBtn.innerText;
+    submitBtn.innerText = 'MENYIMPAN...';
+    submitBtn.disabled = true;
+
+    const formData = {
+        action: $('#formId').value ? 'edit' : 'add',
+        noInventaris: $('#formId').value || `BN2-${Date.now()}`,
+        namaBarang: $('#inputNama').value,
+        kategori: $('#inputKategori').value,
+        jumlah: $('#inputJumlah').value,
+        kondisi: $('#inputKondisi').value,
+        lokasi: $('#inputLokasi').value,
+        keterangan: $('#inputKeterangan').value
+    };
+
+    try {
+        const response = await fetch(GAS_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+        });
+
+        // Optimistic Update
+        if (formData.action === 'add') {
+            state.items.unshift({...formData, id: formData.noInventaris, isPending: true});
+        } else {
+            const idx = state.items.findIndex(i => i.id === formData.noInventaris);
+            state.items[idx] = {...formData, id: formData.noInventaris, isPending: true};
+        }
+        
+        hideItemForm();
+        renderAll();
+        alert('Permintaan terkirim! Data akan sinkron dalam beberapa menit.');
+    } catch (error) {
+        alert('Gagal mengirim data!');
+    } finally {
+        submitBtn.innerText = originalText;
+        submitBtn.disabled = false;
+    }
+}
+
+async function deleteItem(id) {
+    if (!confirm('Hapus barang ini secara permanen?')) return;
+
+    try {
+        await fetch(GAS_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'delete', noInventaris: id })
+        });
+
+        state.items = state.items.filter(i => i.id !== id);
+        renderAll();
+        alert('Permintaan hapus terkirim!');
+    } catch (error) {
+        alert('Gagal menghapus!');
+    }
 }
