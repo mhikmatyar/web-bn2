@@ -249,32 +249,29 @@
         }
 
         container.innerHTML = state.filteredItems.map(item => `
-            <div class="bg-white rounded-[1.5rem] sm:rounded-[2.5rem] p-4 sm:p-6 shadow-sm border border-slate-100 relative group transition-all hover:shadow-xl hover:-translate-y-1">
+            <div class="bg-white rounded-[1.25rem] sm:rounded-[2.5rem] p-3.5 sm:p-6 shadow-sm border border-slate-100 relative group transition-all hover:shadow-xl hover:-translate-y-1 card-compact">
                 ${item.isPending ? `
-                    <div class="absolute inset-x-8 top-0 h-1 bg-amber-400 rounded-b-full animate-pulse shadow-[0_0_10px_rgba(251,191,36,0.5)]"></div>
-                    <div class="absolute top-4 right-4 flex items-center gap-1.5 bg-amber-50 text-amber-600 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest">
-                        <i data-lucide="refresh-cw" class="w-2.5 h-2.5 animate-spin"></i> Sync...
-                    </div>
+                    <div class="absolute inset-x-8 top-0 h-1 bg-amber-400 rounded-b-full animate-pulse"></div>
                 ` : ''}
                 
-                <div class="mb-3 sm:mb-5">
-                    <span class="inline-block px-2 py-0.5 rounded-lg bg-slate-100 text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 sm:mb-2">${item.kategori}</span>
-                    <h3 class="text-base sm:text-xl font-black text-slate-800 leading-tight mb-1 text-mobile-title">${item.namaBarang}</h3>
-                    <p class="text-[8px] sm:text-[10px] font-bold text-slate-400 tracking-wider text-mobile-meta">${item.noInventaris}</p>
+                <div class="mb-2.5 sm:mb-5">
+                    <span class="inline-block px-2 py-0.5 rounded-lg bg-slate-100 text-[7px] sm:text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 sm:mb-2">${item.kategori}</span>
+                    <h3 class="text-sm sm:text-xl font-black text-slate-800 leading-tight mb-0.5 text-mobile-title">${item.namaBarang}</h3>
+                    <p class="text-[7px] sm:text-[10px] font-bold text-slate-400 tracking-wider text-mobile-meta">${item.noInventaris}</p>
                 </div>
 
-                <div class="grid grid-cols-2 gap-2 sm:gap-3 mb-4 sm:mb-6">
-                    <div class="bg-slate-50 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-100/50">
-                        <p class="text-[7px] sm:text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5 sm:mb-1">Kondisi</p>
+                <div class="grid grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-6">
+                    <div class="bg-slate-50 p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-100/50">
+                        <p class="text-[7px] sm:text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Kondisi</p>
                         <p class="text-[10px] sm:text-xs font-black ${getKondisiColor(item.kondisi)}">${item.kondisi}</p>
                     </div>
-                    <div class="bg-slate-50 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-100/50">
-                        <p class="text-[7px] sm:text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5 sm:mb-1">Lokasi</p>
+                    <div class="bg-slate-50 p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-100/50">
+                        <p class="text-[7px] sm:text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Lokasi</p>
                         <p class="text-[10px] sm:text-xs font-black text-slate-700 truncate">${item.lokasi || '-'}</p>
                     </div>
                 </div>
 
-                <div class="flex items-center justify-between gap-3 sm:gap-4">
+                <div class="flex items-center justify-between gap-2.5 sm:gap-4">
                     ${state.isAdmin ? `
                         <button onclick="window.editItem('${item.noInventaris}')" class="flex-1 bg-emerald-50 text-emerald-600 py-3.5 rounded-2xl flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest transition-all active:scale-95">
                             <i data-lucide="edit-3" class="w-4 h-4"></i> Edit

@@ -33,13 +33,13 @@
         .backdrop-active { opacity: 1 !important; pointer-events: auto !important; }
 
         @media (max-width: 768px) {
-            #sidebar { --sidebar-width: 16rem; position: fixed; height: 100vh; left: 0; top: 0; z-index: 100; }
+            #sidebar { --sidebar-width: 80% !important; max-width: 300px; position: fixed; height: 100vh; left: 0; top: 0; z-index: 100; }
             .sidebar-closed { transform: translateX(-100%); }
-            .card-compact { padding: 1rem !important; }
-            .text-mobile-title { font-size: 1rem !important; }
-            .text-mobile-meta { font-size: 9px !important; }
-            .stats-mobile-card { padding: 1rem !important; }
-            .stats-mobile-val { font-size: 1.25rem !important; }
+            .card-compact { padding: 0.85rem !important; margin-bottom: 0.5rem !important; }
+            .text-mobile-title { font-size: 0.9rem !important; }
+            .text-mobile-meta { font-size: 8px !important; }
+            .stats-mobile-card { padding: 0.75rem !important; }
+            .stats-mobile-val { font-size: 1.15rem !important; }
         }
     </style>
 </head>
