@@ -1,5 +1,5 @@
 /* ========================================
-   INVENTARIS PERUMAHAN BN2 - APP.JS (Senior Friendly)
+   INVENTARIS BN2 - APP.JS (Sidebar + Senior Friendly)
    ======================================== */
 
 (function () {
@@ -15,6 +15,7 @@
         scriptUrl: '',
         isAdmin: false,
         activeFilter: 'all',
+        searchQuery: '',
         syncQueue: [],
         isSyncing: false,
     };
@@ -26,49 +27,68 @@
     async function init() {
         loadSettings();
         bindEvents();
-        
-        if (localStorage.getItem('inv-isAdmin') === 'true') {
-            state.isAdmin = true;
-            updateAdminUI();
-        }
+        updateAdminUI();
 
         if (state.sheetUrl) {
             await fetchData();
         }
         
-        setInterval(processSyncQueue, 10000);
+        setInterval(processSyncQueue, 15000);
         if (window.lucide) lucide.createIcons();
     }
 
     function loadSettings() {
         state.sheetUrl = localStorage.getItem('inv-sheetUrl') || DEFAULT_SHEET_URL;
         state.scriptUrl = localStorage.getItem('inv-scriptUrl') || DEFAULT_SCRIPT_URL;
+        state.isAdmin = localStorage.getItem('inv-isAdmin') === 'true';
         
         const savedQueue = localStorage.getItem('inv-syncQueue');
         if (savedQueue) state.syncQueue = JSON.parse(savedQueue);
     }
 
     function bindEvents() {
+        // Sidebar Toggle
+        $('#openSidebar').onclick = () => $('#sidebar').classList.remove('sidebar-closed');
+        $('#closeSidebar').onclick = () => $('#sidebar').classList.add('sidebar-closed');
+        
+        // Refresh & Auth
         $('#refreshBtn').onclick = fetchData;
-        $('#adminBtn').onclick = () => $('#authModal').classList.remove('hidden');
-        $('#authClose').onclick = () => $('#authModal').classList.add('hidden');
+        $('#adminLoginBtn').onclick = () => {
+            $('#authModal').classList.remove('hidden');
+            $('#sidebar').classList.add('sidebar-closed');
+        };
+        $('#adminLogoutBtn').onclick = () => {
+            if(confirm('Logout dari Mode Admin?')) {
+                state.isAdmin = false;
+                localStorage.removeItem('inv-isAdmin');
+                updateAdminUI();
+                showToast('Logout Berhasil', 'info');
+            }
+        };
         $('#authSubmit').onclick = performLogin;
         
+        // Search & Filter
         $('#searchInput').oninput = (e) => {
             state.searchQuery = e.target.value.toLowerCase();
             renderAll();
         };
 
-        $$('.filter-tab').forEach(tab => {
-            tab.onclick = () => {
-                $$('.filter-tab').forEach(t => t.classList.remove('active-tab'));
-                tab.classList.add('active-tab');
-                state.activeFilter = tab.dataset.filter;
+        $$('.filter-btn').forEach(btn => {
+            btn.onclick = () => {
+                $$('.filter-btn').forEach(b => {
+                    b.classList.remove('active', 'bg-emerald-600', 'text-white');
+                    b.classList.add('bg-slate-100', 'text-slate-500');
+                });
+                btn.classList.add('active', 'bg-emerald-600', 'text-white');
+                btn.classList.remove('bg-slate-100', 'text-slate-500');
+                state.activeFilter = btn.dataset.filter;
                 renderAll();
             };
         });
 
+        // Add Item
         $('#addBtn').onclick = () => {
+            if (!state.isAdmin) return;
             $('#modalTitle').textContent = 'Tambah Barang Baru';
             $('#formMode').value = 'add';
             $('#itemModal').classList.remove('hidden');
@@ -84,31 +104,33 @@
             state.isAdmin = true;
             localStorage.setItem('inv-isAdmin', 'true');
             $('#authModal').classList.add('hidden');
+            $('#adminPass').value = '';
             updateAdminUI();
-            showToast('Login Berhasil!', 'success');
+            showToast('Login Admin Berhasil!', 'success');
         } else {
-            showToast('Password Salah!', 'error');
+            showToast('PIN Salah!', 'error');
         }
     }
 
     function updateAdminUI() {
         if (state.isAdmin) {
-            $('#adminBadge').classList.remove('hidden');
+            $('#adminLogoutBtn').classList.remove('hidden');
+            $('#adminLoginBtn').classList.add('hidden');
             $('#adminActions').classList.remove('hidden');
-            $('#adminBtn').innerHTML = '<i data-lucide="unlock" class="w-5 h-5"></i>';
         } else {
-            $('#adminBadge').classList.add('hidden');
+            $('#adminLogoutBtn').classList.add('hidden');
+            $('#adminLoginBtn').classList.remove('hidden');
             $('#adminActions').classList.add('hidden');
-            $('#adminBtn').innerHTML = '<i data-lucide="lock" class="w-5 h-5"></i>';
         }
-        if (window.lucide) lucide.createIcons();
         renderAll();
     }
 
     // =================== DATA FETCH ===================
     async function fetchData() {
-        const icon = $('#refreshBtn i');
-        icon?.classList.add('animate-spin');
+        const btn = $('#refreshBtn');
+        btn.classList.add('opacity-50', 'pointer-events-none');
+        $('#syncText').textContent = 'Memperbarui...';
+        $('#syncDot').className = 'w-2 h-2 rounded-full bg-blue-500 animate-pulse';
 
         try {
             const response = await fetch(state.sheetUrl);
@@ -120,25 +142,27 @@
                 complete: (results) => {
                     state.items = results.data.map((row, idx) => ({
                         no: row.NO || (idx + 1),
-                        namaBarang: row['NAMA BARANG'] || '',
-                        noInventaris: row['NO INVENTARIS'] || '',
-                        kategori: row.KATEGORI || '',
-                        merkType: row['MERK/TYPE'] || '',
-                        tahunPerolehan: row['TAHUN PEROLEHAN'] || '',
-                        jumlah: parseInt(row.JUMLAH) || 0,
-                        hargaSatuan: parseInt(row['HARGA SATUAN']?.replace(/\D/g, '')) || 0,
-                        kondisi: row.KONDISI || 'Baik',
-                        lokasi: row.LOKASI || '',
-                        dokumentasi: row.DOKUMENTASI || '',
-                        keterangan: row.KETERANGAN || ''
+                        namaBarang: row['NAMA BARANG'] || row['Nama Barang'] || '',
+                        noInventaris: row['NO INVENTARIS'] || row['No Inventaris'] || '',
+                        kategori: row.KATEGORI || row['Kategori'] || '',
+                        jumlah: parseInt(row.JUMLAH || row['Jumlah']) || 0,
+                        hargaSatuan: parseInt((row['HARGA SATUAN'] || row['Harga Satuan'] || '0').toString().replace(/\D/g, '')) || 0,
+                        kondisi: row.KONDISI || row['Kondisi'] || 'Baik',
+                        lokasi: row.LOKASI || row['Lokasi'] || '',
+                        keterangan: row.KETERANGAN || row['Keterangan'] || ''
                     })).filter(i => i.namaBarang);
+                    
+                    $('#syncText').textContent = 'Terhubung';
+                    $('#syncDot').className = 'w-2 h-2 rounded-full bg-emerald-500';
                     renderAll();
                 }
             });
         } catch (err) {
+            $('#syncText').textContent = 'Koneksi Gagal';
+            $('#syncDot').className = 'w-2 h-2 rounded-full bg-rose-500';
             showToast('Gagal memuat data!', 'error');
         } finally {
-            icon?.classList.remove('animate-spin');
+            btn.classList.remove('opacity-50', 'pointer-events-none');
         }
     }
 
@@ -146,78 +170,91 @@
     function renderAll() {
         const container = $('#inventoryContainer');
         
-        // Stats
-        $('#statTotalBarang').textContent = state.items.reduce((s, i) => s + i.jumlah, 0);
-        $('#statKondisiBaik').textContent = state.items.filter(i => i.kondisi === 'Baik').length + ' Item';
+        // Stats Calculation
+        const totalItems = state.items.reduce((s, i) => s + i.jumlah, 0);
         const totalNilai = state.items.reduce((s, i) => s + (i.jumlah * i.hargaSatuan), 0);
-        $('#statTotalNilai').textContent = 'Rp ' + totalNilai.toLocaleString('id-ID');
+        const categories = new Set(state.items.map(i => i.kategori).filter(Boolean));
+        const rusakCount = state.items.filter(i => i.kondisi.toLowerCase().includes('rusak')).length;
 
-        // Filter
+        $('#statTotal').textContent = totalItems;
+        $('#statNilai').textContent = formatRp(totalNilai);
+        $('#statKat').textContent = categories.size;
+        $('#statRusak').textContent = rusakCount;
+
+        // Filter Logic
         state.filteredItems = state.items.filter(i => {
-            const matchesSearch = !state.searchQuery || i.namaBarang.toLowerCase().includes(state.searchQuery);
+            const matchesSearch = !state.searchQuery || i.namaBarang.toLowerCase().includes(state.searchQuery) || i.noInventaris.toLowerCase().includes(state.searchQuery);
             const matchesFilter = state.activeFilter === 'all' || i.kategori === state.activeFilter;
             return matchesSearch && matchesFilter;
         });
 
+        $('#itemCount').textContent = `${state.filteredItems.length} Data`;
+
         if (state.filteredItems.length === 0) {
-            container.innerHTML = `<div class="text-center py-20 text-slate-400 font-bold">Data tidak ditemukan</div>`;
+            container.innerHTML = `<div class="col-span-full py-20 flex flex-col items-center justify-center text-slate-300">
+                <i data-lucide="search-x" class="w-12 h-12 mb-4"></i>
+                <p class="font-black uppercase tracking-widest text-xs">Data tidak ditemukan</p>
+            </div>`;
+            if (window.lucide) lucide.createIcons();
             return;
         }
 
         container.innerHTML = state.filteredItems.map(item => `
-            <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 relative overflow-hidden group active:scale-[0.98] transition-all">
+            <div class="bg-white rounded-[2.5rem] p-6 shadow-sm border border-slate-100 relative group transition-all hover:shadow-xl hover:-translate-y-1">
                 ${item.isPending ? `
-                    <div class="absolute top-0 right-0 left-0 h-1 bg-amber-400 animate-pulse"></div>
-                    <div class="absolute top-3 right-3 flex items-center gap-1 bg-amber-100 text-amber-600 px-2 py-1 rounded-full text-[8px] font-black uppercase">
-                        <i data-lucide="refresh-cw" class="w-2 h-2 animate-spin"></i> Pending
+                    <div class="absolute inset-x-8 top-0 h-1 bg-amber-400 rounded-b-full animate-pulse shadow-[0_0_10px_rgba(251,191,36,0.5)]"></div>
+                    <div class="absolute top-4 right-4 flex items-center gap-1.5 bg-amber-50 text-amber-600 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest">
+                        <i data-lucide="refresh-cw" class="w-2.5 h-2.5 animate-spin"></i> Sync...
                     </div>
                 ` : ''}
                 
-                <div class="flex justify-between items-start mb-3">
-                    <div class="flex-1">
-                        <h3 class="text-xl font-extrabold text-slate-800 leading-tight">${item.namaBarang}</h3>
-                        <p class="text-[10px] font-black text-slate-400 tracking-widest uppercase">${item.noInventaris}</p>
-                    </div>
-                    <span class="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase ${getKondisiStyle(item.kondisi)}">
-                        ${item.kondisi}
-                    </span>
+                <div class="mb-5">
+                    <span class="inline-block px-3 py-1 rounded-lg bg-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">${item.kategori}</span>
+                    <h3 class="text-xl font-black text-slate-800 leading-tight mb-1">${item.namaBarang}</h3>
+                    <p class="text-[10px] font-bold text-slate-400 tracking-wider">${item.noInventaris}</p>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3 mb-4">
-                    <div class="bg-slate-50 p-3 rounded-2xl">
-                        <p class="text-[8px] font-black text-slate-400 uppercase mb-1">Lokasi</p>
-                        <p class="text-xs font-bold text-slate-700">${item.lokasi || '-'}</p>
+                <div class="grid grid-cols-2 gap-3 mb-6">
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100/50">
+                        <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Kondisi</p>
+                        <p class="text-xs font-black ${getKondisiColor(item.kondisi)}">${item.kondisi}</p>
                     </div>
-                    <div class="bg-slate-50 p-3 rounded-2xl">
-                        <p class="text-[8px] font-black text-slate-400 uppercase mb-1">Jumlah</p>
-                        <p class="text-xs font-bold text-slate-700">${item.jumlah} Unit</p>
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100/50">
+                        <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Lokasi</p>
+                        <p class="text-xs font-black text-slate-700 truncate">${item.lokasi || '-'}</p>
                     </div>
                 </div>
 
-                ${state.isAdmin ? `
-                    <div class="flex gap-2 border-t border-slate-50 pt-4 mt-2">
-                        <button onclick="window.editItem('${item.noInventaris}')" class="flex-1 bg-blue-50 text-blue-600 py-3 rounded-2xl flex items-center justify-center gap-2 font-black text-[10px] uppercase transition-all active:bg-blue-100">
+                <div class="flex items-center justify-between gap-4">
+                    ${state.isAdmin ? `
+                        <button onclick="window.editItem('${item.noInventaris}')" class="flex-1 bg-emerald-50 text-emerald-600 py-3.5 rounded-2xl flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest transition-all active:scale-95">
                             <i data-lucide="edit-3" class="w-4 h-4"></i> Edit
                         </button>
-                        <button onclick="window.deleteItem('${item.noInventaris}')" class="flex-1 bg-rose-50 text-rose-600 py-3 rounded-2xl flex items-center justify-center gap-2 font-black text-[10px] uppercase transition-all active:bg-rose-100">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i> Hapus
+                        <button onclick="window.deleteItem('${item.noInventaris}')" class="bg-rose-50 text-rose-600 p-3.5 rounded-2xl flex items-center justify-center transition-all active:scale-90 hover:bg-rose-100">
+                            <i data-lucide="trash-2" class="w-5 h-5"></i>
                         </button>
-                    </div>
-                ` : `
-                     <button onclick="window.showDetail('${item.noInventaris}')" class="w-full bg-slate-50 text-slate-600 py-3 rounded-2xl flex items-center justify-center gap-2 font-black text-[10px] uppercase transition-all active:bg-slate-100">
-                        <i data-lucide="eye" class="w-4 h-4"></i> Lihat Detail
-                    </button>
-                `}
+                    ` : `
+                        <button onclick="window.showDetail('${item.noInventaris}')" class="flex-1 bg-slate-100 text-slate-600 py-3.5 rounded-2xl flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest transition-all active:scale-95">
+                            <i data-lucide="info" class="w-4 h-4"></i> Detail
+                        </button>
+                    `}
+                </div>
             </div>
         `).join('');
 
         if (window.lucide) lucide.createIcons();
     }
 
-    function getKondisiStyle(k) {
-        if (k === 'Baik') return 'bg-emerald-100 text-emerald-600';
-        if (k.includes('Rusak Ringan')) return 'bg-amber-100 text-amber-600';
-        return 'bg-rose-100 text-rose-600';
+    function getKondisiColor(k) {
+        const lower = k.toLowerCase();
+        if (lower.includes('baik')) return 'text-emerald-600';
+        if (lower.includes('rusak ringan')) return 'text-amber-500';
+        return 'text-rose-600';
+    }
+
+    function formatRp(num) {
+        if (num >= 1000000) return 'Rp ' + (num / 1000000).toFixed(1).replace('.0', '') + ' Jt';
+        return 'Rp ' + num.toLocaleString('id-ID');
     }
 
     // =================== ACTIONS ===================
@@ -225,7 +262,7 @@
         const item = state.items.find(i => i.noInventaris === noInv);
         if (!item) return;
         
-        $('#modalTitle').textContent = 'Edit Barang';
+        $('#modalTitle').textContent = 'Perbarui Data';
         $('#formMode').value = 'edit';
         $('#formNo').value = item.no;
         $('#formNoInv').value = item.noInventaris;
@@ -235,21 +272,20 @@
         $('#addJumlah').value = item.jumlah;
         $('#addKondisi').value = item.kondisi;
         $('#addLokasi').value = item.lokasi;
-        $('#addHarga').value = item.hargaSatuan;
         $('#addKeterangan').value = item.keterangan;
         
         $('#itemModal').classList.remove('hidden');
     };
 
-    window.deleteItem = async (noInv) => {
-        if (!confirm('Yakin ingin menghapus barang ini?')) return;
-        
+    window.deleteItem = (noInv) => {
         const item = state.items.find(i => i.noInventaris === noInv);
+        if (!confirm(`Hapus barang "${item.namaBarang}"?`)) return;
+        
         state.items = state.items.filter(i => i.noInventaris !== noInv);
         renderAll();
 
         addToQueue('deleteItem', { action: 'deleteItem', noInventaris: noInv, password: 'adminbn2' });
-        showToast('Menghapus data di latar belakang...', 'info');
+        showToast('Menghapus data...', 'info');
     };
 
     async function submitForm() {
@@ -257,14 +293,13 @@
         const data = {
             namaBarang: $('#addNama').value,
             kategori: $('#addKategori').value,
-            jumlah: parseInt($('#addJumlah').value),
+            jumlah: parseInt($('#addJumlah').value) || 1,
             kondisi: $('#addKondisi').value,
             lokasi: $('#addLokasi').value,
-            harga: parseInt($('#addHarga').value) || 0,
             keterangan: $('#addKeterangan').value
         };
 
-        const noInv = mode === 'edit' ? $('#formNoInv').value : 'NEW-' + Date.now();
+        const noInv = mode === 'edit' ? $('#formNoInv').value : 'INV-' + Date.now();
         const payload = {
             action: mode === 'edit' ? 'editItem' : 'addItem',
             ...data,
@@ -285,7 +320,7 @@
         $('#itemModal').classList.add('hidden');
         
         addToQueue(payload.action, payload);
-        showToast('Menyimpan data di latar belakang...', 'info');
+        showToast('Menyimpan perubahan...', 'info');
     }
 
     // =================== SYNC QUEUE ===================
@@ -312,7 +347,7 @@
                 state.syncQueue.shift();
                 localStorage.setItem('inv-syncQueue', JSON.stringify(state.syncQueue));
                 
-                // Clear isPending in local state
+                // Clear isPending flag locally
                 if (item.payload.noInventaris) {
                     const localItem = state.items.find(i => i.noInventaris === item.payload.noInventaris);
                     if (localItem) delete localItem.isPending;
@@ -323,7 +358,7 @@
                 }
             }
         } catch (err) {
-            console.error('Sync Error', err);
+            console.error('Sync error', err);
         } finally {
             state.isSyncing = false;
             renderAll();
@@ -334,11 +369,23 @@
     // =================== UTILS ===================
     function showToast(msg, type) {
         const t = document.createElement('div');
-        t.className = `fixed top-20 left-1/2 -translate-x-1/2 px-6 py-3 rounded-2xl font-black text-white text-xs z-[200] shadow-2xl transition-all ${type === 'success' ? 'bg-emerald-500' : type === 'error' ? 'bg-rose-500' : 'bg-blue-500'}`;
+        t.className = `fixed bottom-10 left-1/2 -translate-x-1/2 px-8 py-4 rounded-3xl font-black text-white text-sm z-[200] shadow-2xl transition-all scale-0 animate-bounce-in ${type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-rose-600' : 'bg-slate-800'}`;
+        t.style.animation = 'popIn 0.3s forwards';
         t.textContent = msg;
         document.body.appendChild(t);
-        setTimeout(() => t.remove(), 3000);
+        setTimeout(() => {
+            t.style.animation = 'popOut 0.3s forwards';
+            setTimeout(() => t.remove(), 300);
+        }, 3000);
     }
+
+    // CSS for toast animation
+    const style = document.createElement('style');
+    style.innerHTML = `
+        @keyframes popIn { from { transform: translate(-50%, 100%) scale(0.5); opacity: 0; } to { transform: translate(-50%, 0) scale(1); opacity: 1; } }
+        @keyframes popOut { from { transform: translate(-50%, 0) scale(1); opacity: 1; } to { transform: translate(-50%, 100%) scale(0.5); opacity: 0; } }
+    `;
+    document.head.appendChild(style);
 
     window.onload = init;
 })();
