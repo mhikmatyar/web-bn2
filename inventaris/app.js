@@ -564,10 +564,18 @@
             const result = await response.json();
             if (result.success) {
                 // Success! Remove from queue
-                state.syncQueue.shift();
+                const processedItem = state.syncQueue.shift();
                 saveSyncQueue();
-                console.log(`Sync success: ${item.action}`, item.payload);
+                console.log(`Sync success: ${processedItem.action}`, processedItem.payload);
                 
+                // Clear isPending flag in local state
+                if (processedItem.payload && processedItem.payload.noInventaris) {
+                    const localItem = state.items.find(i => i.noInventaris === processedItem.payload.noInventaris);
+                    if (localItem) {
+                        delete localItem.isPending;
+                    }
+                }
+
                 if (state.syncQueue.length === 0) {
                     showToast('Semua data berhasil disinkronkan ke Google Sheets', 'success');
                     updateSyncStatus('connected', `Terakhir sync: ${new Date().toLocaleTimeString('id-ID')}`);
