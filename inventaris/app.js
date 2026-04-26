@@ -348,51 +348,51 @@
 
         const content = $('#detailContent');
         content.innerHTML = `
-            <div class="space-y-6">
-                <div class="flex items-center gap-4 bg-slate-50 p-6 rounded-3xl border border-slate-100">
-                    <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm text-emerald-600 shrink-0">
-                        <i data-lucide="package-search" class="w-8 h-8"></i>
+            <div class="space-y-4">
+                <div class="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm text-emerald-600 shrink-0 border border-slate-100">
+                        <i data-lucide="package-search" class="w-6 h-6"></i>
                     </div>
                     <div>
-                        <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Nama Barang</h4>
-                        <p class="text-xl font-black text-slate-800">${item.namaBarang}</p>
+                        <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Nama Barang</h4>
+                        <p class="text-lg font-black text-slate-800 leading-tight">${item.namaBarang}</p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="p-5 rounded-[2rem] bg-slate-50 border border-slate-100">
-                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Kategori</p>
-                        <p class="text-sm font-black text-slate-700">${item.kategori}</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Kategori</p>
+                        <p class="text-sm font-black text-slate-700 leading-none">${item.kategori}</p>
                     </div>
-                    <div class="p-5 rounded-[2rem] bg-slate-50 border border-slate-100">
-                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Lokasi</p>
-                        <p class="text-sm font-black text-slate-700">${item.lokasi || '-'}</p>
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Lokasi</p>
+                        <p class="text-sm font-black text-slate-700 leading-none">${item.lokasi || '-'}</p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="p-5 rounded-[2rem] bg-slate-50 border border-slate-100">
-                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Kondisi</p>
-                        <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase ${getKondisiColor(item.kondisi)} bg-white shadow-sm border border-slate-100 inline-block">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Kondisi</p>
+                        <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${getKondisiColor(item.kondisi)} bg-white shadow-sm border border-slate-100 inline-block">
                             ${item.kondisi}
                         </span>
                     </div>
-                    <div class="p-5 rounded-[2rem] bg-slate-50 border border-slate-100">
-                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Jumlah</p>
-                        <p class="text-sm font-black text-slate-700">${item.jumlah} Unit</p>
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Jumlah</p>
+                        <p class="text-sm font-black text-slate-700 leading-none">${item.jumlah} Unit</p>
                     </div>
                 </div>
 
-                <div class="p-6 rounded-[2rem] bg-slate-900 text-white shadow-xl relative overflow-hidden">
-                    <div class="absolute -top-10 -right-10 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
-                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">Nomor Inventaris</p>
-                    <p class="text-lg font-black tracking-widest relative z-10">${item.noInventaris}</p>
+                <div class="p-4 rounded-2xl bg-slate-900 text-white shadow-lg relative overflow-hidden">
+                    <div class="absolute -top-10 -right-10 w-24 h-24 bg-white/5 rounded-full blur-2xl"></div>
+                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 relative z-10">Nomor Inventaris</p>
+                    <p class="text-base font-black tracking-widest relative z-10">${item.noInventaris}</p>
                 </div>
 
                 ${item.keterangan ? `
-                    <div class="p-6 rounded-[2rem] bg-emerald-50 border border-emerald-100">
-                        <p class="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-2">Keterangan Tambahan</p>
-                        <p class="text-sm font-bold text-slate-600 leading-relaxed">${item.keterangan}</p>
+                    <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-100">
+                        <p class="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-1.5">Keterangan Tambahan</p>
+                        <p class="text-xs font-bold text-slate-600 leading-relaxed">${item.keterangan}</p>
                     </div>
                 ` : ''}
             </div>
