@@ -1,6 +1,6 @@
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR6nN2T377t118P6X7uXk8U8Y7X_f8T3u10E1v7M1W1r3v4P_f8T3u10E1v7M1W1r3v4P_f8T3u10E1v7M1W1r3v4P_f8T3u10E1v/pub?output=csv';
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbz_7X-N7u5e3_8_v7v9e0e-4r7v9e0e-4r7v9e0e-4r7v9e0e-4r/exec';
-const ADMIN_PIN = 'adminbn2';
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQfPsk4L2qxshegLjX6zTdY4mPv0e4xYFqbzYFKgqwHJrMuSXAeDJuIFAhdyK2vi4SwyJ2HXZX4h0un/pub?gid=0&single=true&output=csv';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxSb3F1apIZ1TGxKC2v5BinPsWE2DTRA843kILk0NtQcwealsRHLaB3yfodJtTkVrhV/exec';
+const ADMIN_PIN = '1122'; // Default numeric PIN for Numpad UI
 
 let state = {
     items: [],
@@ -22,11 +22,26 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function fetchData() {
+    // Show loading state
+    $('#inventoryGrid').innerHTML = '<div class="col-span-full py-20 text-center"><i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4 text-emerald-600"></i><p class="font-bold text-slate-400">Memuat data barang...</p></div>';
+    lucide.createIcons();
+
     Papa.parse(CSV_URL, {
         download: true,
         header: true,
         complete: (results) => {
-            state.items = results.data.filter(i => i.namaBarang).map(i => ({...i, id: i.noInventaris}));
+            state.items = results.data
+                .filter(i => i.namaBarang || i['NAMA BARANG'])
+                .map(i => ({
+                    id: i.noInventaris || i['NO INVENTARIS'],
+                    noInventaris: i.noInventaris || i['NO INVENTARIS'],
+                    namaBarang: i.namaBarang || i['NAMA BARANG'],
+                    kategori: i.kategori || i['KATEGORI'],
+                    jumlah: i.jumlah || i['JUMLAH'],
+                    kondisi: i.kondisi || i['KONDISI'],
+                    lokasi: i.lokasi || i['LOKASI'],
+                    keterangan: i.keterangan || i['KETERANGAN']
+                }));
             applyFilter();
         }
     });
@@ -86,8 +101,8 @@ function bindEvents() {
 
 function applyFilter() {
     state.filteredItems = state.items.filter(item => {
-        const matchesSearch = item.namaBarang.toLowerCase().includes(state.searchQuery) || 
-                             item.noInventaris.toLowerCase().includes(state.searchQuery);
+        const matchesSearch = (item.namaBarang || '').toLowerCase().includes(state.searchQuery) || 
+                             (item.noInventaris || '').toLowerCase().includes(state.searchQuery);
         const matchesFilter = state.currentFilter === 'all' || item.kategori === state.currentFilter;
         return matchesSearch && matchesFilter;
     });
@@ -145,8 +160,8 @@ function renderAll() {
 
 function updateStats() {
     const total = state.items.length;
-    const baik = state.items.filter(i => i.kondisi === 'Baik').length;
-    const rusak = state.items.filter(i => i.kondisi === 'Rusak').length;
+    const baik = state.items.filter(i => (i.kondisi || '').toLowerCase().includes('baik')).length;
+    const rusak = state.items.filter(i => (i.kondisi || '').toLowerCase().includes('rusak')).length;
     const kats = new Set(state.items.map(i => i.kategori)).size;
 
     $('#statTotal').innerText = total;
@@ -156,8 +171,9 @@ function updateStats() {
 }
 
 function getBadgeStyle(kondisi) {
-    if (kondisi === 'Baik') return 'bg-emerald-50 text-emerald-600';
-    if (kondisi === 'Rusak Ringan') return 'bg-amber-50 text-amber-600';
+    const k = (kondisi || '').toLowerCase();
+    if (k.includes('baik')) return 'bg-emerald-50 text-emerald-600';
+    if (k.includes('ringan')) return 'bg-amber-50 text-amber-600';
     return 'bg-rose-50 text-rose-600';
 }
 
@@ -249,7 +265,7 @@ function renderNumpad() {
 function handlePin(key) {
     if (key === 'C') state.pinInput = '';
     else if (key === '⌫') state.pinInput = state.pinInput.slice(0, -1);
-    else if (state.pinInput.length < 6) state.pinInput += key;
+    else if (state.pinInput.length < 4) state.pinInput += key;
     
     updatePinDots();
 }
@@ -270,7 +286,7 @@ function validatePIN() {
     } else {
         state.pinInput = '';
         updatePinDots();
-        alert('PIN Salah!');
+        alert('PIN Salah! PIN Baru: 1122');
     }
 }
 
@@ -312,41 +328,34 @@ function hideItemForm() {
 }
 
 async function saveItem() {
-    const submitBtn = $('#submitBtn');
+    const submitBtn = $('#itemForm button[type="submit"]');
     const originalText = submitBtn.innerText;
     submitBtn.innerText = 'MENYIMPAN...';
     submitBtn.disabled = true;
 
     const formData = {
-        action: $('#formId').value ? 'edit' : 'add',
+        action: $('#formId').value ? 'editItem' : 'addItem',
         noInventaris: $('#formId').value || `BN2-${Date.now()}`,
         namaBarang: $('#inputNama').value,
         kategori: $('#inputKategori').value,
         jumlah: $('#inputJumlah').value,
         kondisi: $('#inputKondisi').value,
         lokasi: $('#inputLokasi').value,
-        keterangan: $('#inputKeterangan').value
+        keterangan: $('#inputKeterangan').value,
+        password: "adminbn2"
     };
 
     try {
-        const response = await fetch(GAS_URL, {
+        await fetch(GAS_URL, {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(formData)
         });
 
-        // Optimistic Update
-        if (formData.action === 'add') {
-            state.items.unshift({...formData, id: formData.noInventaris, isPending: true});
-        } else {
-            const idx = state.items.findIndex(i => i.id === formData.noInventaris);
-            state.items[idx] = {...formData, id: formData.noInventaris, isPending: true};
-        }
-        
         hideItemForm();
-        renderAll();
-        alert('Permintaan terkirim! Data akan sinkron dalam beberapa menit.');
+        alert('Permintaan terkirim! Silakan refresh beberapa menit lagi.');
+        fetchData();
     } catch (error) {
         alert('Gagal mengirim data!');
     } finally {
@@ -363,12 +372,15 @@ async function deleteItem(id) {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'delete', noInventaris: id })
+            body: JSON.stringify({ 
+                action: 'deleteItem', 
+                noInventaris: id,
+                password: "adminbn2"
+            })
         });
 
-        state.items = state.items.filter(i => i.id !== id);
-        renderAll();
         alert('Permintaan hapus terkirim!');
+        fetchData();
     } catch (error) {
         alert('Gagal menghapus!');
     }
