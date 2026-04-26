@@ -51,7 +51,8 @@
         $('#openSidebar').onclick = () => $('#sidebar').classList.remove('sidebar-closed');
         $('#closeSidebar').onclick = () => $('#sidebar').classList.add('sidebar-closed');
         
-        $('#minimizeSidebar').onclick = () => {
+        $('#minimizeSidebar').onclick = (e) => {
+            e.stopPropagation();
             const sidebar = $('#sidebar');
             const isMin = sidebar.classList.toggle('sidebar-minimized');
             
