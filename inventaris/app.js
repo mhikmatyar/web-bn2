@@ -58,12 +58,19 @@
         }
         
         function openDrawer() {
-            $('#sidebar').classList.remove('sidebar-closed');
+            const sidebar = $('#sidebar');
+            sidebar.classList.remove('hidden');
+            sidebar.classList.add('flex');
             $('#sidebarBackdrop').classList.add('backdrop-active');
         }
         
         function closeDrawer() {
-            $('#sidebar').classList.add('sidebar-closed');
+            const sidebar = $('#sidebar');
+            // Check if mobile before hiding
+            if (window.innerWidth < 768) {
+                sidebar.classList.add('hidden');
+                sidebar.classList.remove('flex');
+            }
             $('#sidebarBackdrop').classList.remove('backdrop-active');
         }
         

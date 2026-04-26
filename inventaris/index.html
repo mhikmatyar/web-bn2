@@ -29,19 +29,18 @@
             .sidebar-minimized .sidebar-footer { padding: 1rem 0.5rem; }
         }
         
-        #sidebarBackdrop { opacity: 0; pointer-events: none; transition: opacity 0.3s; }
-        .backdrop-active { opacity: 1 !important; pointer-events: auto !important; }
+        #sidebarBackdrop { display: none; opacity: 0; transition: opacity 0.3s; }
+        .backdrop-active { display: block !important; opacity: 1 !important; }
 
         @media (max-width: 768px) {
-            #sidebar { --sidebar-width: 80% !important; max-width: 300px; position: fixed; height: 100vh; left: 0; top: 0; z-index: 100; }
-            .sidebar-closed { transform: translateX(-100%); }
+            #sidebar { --sidebar-width: 280px !important; position: fixed; height: 100vh; left: 0; top: 0; z-index: 100; }
             .card-compact { padding: 0.85rem !important; margin-bottom: 0.5rem !important; }
             .text-mobile-title { font-size: 0.9rem !important; }
             .text-mobile-meta { font-size: 8px !important; }
             .stats-mobile-card { padding: 0.75rem !important; }
             .stats-mobile-val { font-size: 1.15rem !important; }
             
-            /* Ensure text ALWAYS shows on mobile sidebar regardless of minimized class */
+            /* Ensure text ALWAYS shows on mobile sidebar */
             #sidebar .sidebar-text, #sidebar .sidebar-header span { display: inline !important; }
         }
     </style>
@@ -52,7 +51,7 @@
 
     <div class="flex h-screen overflow-hidden">
         <!-- SIDEBAR -->
-        <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 bg-slate-900 text-slate-300 transform transition-transform duration-300 ease-in-out sidebar-closed md:relative md:translate-x-0 flex flex-col">
+        <aside id="sidebar" class="hidden md:flex fixed inset-y-0 left-0 z-50 bg-slate-900 text-slate-300 transform md:relative md:translate-x-0 flex-col">
             <div class="p-6 flex items-center justify-between border-b border-slate-800 sidebar-header">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-900/20 shrink-0">
