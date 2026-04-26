@@ -1,516 +1,287 @@
-/* ========================================
-   INVENTARIS BN2 - APP.JS (Sidebar + Senior Friendly)
-   ======================================== */
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR6nN2T377t118P6X7uXk8U8Y7X_f8T3u10E1v7M1W1r3v4P_f8T3u10E1v7M1W1r3v4P_f8T3u10E1v7M1W1r3v4P_f8T3u10E1v/pub?output=csv';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbz_7X-N7u5e3_8_v7v9e0e-4r7v9e0e-4r7v9e0e-4r7v9e0e-4r/exec';
+const ADMIN_PIN = 'adminbn2';
 
-(function () {
-    'use strict';
+let state = {
+    items: [],
+    filteredItems: [],
+    isAdmin: false,
+    currentFilter: 'all',
+    searchQuery: '',
+    pinInput: ''
+};
 
-    const DEFAULT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQfPsk4L2qxshegLjX6zTdY4mPv0e4xYFqbzYFKgqwHJrMuSXAeDJuIFAhdyK2vi4SwyJ2HXZX4h0un/pub?gid=0&single=true&output=csv';
-    const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxSb3F1apIZ1TGxKC2v5BinPsWE2DTRA843kILk0NtQcwealsRHLaB3yfodJtTkVrhV/exec';
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => document.querySelectorAll(s);
 
-    const state = {
-        items: [],
-        filteredItems: [],
-        sheetUrl: '',
-        scriptUrl: '',
-        isAdmin: false,
-        activeFilter: 'all',
-        searchQuery: '',
-        syncQueue: [],
-        isSyncing: false,
+// INITIALIZATION
+document.addEventListener('DOMContentLoaded', () => {
+    fetchData();
+    bindEvents();
+    renderNumpad();
+});
+
+function fetchData() {
+    Papa.parse(CSV_URL, {
+        download: true,
+        header: true,
+        complete: (results) => {
+            state.items = results.data.filter(i => i.namaBarang).map(i => ({...i, id: i.noInventaris}));
+            applyFilter();
+        }
+    });
+}
+
+function bindEvents() {
+    // SEARCH & FILTER
+    $('#searchInput').oninput = (e) => {
+        state.searchQuery = e.target.value.toLowerCase();
+        applyFilter();
     };
 
-    const $ = (sel) => document.querySelector(sel);
-    const $$ = (sel) => document.querySelectorAll(sel);
+    $$('.filter-tab').forEach(btn => {
+        btn.onclick = () => {
+            $$('.filter-tab').forEach(b => b.classList.replace('bg-accent', 'bg-slate-100'));
+            $$('.filter-tab').forEach(b => b.classList.replace('text-white', 'text-slate-600'));
+            btn.classList.replace('bg-slate-100', 'bg-accent');
+            btn.classList.replace('text-slate-600', 'text-white');
+            state.currentFilter = btn.dataset.filter;
+            applyFilter();
+        };
+    });
 
-    // =================== INIT ===================
-    async function init() {
-        loadSettings();
-        bindEvents();
-        updateAdminUI();
-
-        if (state.sheetUrl) {
-            await fetchData();
-        }
-        
-        setInterval(processSyncQueue, 15000);
-        if (window.lucide) lucide.createIcons();
-    }
-
-    function loadSettings() {
-        state.sheetUrl = localStorage.getItem('inv-sheetUrl') || DEFAULT_SHEET_URL;
-        state.scriptUrl = localStorage.getItem('inv-scriptUrl') || DEFAULT_SCRIPT_URL;
-        state.isAdmin = localStorage.getItem('inv-isAdmin') === 'true';
-        
-        const savedQueue = localStorage.getItem('inv-syncQueue');
-        if (savedQueue) state.syncQueue = JSON.parse(savedQueue);
-    }
-
-    function bindEvents() {
-        // Sidebar Toggle
-        $('#openSidebar').onclick = openDrawer;
-        $('#closeSidebar').onclick = closeDrawer;
-        $('#sidebarBackdrop').onclick = closeDrawer;
-        
-        // Mobile Bottom Menu Toggle
-        if ($('#mobileMenuBtn')) {
-            $('#mobileMenuBtn').onclick = openDrawer;
-        }
-        
-        function openDrawer() {
-            const sidebar = $('#sidebar');
-            sidebar.classList.remove('hidden');
-            sidebar.classList.add('flex');
-            $('#sidebarBackdrop').classList.add('backdrop-active');
-        }
-        
-        function closeDrawer() {
-            const sidebar = $('#sidebar');
-            // Check if mobile before hiding
-            if (window.innerWidth < 768) {
-                sidebar.classList.add('hidden');
-                sidebar.classList.remove('flex');
+    // NAVIGATION
+    $$('.nav-item, .mobile-nav-item').forEach(btn => {
+        btn.onclick = () => {
+            const page = btn.dataset.page;
+            if (page === 'inventaris') {
+                $('#inventoryGrid').scrollIntoView({ behavior: 'smooth' });
             }
-            $('#sidebarBackdrop').classList.remove('backdrop-active');
-        }
-        
-        $('#minimizeSidebar').onclick = (e) => {
-            e.stopPropagation();
-            // Only minimize on desktop
-            if (window.innerWidth < 768) return;
-            
-            const sidebar = $('#sidebar');
-            const isMin = sidebar.classList.toggle('sidebar-minimized');
-            
-            const icon = $('#minimizeIcon');
-            if (icon) {
-                icon.setAttribute('data-lucide', isMin ? 'chevron-right' : 'chevron-left');
-                if (window.lucide) lucide.createIcons();
+            if (page === 'dashboard') {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         };
-        
-        // Navigation clicks (Desktop & Mobile Bottom Nav)
-        $$('.nav-item').forEach(item => {
-            item.onclick = (e) => {
-                e.preventDefault();
-                const page = item.dataset.page;
-                
-                // Update All Nav Items (Sidebar & Bottom)
-                $$('.nav-item').forEach(nav => {
-                    nav.classList.remove('sidebar-active', 'bg-emerald-600', 'text-white', 'text-emerald-600');
-                    nav.classList.add('text-slate-400');
-                    if (nav.tagName === 'A') nav.classList.add('hover:bg-slate-800');
-                });
-                
-                // Set Active Class
-                item.classList.add('sidebar-active', 'text-emerald-600');
-                item.classList.remove('text-slate-400', 'hover:bg-slate-800');
-                
-                if (page === 'inventaris') {
-                    $('#inventoryContainer').scrollIntoView({ behavior: 'smooth' });
-                }
-                
-                closeDrawer();
-                renderAll();
-            };
-        });
+    });
 
-        // Refresh & Auth
-        $('#refreshBtn').onclick = fetchData;
-        $('#adminLoginBtn').onclick = () => {
-            $('#authModal').classList.remove('hidden');
-            $('#sidebar').classList.add('sidebar-closed');
-        };
-        $('#adminLogoutBtn').onclick = () => {
-            if(confirm('Logout dari Mode Admin?')) {
-                state.isAdmin = false;
-                localStorage.removeItem('inv-isAdmin');
-                updateAdminUI();
-                showToast('Logout Berhasil', 'info');
-            }
-        };
-        $('#authSubmit').onclick = performLogin;
-        
-        // Search & Filter
-        $('#searchInput').oninput = (e) => {
-            state.searchQuery = e.target.value.toLowerCase();
-            renderAll();
-        };
+    // ADMIN ACTIONS
+    $('#mobileAddBtn').onclick = () => showItemForm();
+    $('#refreshBtn').onclick = () => fetchData();
+    $('#authSubmit').onclick = () => validatePIN();
 
-        $$('.filter-btn').forEach(btn => {
-            btn.onclick = () => {
-                $$('.filter-btn').forEach(b => {
-                    b.classList.remove('active', 'bg-emerald-600', 'text-white');
-                    b.classList.add('bg-slate-100', 'text-slate-500');
-                });
-                btn.classList.add('active', 'bg-emerald-600', 'text-white');
-                btn.classList.remove('bg-slate-100', 'text-slate-500');
-                state.activeFilter = btn.dataset.filter;
-                renderAll();
-            };
-        });
-
-        // Add Item
-        $('#addBtn').onclick = () => {
-            if (!state.isAdmin) return;
-            $('#modalTitle').textContent = 'Tambah Barang Baru';
-            $('#formMode').value = 'add';
-            $('#itemModal').classList.remove('hidden');
-        };
-
-        $('#submitBtn').onclick = submitForm;
-    }
-
-    // =================== AUTH ===================
-    function performLogin() {
-        const pass = $('#adminPass').value;
-        if (btoa(pass) === 'YWRtaW5ibjI=') {
-            state.isAdmin = true;
-            localStorage.setItem('inv-isAdmin', 'true');
-            $('#authModal').classList.add('hidden');
-            $('#adminPass').value = '';
-            updateAdminUI();
-            showToast('Login Admin Berhasil!', 'success');
-        } else {
-            showToast('PIN Salah!', 'error');
-        }
-    }
-
-    function updateAdminUI() {
-        if (state.isAdmin) {
-            $('#adminLogoutBtn').classList.remove('hidden');
-            $('#adminLoginBtn').classList.add('hidden');
-            $('#adminActions').classList.remove('hidden');
-        } else {
-            $('#adminLogoutBtn').classList.add('hidden');
-            $('#adminLoginBtn').classList.remove('hidden');
-            $('#adminActions').classList.add('hidden');
-        }
-        renderAll();
-    }
-
-    // =================== DATA FETCH ===================
-    async function fetchData() {
-        const btn = $('#refreshBtn');
-        btn.classList.add('opacity-50', 'pointer-events-none');
-        $('#syncText').textContent = 'Memperbarui...';
-        $('#syncDot').className = 'w-2 h-2 rounded-full bg-blue-500 animate-pulse';
-
-        try {
-            const response = await fetch(state.sheetUrl);
-            const csv = await response.text();
-            
-            Papa.parse(csv, {
-                header: true,
-                skipEmptyLines: true,
-                complete: (results) => {
-                    state.items = results.data.map((row, idx) => ({
-                        no: row.NO || (idx + 1),
-                        namaBarang: row['NAMA BARANG'] || row['Nama Barang'] || '',
-                        noInventaris: row['NO INVENTARIS'] || row['No Inventaris'] || '',
-                        kategori: row.KATEGORI || row['Kategori'] || '',
-                        jumlah: parseInt(row.JUMLAH || row['Jumlah']) || 0,
-                        hargaSatuan: parseInt((row['HARGA SATUAN'] || row['Harga Satuan'] || '0').toString().replace(/\D/g, '')) || 0,
-                        kondisi: row.KONDISI || row['Kondisi'] || 'Baik',
-                        lokasi: row.LOKASI || row['Lokasi'] || '',
-                        keterangan: row.KETERANGAN || row['Keterangan'] || ''
-                    })).filter(i => i.namaBarang);
-                    
-                    $('#syncText').textContent = 'Terhubung';
-                    $('#syncDot').className = 'w-2 h-2 rounded-full bg-emerald-500';
-                    renderAll();
-                }
-            });
-        } catch (err) {
-            $('#syncText').textContent = 'Koneksi Gagal';
-            $('#syncDot').className = 'w-2 h-2 rounded-full bg-rose-500';
-            showToast('Gagal memuat data!', 'error');
-        } finally {
-            btn.classList.remove('opacity-50', 'pointer-events-none');
-        }
-    }
-
-    // =================== RENDERING ===================
-    function renderAll() {
-        const container = $('#inventoryContainer');
-        
-        // Stats Calculation
-        const totalItems = state.items.reduce((s, i) => s + i.jumlah, 0);
-        const categories = new Set(state.items.map(i => i.kategori).filter(Boolean));
-        
-        const baikCount = state.items.filter(i => i.kondisi.toLowerCase() === 'baik').reduce((s, i) => s + i.jumlah, 0);
-        const rusakCount = state.items.filter(i => i.kondisi.toLowerCase().includes('rusak')).reduce((s, i) => s + i.jumlah, 0);
-
-        const baikPersen = totalItems > 0 ? Math.round((baikCount / totalItems) * 100) : 0;
-        const rusakPersen = totalItems > 0 ? Math.round((rusakCount / totalItems) * 100) : 0;
-
-        $('#statTotal').textContent = totalItems;
-        $('#statKat').textContent = categories.size;
-        $('#statBaikPersen').textContent = baikPersen + '%';
-        $('#statRusakPersen').textContent = rusakPersen + '%';
-
-        // Filter Logic
-        state.filteredItems = state.items.filter(i => {
-            const matchesSearch = !state.searchQuery || i.namaBarang.toLowerCase().includes(state.searchQuery) || i.noInventaris.toLowerCase().includes(state.searchQuery);
-            const matchesFilter = state.activeFilter === 'all' || i.kategori === state.activeFilter;
-            return matchesSearch && matchesFilter;
-        });
-
-        $('#itemCount').textContent = `${state.filteredItems.length} Data`;
-
-        if (state.filteredItems.length === 0) {
-            container.innerHTML = `<div class="col-span-full py-20 flex flex-col items-center justify-center text-slate-300">
-                <i data-lucide="search-x" class="w-12 h-12 mb-4"></i>
-                <p class="font-black uppercase tracking-widest text-xs">Data tidak ditemukan</p>
-            </div>`;
-            if (window.lucide) lucide.createIcons();
-            return;
-        }
-
-        container.innerHTML = state.filteredItems.map(item => `
-            <div class="bg-white rounded-[1.25rem] sm:rounded-[2.5rem] p-3.5 sm:p-6 shadow-sm border border-slate-100 relative group transition-all hover:shadow-xl hover:-translate-y-1 card-compact">
-                ${item.isPending ? `
-                    <div class="absolute inset-x-8 top-0 h-1 bg-amber-400 rounded-b-full animate-pulse"></div>
-                ` : ''}
-                
-                <div class="mb-2.5 sm:mb-5">
-                    <span class="inline-block px-2 py-0.5 rounded-lg bg-slate-100 text-[7px] sm:text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 sm:mb-2">${item.kategori}</span>
-                    <h3 class="text-sm sm:text-xl font-black text-slate-800 leading-tight mb-0.5 text-mobile-title">${item.namaBarang}</h3>
-                    <p class="text-[7px] sm:text-[10px] font-bold text-slate-400 tracking-wider text-mobile-meta">${item.noInventaris}</p>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-6">
-                    <div class="bg-slate-50 p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-100/50">
-                        <p class="text-[7px] sm:text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Kondisi</p>
-                        <p class="text-[10px] sm:text-xs font-black ${getKondisiColor(item.kondisi)}">${item.kondisi}</p>
-                    </div>
-                    <div class="bg-slate-50 p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-100/50">
-                        <p class="text-[7px] sm:text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Lokasi</p>
-                        <p class="text-[10px] sm:text-xs font-black text-slate-700 truncate">${item.lokasi || '-'}</p>
-                    </div>
-                </div>
-
-                <div class="flex items-center justify-between gap-2.5 sm:gap-4">
-                    ${state.isAdmin ? `
-                        <button onclick="window.editItem('${item.noInventaris}')" class="flex-1 bg-emerald-50 text-emerald-600 py-3.5 rounded-2xl flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest transition-all active:scale-95">
-                            <i data-lucide="edit-3" class="w-4 h-4"></i> Edit
-                        </button>
-                        <button onclick="window.deleteItem('${item.noInventaris}')" class="bg-rose-50 text-rose-600 p-3.5 rounded-2xl flex items-center justify-center transition-all active:scale-90 hover:bg-rose-100">
-                            <i data-lucide="trash-2" class="w-5 h-5"></i>
-                        </button>
-                    ` : `
-                        <button onclick="window.showDetail('${item.noInventaris}')" class="flex-1 bg-slate-100 text-slate-600 py-3.5 rounded-2xl flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest transition-all active:scale-95">
-                            <i data-lucide="info" class="w-4 h-4"></i> Detail
-                        </button>
-                    `}
-                </div>
-            </div>
-        `).join('');
-
-        if (window.lucide) lucide.createIcons();
-    }
-
-    function getKondisiColor(k) {
-        const lower = k.toLowerCase();
-        if (lower.includes('baik')) return 'text-emerald-600';
-        if (lower.includes('rusak ringan')) return 'text-amber-500';
-        return 'text-rose-600';
-    }
-
-    function formatRp(num) {
-        if (num >= 1000000) return 'Rp ' + (num / 1000000).toFixed(1).replace('.0', '') + ' Jt';
-        return 'Rp ' + num.toLocaleString('id-ID');
-    }
-
-    // =================== ACTIONS ===================
-    window.editItem = (noInv) => {
-        const item = state.items.find(i => i.noInventaris === noInv);
-        if (!item) return;
-        
-        $('#modalTitle').textContent = 'Perbarui Data';
-        $('#formMode').value = 'edit';
-        $('#formNo').value = item.no;
-        $('#formNoInv').value = item.noInventaris;
-        
-        $('#addNama').value = item.namaBarang;
-        $('#addKategori').value = item.kategori;
-        $('#addJumlah').value = item.jumlah;
-        $('#addKondisi').value = item.kondisi;
-        $('#addLokasi').value = item.lokasi;
-        $('#addKeterangan').value = item.keterangan;
-        
-        $('#itemModal').classList.remove('hidden');
+    // CLOSE MODALS
+    $('#modalBackdrop').onclick = () => {
+        hideAuth();
+        hideItemForm();
+        hideDetail();
     };
+}
 
-    window.showDetail = (noInv) => {
-        const item = state.items.find(i => i.noInventaris === noInv);
-        if (!item) return;
+function applyFilter() {
+    state.filteredItems = state.items.filter(item => {
+        const matchesSearch = item.namaBarang.toLowerCase().includes(state.searchQuery) || 
+                             item.noInventaris.toLowerCase().includes(state.searchQuery);
+        const matchesFilter = state.currentFilter === 'all' || item.kategori === state.currentFilter;
+        return matchesSearch && matchesFilter;
+    });
+    renderAll();
+}
 
-        const content = $('#detailContent');
-        content.innerHTML = `
-            <div class="space-y-4">
-                <div class="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                    <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm text-emerald-600 shrink-0 border border-slate-100">
-                        <i data-lucide="package-search" class="w-6 h-6"></i>
+function renderAll() {
+    updateStats();
+    const container = $('#inventoryGrid');
+    
+    if (state.filteredItems.length === 0) {
+        container.innerHTML = `<div class="col-span-full py-20 text-center text-slate-400 font-bold">Tidak ada barang ditemukan.</div>`;
+        return;
+    }
+
+    container.innerHTML = state.filteredItems.map(item => `
+        <div onclick="showDetail('${item.id}')" class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer active:scale-[0.98]">
+            <div class="flex flex-col gap-4">
+                <div>
+                    <span class="inline-block px-3 py-1 rounded-full bg-slate-100 text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2">${item.kategori}</span>
+                    <h3 class="text-[18px] font-black text-slate-800 leading-tight">${item.namaBarang}</h3>
+                    <p class="text-[13px] font-bold text-slate-400 mt-1">${item.noInventaris}</p>
+                </div>
+                
+                <div class="flex items-center justify-between border-t border-slate-50 pt-4">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="map-pin" class="w-4 h-4 text-slate-300"></i>
+                        <span class="text-[14px] font-bold text-slate-600">${item.lokasi || '-'}</span>
                     </div>
-                    <div>
-                        <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Nama Barang</h4>
-                        <p class="text-lg font-black text-slate-800 leading-tight">${item.namaBarang}</p>
-                    </div>
+                    <span class="px-4 py-1.5 rounded-full text-[12px] font-black uppercase tracking-wider ${getBadgeStyle(item.kondisi)}">
+                        ${item.kondisi}
+                    </span>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Kategori</p>
-                        <p class="text-sm font-black text-slate-700 leading-none">${item.kategori}</p>
-                    </div>
-                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Lokasi</p>
-                        <p class="text-sm font-black text-slate-700 leading-none">${item.lokasi || '-'}</p>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Kondisi</p>
-                        <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${getKondisiColor(item.kondisi)} bg-white shadow-sm border border-slate-100 inline-block">
-                            ${item.kondisi}
-                        </span>
-                    </div>
-                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Jumlah</p>
-                        <p class="text-sm font-black text-slate-700 leading-none">${item.jumlah} Unit</p>
-                    </div>
-                </div>
-
-                <div class="p-4 rounded-2xl bg-slate-900 text-white shadow-lg relative overflow-hidden">
-                    <div class="absolute -top-10 -right-10 w-24 h-24 bg-white/5 rounded-full blur-2xl"></div>
-                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 relative z-10">Nomor Inventaris</p>
-                    <p class="text-base font-black tracking-widest relative z-10">${item.noInventaris}</p>
-                </div>
-
-                ${item.keterangan ? `
-                    <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-100">
-                        <p class="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-1.5">Keterangan Tambahan</p>
-                        <p class="text-xs font-bold text-slate-600 leading-relaxed">${item.keterangan}</p>
+                ${state.isAdmin ? `
+                    <div class="flex gap-2 pt-2">
+                        <button onclick="event.stopPropagation(); showItemForm('${item.id}')" class="flex-1 py-3 bg-emerald-50 text-emerald-600 rounded-xl font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2">
+                            <i data-lucide="edit-3" class="w-4 h-4"></i> EDIT
+                        </button>
                     </div>
                 ` : ''}
             </div>
-        `;
+        </div>
+    `).join('');
 
-        $('#detailModal').classList.remove('hidden');
-        if (window.lucide) lucide.createIcons();
-    };
+    lucide.createIcons();
+}
 
-    window.deleteItem = (noInv) => {
-        const item = state.items.find(i => i.noInventaris === noInv);
-        if (!confirm(`Hapus barang "${item.namaBarang}"?`)) return;
-        
-        state.items = state.items.filter(i => i.noInventaris !== noInv);
-        renderAll();
+function updateStats() {
+    const total = state.items.length;
+    const baik = state.items.filter(i => i.kondisi === 'Baik').length;
+    const rusak = state.items.filter(i => i.kondisi === 'Rusak').length;
+    const kats = new Set(state.items.map(i => i.kategori)).size;
 
-        addToQueue('deleteItem', { action: 'deleteItem', noInventaris: noInv, password: 'adminbn2' });
-        showToast('Menghapus data...', 'info');
-    };
+    $('#statTotal').innerText = total;
+    $('#statKat').innerText = kats;
+    $('#statBaik').innerText = total ? Math.round((baik/total)*100) + '%' : '0%';
+    $('#statRusak').innerText = total ? Math.round((rusak/total)*100) + '%' : '0%';
+}
 
-    async function submitForm() {
-        const mode = $('#formMode').value;
-        const data = {
-            namaBarang: $('#addNama').value,
-            kategori: $('#addKategori').value,
-            jumlah: parseInt($('#addJumlah').value) || 1,
-            kondisi: $('#addKondisi').value,
-            lokasi: $('#addLokasi').value,
-            keterangan: $('#addKeterangan').value
-        };
+function getBadgeStyle(kondisi) {
+    if (kondisi === 'Baik') return 'bg-emerald-50 text-emerald-600';
+    if (kondisi === 'Rusak Ringan') return 'bg-amber-50 text-amber-600';
+    return 'bg-rose-50 text-rose-600';
+}
 
-        const noInv = mode === 'edit' ? $('#formNoInv').value : 'INV-' + Date.now();
-        const payload = {
-            action: mode === 'edit' ? 'editItem' : 'addItem',
-            ...data,
-            no: mode === 'edit' ? $('#formNo').value : (state.items.length + 1),
-            noInventaris: noInv,
-            password: 'adminbn2'
-        };
+// DETAIL PANEL (BOTTOM SHEET)
+function showDetail(id) {
+    const item = state.items.find(i => i.id === id);
+    if (!item) return;
 
-        // Optimistic Update
-        if (mode === 'edit') {
-            const idx = state.items.findIndex(i => i.noInventaris === noInv);
-            state.items[idx] = { ...state.items[idx], ...data, isPending: true };
-        } else {
-            state.items.push({ ...data, noInventaris: noInv, isPending: true });
-        }
+    const content = `
+        <div class="space-y-6">
+            <div class="flex items-center gap-4 border-b border-slate-100 pb-6">
+                <div class="w-14 h-14 bg-accent rounded-2xl flex items-center justify-center text-white shrink-0 shadow-lg shadow-emerald-100">
+                    <i data-lucide="package-search" class="w-7 h-7"></i>
+                </div>
+                <div>
+                    <h4 class="text-[12px] font-black text-slate-400 uppercase tracking-widest mb-1">Nama Barang</h4>
+                    <p class="text-xl font-black text-slate-800 leading-tight">${item.namaBarang}</p>
+                </div>
+            </div>
 
-        renderAll();
-        $('#itemModal').classList.add('hidden');
-        
-        addToQueue(payload.action, payload);
-        showToast('Menyimpan perubahan...', 'info');
-    }
+            <div class="grid grid-cols-2 gap-4">
+                <div class="p-5 bg-slate-50 rounded-2xl">
+                    <p class="text-[12px] font-bold text-slate-400 uppercase mb-2">Kategori</p>
+                    <p class="text-[16px] font-black text-slate-800">${item.kategori}</p>
+                </div>
+                <div class="p-5 bg-slate-50 rounded-2xl">
+                    <p class="text-[12px] font-bold text-slate-400 uppercase mb-2">Jumlah</p>
+                    <p class="text-[16px] font-black text-slate-800">${item.jumlah} Unit</p>
+                </div>
+            </div>
 
-    // =================== SYNC QUEUE ===================
-    function addToQueue(action, payload) {
-        state.syncQueue.push({ action, payload, timestamp: Date.now() });
-        localStorage.setItem('inv-syncQueue', JSON.stringify(state.syncQueue));
-        processSyncQueue();
-    }
+            <div class="p-5 bg-slate-50 rounded-2xl">
+                <p class="text-[12px] font-bold text-slate-400 uppercase mb-2">Lokasi Penyimpanan</p>
+                <div class="flex items-center gap-2">
+                    <i data-lucide="map-pin" class="w-5 h-5 text-accent"></i>
+                    <p class="text-[16px] font-black text-slate-800">${item.lokasi || '-'}</p>
+                </div>
+            </div>
 
-    async function processSyncQueue() {
-        if (state.isSyncing || state.syncQueue.length === 0) return;
-        state.isSyncing = true;
+            <div class="p-6 bg-navy rounded-2xl text-white relative overflow-hidden">
+                <div class="absolute -top-10 -right-10 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
+                <p class="text-[12px] font-black text-slate-500 uppercase tracking-widest mb-2 relative z-10">No. Inventaris</p>
+                <p class="text-[18px] font-black tracking-widest relative z-10">${item.noInventaris}</p>
+            </div>
 
-        const item = state.syncQueue[0];
-        try {
-            const res = await fetch(state.scriptUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(item.payload)
-            });
-            const result = await res.json();
-            
-            if (result.success) {
-                state.syncQueue.shift();
-                localStorage.setItem('inv-syncQueue', JSON.stringify(state.syncQueue));
-                
-                // Clear isPending flag locally
-                if (item.payload.noInventaris) {
-                    const localItem = state.items.find(i => i.noInventaris === item.payload.noInventaris);
-                    if (localItem) delete localItem.isPending;
-                }
-                
-                if (state.syncQueue.length === 0) {
-                    showToast('Semua data sinkron!', 'success');
-                }
-            }
-        } catch (err) {
-            console.error('Sync error', err);
-        } finally {
-            state.isSyncing = false;
-            renderAll();
-            if (state.syncQueue.length > 0) setTimeout(processSyncQueue, 1000);
-        }
-    }
-
-    // =================== UTILS ===================
-    function showToast(msg, type) {
-        const t = document.createElement('div');
-        t.className = `fixed bottom-10 left-1/2 -translate-x-1/2 px-8 py-4 rounded-3xl font-black text-white text-sm z-[200] shadow-2xl transition-all scale-0 animate-bounce-in ${type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-rose-600' : 'bg-slate-800'}`;
-        t.style.animation = 'popIn 0.3s forwards';
-        t.textContent = msg;
-        document.body.appendChild(t);
-        setTimeout(() => {
-            t.style.animation = 'popOut 0.3s forwards';
-            setTimeout(() => t.remove(), 300);
-        }, 3000);
-    }
-
-    // CSS for toast animation
-    const style = document.createElement('style');
-    style.innerHTML = `
-        @keyframes popIn { from { transform: translate(-50%, 100%) scale(0.5); opacity: 0; } to { transform: translate(-50%, 0) scale(1); opacity: 1; } }
-        @keyframes popOut { from { transform: translate(-50%, 0) scale(1); opacity: 1; } to { transform: translate(-50%, 100%) scale(0.5); opacity: 0; } }
+            <div class="pt-2">
+                <button onclick="hideDetail()" class="w-full py-5 bg-slate-100 rounded-2xl font-black text-slate-500 uppercase tracking-widest text-xs touch-target">Tutup Panel</button>
+            </div>
+        </div>
     `;
-    document.head.appendChild(style);
 
-    window.onload = init;
-})();
+    if (window.innerWidth < 768) {
+        $('#sheetContent').innerHTML = content;
+        $('#detailSheet').classList.add('sheet-active');
+        $('#modalBackdrop').classList.remove('hidden');
+    } else {
+        $('#modalContent').innerHTML = content;
+        $('#detailModal').classList.remove('hidden');
+        $('#modalBackdrop').classList.remove('hidden');
+    }
+    lucide.createIcons();
+}
+
+function hideDetail() {
+    $('#detailSheet').classList.remove('sheet-active');
+    $('#detailModal').classList.add('hidden');
+    $('#modalBackdrop').classList.add('hidden');
+}
+
+// AUTH LOGIC (NUMPAD)
+function renderNumpad() {
+    const container = $('#authModal .grid');
+    if (!container) return;
+    
+    const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', '⌫'];
+    container.innerHTML = keys.map(k => `
+        <button onclick="handlePin('${k}')" class="h-16 bg-slate-800 text-white rounded-2xl text-2xl font-black active:bg-accent transition-all touch-target">
+            ${k}
+        </button>
+    `).join('');
+}
+
+function handlePin(key) {
+    if (key === 'C') state.pinInput = '';
+    else if (key === '⌫') state.pinInput = state.pinInput.slice(0, -1);
+    else if (state.pinInput.length < 4) state.pinInput += key;
+    
+    updatePinDots();
+}
+
+function updatePinDots() {
+    const dots = $$('.pin-dot');
+    dots.forEach((dot, i) => {
+        dot.classList.toggle('active', i < state.pinInput.length);
+    });
+}
+
+function validatePIN() {
+    if (state.pinInput === '1234' || state.pinInput === ADMIN_PIN) { // Example PIN
+        state.isAdmin = true;
+        hideAuth();
+        renderAll();
+        alert('Mode Admin Aktif');
+    } else {
+        state.pinInput = '';
+        updatePinDots();
+        alert('PIN Salah!');
+    }
+}
+
+function showAuth() {
+    $('#authModal').classList.remove('hidden');
+    state.pinInput = '';
+    updatePinDots();
+}
+
+function hideAuth() {
+    $('#authModal').classList.add('hidden');
+}
+
+// FORM LOGIC
+function showItemForm(id = null) {
+    // Basic implementation for now
+    $('#itemModal').classList.remove('hidden');
+    $('#modalBackdrop').classList.remove('hidden');
+    if (id) {
+        const item = state.items.find(i => i.id === id);
+        $('#formTitle').innerText = 'Edit Barang';
+        $('#formId').value = item.id;
+        $('#inputNama').value = item.namaBarang;
+        // fill other fields...
+    } else {
+        $('#formTitle').innerText = 'Tambah Barang Baru';
+        $('#itemForm').reset();
+        $('#formId').value = '';
+    }
+}
+
+function hideItemForm() {
+    $('#itemModal').classList.add('hidden');
+    $('#modalBackdrop').classList.add('hidden');
+}

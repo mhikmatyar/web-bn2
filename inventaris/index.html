@@ -3,264 +3,231 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InvenRumah BN2 — Smart Tracker</title>
+    <title>InvenBN2 - Sistem Inventaris Senior</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { --sidebar-width: 16rem; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
+        :root {
+            --navy: #0D1B2A;
+            --accent: #1DA874;
+            --text-main: #1F2937;
+        }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #FFFFFF; 
+            color: var(--text-main);
+            line-height: 1.6;
+            font-size: 14px;
+        }
+        .bg-navy { background-color: var(--navy); }
+        .text-accent { color: var(--accent); }
+        .bg-accent { background-color: var(--accent); }
+        
+        /* DESKTOP SIDEBAR */
+        @media (min-width: 768px) {
+            #sidebar { width: 220px !important; }
+            #mainContent { margin-left: 220px; }
+        }
+
+        /* MOBILE BOTTOM SHEET */
+        #detailSheet {
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #detailSheet.sheet-active { transform: translateY(0); }
+
+        /* PIN DOTS */
+        .pin-dot { width: 20px; height: 20px; border: 2px solid #CBD5E1; border-radius: 50%; transition: all 0.2s; }
+        .pin-dot.active { background-color: var(--accent); border-color: var(--accent); }
+
+        /* TOUCH TARGETS */
+        .touch-target { min-height: 44px; min-width: 44px; }
+        
+        /* SCROLLBAR */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        #sidebar { width: var(--sidebar-width); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        
-        /* DESKTOP ONLY MINIMIZE */
-        @media (min-width: 768px) {
-            .sidebar-minimized { --sidebar-width: 5rem !important; }
-            .sidebar-minimized .sidebar-text, 
-            .sidebar-minimized .sidebar-header span,
-            .sidebar-minimized .sidebar-divider-text,
-            .sidebar-minimized .portal-link-text { display: none !important; }
-            .sidebar-minimized .nav-item { justify-content: center; padding-left: 0.5rem; padding-right: 0.5rem; }
-            .sidebar-minimized .sidebar-header { justify-content: center; padding: 1.5rem 0; }
-            .sidebar-minimized .sidebar-footer { padding: 1rem 0.5rem; }
-        }
-        
-        #sidebarBackdrop { display: none; opacity: 0; transition: opacity 0.3s; }
-        .backdrop-active { display: block !important; opacity: 1 !important; }
-
-        @media (max-width: 768px) {
-            #sidebar { --sidebar-width: 280px !important; position: fixed; height: 100vh; left: 0; top: 0; z-index: 100; }
-            .card-compact { padding: 0.85rem !important; margin-bottom: 0.5rem !important; }
-            .text-mobile-title { font-size: 0.9rem !important; }
-            .text-mobile-meta { font-size: 8px !important; }
-            .stats-mobile-card { padding: 0.75rem !important; }
-            .stats-mobile-val { font-size: 1.15rem !important; }
-            
-            /* Ensure text ALWAYS shows on mobile sidebar */
-            #sidebar .sidebar-text, #sidebar .sidebar-header span { display: inline !important; }
-        }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 overflow-hidden">
+<body class="overflow-hidden">
     <!-- MOBILE BACKDROP -->
-    <div id="sidebarBackdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[90] md:hidden"></div>
+    <div id="modalBackdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[90] hidden transition-opacity duration-300"></div>
 
     <div class="flex h-screen overflow-hidden">
-        <!-- SIDEBAR -->
-        <aside id="sidebar" class="hidden md:flex fixed inset-y-0 left-0 z-50 bg-slate-900 text-slate-300 transform md:relative md:translate-x-0 flex-col">
-            <div class="p-6 flex items-center justify-between border-b border-slate-800 sidebar-header">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-900/20 shrink-0">
-                        <i data-lucide="building-2" class="w-6 h-6 text-white"></i>
-                    </div>
-                    <span class="font-black text-white tracking-tight text-lg">InvenBN2</span>
+        <!-- SIDEBAR (DESKTOP) -->
+        <aside id="sidebar" class="hidden md:flex fixed inset-y-0 left-0 z-50 bg-navy text-slate-300 flex-col">
+            <div class="p-6 flex items-center gap-3 border-b border-slate-800">
+                <div class="w-10 h-10 bg-accent rounded-xl flex items-center justify-center shadow-lg">
+                    <i data-lucide="package" class="text-white w-6 h-6"></i>
                 </div>
-                <button id="minimizeSidebar" class="hidden md:block text-slate-500 hover:text-white transition-all"><i data-lucide="chevron-left" class="w-5 h-5" id="minimizeIcon"></i></button>
-                <button id="closeSidebar" class="md:hidden text-slate-400"><i data-lucide="x" class="w-6 h-6"></i></button>
+                <span class="font-extrabold text-white text-lg tracking-tight">InvenBN2</span>
             </div>
             
-            <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
-                <a href="#" id="nav-dashboard" class="nav-item sidebar-active flex items-center gap-3 px-4 py-3 rounded-2xl font-bold transition-all" data-page="inventaris">
-                    <i data-lucide="layout-dashboard" class="w-5 h-5 shrink-0"></i> <span class="sidebar-text">Dashboard</span>
+            <nav class="flex-1 p-4 space-y-2 overflow-y-auto no-scrollbar">
+                <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-4 mb-4">Menu Utama</p>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-xl bg-accent text-white font-bold transition-all" data-page="dashboard">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
                 </a>
-                <a href="#" id="nav-inventaris" class="nav-item flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-slate-800 transition-all font-bold" data-page="inventaris">
-                    <i data-lucide="boxes" class="w-5 h-5 shrink-0"></i> <span class="sidebar-text">Data Inventaris</span>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-xl hover:bg-slate-800 font-bold transition-all" data-page="inventaris">
+                    <i data-lucide="boxes" class="w-5 h-5"></i> Inventaris
                 </a>
-                <div class="pt-4 pb-2 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest sidebar-divider-text">Administrator</div>
-                <a href="#" id="nav-settings" class="nav-item flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-slate-800 transition-all font-bold" data-page="settings">
-                    <i data-lucide="settings" class="w-5 h-5 shrink-0"></i> <span class="sidebar-text">Pengaturan</span>
-                </a>
-                <a href="#" id="adminLoginBtn" class="flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-slate-800 transition-all font-bold text-emerald-400">
-                    <i data-lucide="user-cog" class="w-5 h-5 shrink-0"></i> <span class="sidebar-text">Login Admin</span>
-                </a>
-                <a href="#" id="adminLogoutBtn" class="hidden flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-rose-900/30 text-rose-400 transition-all font-bold">
-                    <i data-lucide="log-out" class="w-5 h-5 shrink-0"></i> <span class="sidebar-text">Logout</span>
+                <a href="#" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-xl hover:bg-slate-800 font-bold transition-all" data-page="pengaturan">
+                    <i data-lucide="settings" class="w-5 h-5"></i> Pengaturan
                 </a>
             </nav>
 
-            <div class="p-4 border-t border-slate-800 sidebar-footer">
-                <a href="../" class="flex items-center justify-center gap-2 w-full py-3 bg-slate-800 hover:bg-slate-700 rounded-2xl font-black text-xs uppercase tracking-widest transition-all">
-                    <i data-lucide="home" class="w-4 h-4 shrink-0"></i> <span class="portal-link-text sidebar-text">Ke Portal</span>
+            <div class="p-4 border-t border-slate-800">
+                <a href="../" class="flex items-center justify-center gap-3 w-full py-4 bg-slate-800 hover:bg-slate-700 rounded-2xl font-black text-xs uppercase tracking-widest transition-all">
+                    <i data-lucide="home" class="w-4 h-4"></i> Ke Portal
                 </a>
             </div>
         </aside>
 
         <!-- MAIN CONTENT -->
-        <main class="flex-1 flex flex-col min-w-0 bg-slate-50 relative">
-            <!-- TOP BAR -->
-            <header class="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-30">
-                <div class="flex items-center gap-4">
-                    <button id="openSidebar" class="md:hidden p-2 bg-slate-100 rounded-xl"><i data-lucide="menu" class="w-6 h-6"></i></button>
-                    <div>
-                        <h2 id="pageTitle" class="text-xl font-black text-slate-800">Dashboard Inventaris</h2>
-                        <div class="flex items-center gap-2 mt-0.5">
-                            <span id="syncDot" class="w-2 h-2 rounded-full bg-slate-300"></span>
-                            <span id="syncText" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Menunggu Data</span>
-                        </div>
-                    </div>
-                </div>
+        <main id="mainContent" class="flex-1 flex flex-col w-full bg-white relative">
+            <!-- TOP BAR (MOBILE ONLY) -->
+            <header class="md:hidden flex items-center justify-between p-5 bg-white border-b border-slate-100">
                 <div class="flex items-center gap-3">
-                    <button id="refreshBtn" class="p-2.5 bg-slate-100 hover:bg-emerald-100 hover:text-emerald-600 text-slate-500 rounded-xl transition-all" title="Refresh Data">
-                        <i data-lucide="rotate-cw" class="w-5 h-5"></i>
-                    </button>
+                    <div class="w-9 h-9 bg-accent rounded-lg flex items-center justify-center">
+                        <i data-lucide="package" class="text-white w-5 h-5"></i>
+                    </div>
+                    <span class="font-black text-slate-800 text-base">InvenBN2</span>
                 </div>
+                <button id="refreshBtn" class="w-11 h-11 flex items-center justify-center bg-slate-100 rounded-xl touch-target">
+                    <i data-lucide="rotate-cw" class="w-5 h-5 text-slate-600"></i>
+                </button>
             </header>
 
-            <!-- SCROLLABLE CONTENT -->
-            <div class="flex-1 overflow-y-auto p-6 space-y-8 no-scrollbar">
-                
-                <!-- SUMMARY CARDS -->
-                <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                    <div class="bg-white p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] shadow-sm border border-slate-100 flex flex-col justify-between stats-mobile-card">
-                        <div class="flex items-center sm:block gap-4">
-                            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-100 text-emerald-600 rounded-xl sm:rounded-2xl flex items-center justify-center sm:mb-4 shrink-0">
-                                <i data-lucide="package-check" class="w-5 h-5 sm:w-6 sm:h-6"></i>
-                            </div>
-                            <div>
-                                <p class="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5 sm:mb-1">Total Barang</p>
-                                <h3 id="statTotal" class="text-xl sm:text-3xl font-black text-slate-800 stats-mobile-val">0</h3>
-                            </div>
-                        </div>
+            <div class="flex-1 overflow-y-auto p-5 md:p-8 space-y-8 no-scrollbar pb-32 md:pb-8">
+                <!-- STATS GRID -->
+                <section class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between min-h-[100px]">
+                        <p class="text-[13px] font-bold text-slate-400 uppercase tracking-wide">Total Barang</p>
+                        <h3 id="statTotal" class="text-2xl md:text-[28px] font-black text-slate-800 leading-none mt-2">0</h3>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between min-h-[100px]">
+                        <p class="text-[13px] font-bold text-slate-400 uppercase tracking-wide">Kategori</p>
+                        <h3 id="statKat" class="text-2xl md:text-[28px] font-black text-slate-800 leading-none mt-2">0</h3>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between min-h-[100px]">
+                        <p class="text-[13px] font-bold text-slate-400 uppercase tracking-wide">Kondisi Baik</p>
+                        <h3 id="statBaik" class="text-2xl md:text-[28px] font-black text-accent leading-none mt-2">0%</h3>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between min-h-[100px]">
+                        <p class="text-[13px] font-bold text-slate-400 uppercase tracking-wide">Kondisi Rusak</p>
+                        <h3 id="statRusak" class="text-2xl md:text-[28px] font-black text-rose-600 leading-none mt-2">0%</h3>
+                    </div>
+                </section>
+
+                <!-- SEARCH & FILTERS -->
+                <section class="space-y-4">
+                    <div class="relative w-full">
+                        <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5"></i>
+                        <input type="text" id="searchInput" placeholder="Cari nama barang atau kode..." 
+                            class="w-full h-11 pl-12 pr-4 bg-slate-100 border-none rounded-xl font-bold text-slate-700 focus:ring-2 focus:ring-accent outline-none">
                     </div>
                     
-                    <div class="bg-white p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] shadow-sm border border-slate-100 flex flex-col justify-between stats-mobile-card">
-                        <div class="flex items-center sm:block gap-4">
-                            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-amber-100 text-amber-600 rounded-xl sm:rounded-2xl flex items-center justify-center sm:mb-4 shrink-0">
-                                <i data-lucide="layers" class="w-5 h-5 sm:w-6 sm:h-6"></i>
-                            </div>
-                            <div>
-                                <p class="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5 sm:mb-1">Kategori</p>
-                                <h3 id="statKat" class="text-xl sm:text-3xl font-black text-slate-800 stats-mobile-val">0</h3>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] shadow-sm border border-slate-100 flex flex-col justify-between stats-mobile-card">
-                        <div class="flex items-center sm:block gap-4">
-                            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 text-blue-600 rounded-xl sm:rounded-2xl flex items-center justify-center sm:mb-4 shrink-0">
-                                <i data-lucide="check-circle-2" class="w-5 h-5 sm:w-6 sm:h-6"></i>
-                            </div>
-                            <div>
-                                <p class="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5 sm:mb-1">Kondisi Baik</p>
-                                <h3 id="statBaikPersen" class="text-xl sm:text-3xl font-black text-emerald-600 stats-mobile-val">0%</h3>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] shadow-sm border border-slate-100 flex flex-col justify-between stats-mobile-card">
-                        <div class="flex items-center sm:block gap-4">
-                            <div class="w-10 h-10 sm:w-12 sm:h-12 bg-rose-100 text-rose-600 rounded-xl sm:rounded-2xl flex items-center justify-center sm:mb-4 shrink-0">
-                                <i data-lucide="alert-circle" class="w-5 h-5 sm:w-6 sm:h-6"></i>
-                            </div>
-                            <div>
-                                <p class="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5 sm:mb-1">Kondisi Rusak</p>
-                                <h3 id="statRusakPersen" class="text-xl sm:text-3xl font-black text-rose-600 stats-mobile-val">0%</h3>
-                            </div>
-                        </div>
+                    <div class="flex gap-2 overflow-x-auto no-scrollbar py-1">
+                        <button class="filter-tab touch-target px-6 py-2 bg-accent text-white rounded-full font-bold text-sm whitespace-nowrap" data-filter="all">Semua</button>
+                        <button class="filter-tab touch-target px-6 py-2 bg-slate-100 text-slate-600 rounded-full font-bold text-sm whitespace-nowrap hover:bg-slate-200" data-filter="Elektronik">Elektronik</button>
+                        <button class="filter-tab touch-target px-6 py-2 bg-slate-100 text-slate-600 rounded-full font-bold text-sm whitespace-nowrap hover:bg-slate-200" data-filter="Mebel">Mebel</button>
+                        <button class="filter-tab touch-target px-6 py-2 bg-slate-100 text-slate-600 rounded-full font-bold text-sm whitespace-nowrap hover:bg-slate-200" data-filter="Lainnya">Lainnya</button>
                     </div>
                 </section>
 
-                <!-- SEARCH & FILTER AREA -->
-                <section class="bg-white p-2 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col sm:flex-row gap-2">
-                    <div class="relative flex-1">
-                        <i data-lucide="search" class="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-                        <input type="text" id="searchInput" placeholder="Cari nama barang atau nomor..." 
-                            class="w-full pl-14 pr-6 py-4 rounded-2xl bg-slate-50 border-none focus:ring-2 focus:ring-emerald-500 font-bold text-slate-700">
-                    </div>
-                    <div class="flex gap-2 p-1 overflow-x-auto no-scrollbar">
-                        <button class="filter-btn active bg-emerald-600 text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all" data-filter="all">Semua</button>
-                        <button class="filter-btn bg-slate-100 text-slate-500 px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all" data-filter="Elektronik">Elektronik</button>
-                        <button class="filter-btn bg-slate-100 text-slate-500 px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all" data-filter="Furniture">Mebel</button>
-                    </div>
-                </section>
-
-                <!-- INVENTORY GRID -->
-                <section>
-                    <div class="flex items-center justify-between mb-6 px-2">
-                        <h3 class="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">Daftar Inventaris</h3>
-                        <div id="itemCount" class="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">0 Data</div>
-                    </div>
-                    <div id="inventoryContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-10">
-                        <!-- Loading Placeholder -->
-                        <div class="col-span-full py-20 flex flex-col items-center justify-center text-slate-300">
-                            <i data-lucide="loader-2" class="w-12 h-12 animate-spin mb-4"></i>
-                            <p class="font-bold uppercase tracking-widest text-xs">Menyiapkan Data...</p>
-                        </div>
-                    </div>
+                <!-- INVENTORY LIST -->
+                <section id="inventoryGrid" class="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
+                    <!-- Cards injected via JS -->
                 </section>
             </div>
 
-            <!-- FLOATING ACTIONS (MODIFIED FOR MOBILE SPACING) -->
-            <div id="adminActions" class="fixed bottom-24 sm:bottom-8 right-6 sm:right-8 flex flex-col gap-4 hidden z-40">
-                <button id="addBtn" class="w-14 h-14 sm:w-16 sm:h-16 bg-emerald-600 text-white rounded-2xl sm:rounded-[2rem] shadow-2xl shadow-emerald-900/40 flex items-center justify-center hover:scale-110 active:scale-95 transition-all">
-                    <i data-lucide="plus" class="w-6 h-6 sm:w-8 sm:h-8"></i>
-                </button>
-            </div>
-
-            <!-- BOTTOM MOBILE NAV -->
-            <nav class="md:hidden fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 px-6 py-3 flex items-center justify-around z-50">
-                <button class="nav-item flex flex-col items-center gap-1 text-emerald-600" data-page="inventaris">
+            <!-- MOBILE BOTTOM NAV -->
+            <nav class="md:hidden fixed bottom-0 inset-x-0 bg-white border-t border-slate-100 flex items-center justify-around py-3 px-6 z-[60] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+                <button class="mobile-nav-item flex flex-col items-center gap-1 text-accent" data-page="dashboard">
                     <i data-lucide="layout-dashboard" class="w-6 h-6"></i>
-                    <span class="text-[10px] font-bold">Dashboard</span>
+                    <span class="text-[10px] font-extrabold uppercase tracking-widest">Dashboard</span>
                 </button>
-                <button class="nav-item flex flex-col items-center gap-1 text-slate-400" data-page="inventaris">
+                <button class="mobile-nav-item flex flex-col items-center gap-1 text-slate-400" data-page="inventaris">
                     <i data-lucide="boxes" class="w-6 h-6"></i>
-                    <span class="text-[10px] font-bold">Inventaris</span>
+                    <span class="text-[10px] font-extrabold uppercase tracking-widest">Inventaris</span>
                 </button>
-                <button id="mobileMenuBtn" class="flex flex-col items-center gap-1 text-slate-400">
-                    <i data-lucide="menu" class="w-6 h-6"></i>
-                    <span class="text-[10px] font-bold">Lainnya</span>
+                <button class="mobile-nav-item flex flex-col items-center gap-1 text-slate-400" data-page="pengaturan">
+                    <i data-lucide="settings" class="w-6 h-6"></i>
+                    <span class="text-[10px] font-extrabold uppercase tracking-widest">Pengaturan</span>
                 </button>
             </nav>
+
+            <!-- FAB (MOBILE) -->
+            <button id="mobileAddBtn" class="md:hidden fixed bottom-24 right-6 w-14 h-14 bg-accent text-white rounded-full shadow-xl shadow-emerald-200 flex items-center justify-center z-50 touch-target active:scale-95 transition-all">
+                <i data-lucide="plus" class="w-7 h-7"></i>
+            </button>
         </main>
     </div>
 
-    <!-- MODALS (SAMA SEPERTI SEBELUMNYA TAPI REFINED) -->
-    <!-- AUTH MODAL -->
-    <div id="authModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-6 hidden">
-        <div class="bg-white rounded-[2.5rem] w-full max-w-sm p-8 shadow-2xl">
-            <div class="text-center mb-8">
-                <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                    <i data-lucide="key-round" class="w-8 h-8"></i>
-                </div>
-                <h3 class="text-2xl font-black text-slate-800 mb-2 tracking-tight">Mode Admin</h3>
-                <p class="text-sm text-slate-500 font-medium">Masukkan PIN Pengamanan</p>
-            </div>
-            <input type="password" id="adminPass" placeholder="••••••••" 
-                class="w-full p-5 rounded-2xl bg-slate-100 border-none focus:ring-2 focus:ring-emerald-500 text-center text-2xl font-black tracking-[0.5em] mb-6 shadow-inner">
-            <div class="flex gap-4">
-                <button onclick="document.getElementById('authModal').classList.add('hidden')" class="flex-1 py-4 rounded-2xl font-black text-slate-400 hover:bg-slate-50 transition-all">BATAL</button>
-                <button id="authSubmit" class="flex-1 py-4 rounded-2xl bg-emerald-600 text-white font-black shadow-xl shadow-emerald-200 active:scale-95 transition-all">MASUK</button>
-            </div>
+    <!-- MOBILE DETAIL SHEET (SLIDE UP) -->
+    <div id="detailSheet" class="fixed inset-x-0 bottom-0 bg-white z-[100] rounded-t-[2.5rem] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] md:hidden">
+        <div class="p-4 flex justify-center">
+            <div class="w-12 h-1.5 bg-slate-200 rounded-full"></div>
+        </div>
+        <div id="sheetContent" class="p-8 pt-2 space-y-6 max-h-[85vh] overflow-y-auto no-scrollbar pb-12">
+            <!-- Content injected via JS -->
         </div>
     </div>
 
-    <!-- ITEM MODAL -->
-    <div id="itemModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[110] flex items-center justify-center p-6 hidden">
-        <div class="bg-white rounded-[2rem] w-full max-w-lg shadow-2xl overflow-hidden border border-white/20">
+    <!-- DESKTOP DETAIL MODAL -->
+    <div id="detailModal" class="hidden fixed inset-0 z-[100] md:flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm">
+        <div class="bg-white rounded-[2rem] w-full max-w-lg overflow-hidden shadow-2xl">
+            <div id="modalContent" class="p-8"></div>
+        </div>
+    </div>
+
+    <!-- ADMIN PIN SCREEN -->
+    <div id="authModal" class="fixed inset-0 bg-navy z-[200] flex flex-col items-center justify-center p-8 hidden">
+        <div class="w-full max-w-xs text-center space-y-12">
+            <div class="space-y-4">
+                <div class="w-20 h-20 bg-accent/20 text-accent rounded-[2rem] flex items-center justify-center mx-auto">
+                    <i data-lucide="shield-check" class="w-10 h-10"></i>
+                </div>
+                <h2 class="text-white text-2xl font-black uppercase tracking-tight">Login Admin</h2>
+                <p class="text-slate-400 font-bold">Masukkan PIN Keamanan</p>
+            </div>
+
+            <div class="flex justify-center gap-4 py-4" id="pinDots">
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4 w-full">
+                <!-- Numpad injected via JS -->
+            </div>
+
+            <button id="authSubmit" class="w-full py-5 bg-accent text-white rounded-2xl font-black uppercase tracking-widest text-sm shadow-xl shadow-emerald-900/40 touch-target active:scale-95 transition-all">Masuk</button>
+            <button onclick="hideAuth()" class="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Batal</button>
+        </div>
+    </div>
+
+    <!-- ITEM FORM MODAL -->
+    <div id="itemModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[150] flex items-center justify-center p-6 hidden">
+        <div class="bg-white rounded-[2rem] w-full max-w-lg overflow-hidden shadow-2xl">
             <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <h3 id="modalTitle" class="text-lg font-black text-slate-800 uppercase tracking-tight">Tambah Barang</h3>
-                <button onclick="document.getElementById('itemModal').classList.add('hidden')" class="p-2 text-slate-400 hover:text-slate-600 transition-all">
+                <h3 id="formTitle" class="text-lg font-black text-slate-800 uppercase tracking-tight">Formulir Barang</h3>
+                <button onclick="hideItemForm()" class="p-2 text-slate-400 hover:text-slate-600 transition-all touch-target">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
-            <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto no-scrollbar">
-                <input type="hidden" id="formMode" value="add">
-                <input type="hidden" id="formNo" value="">
-                <input type="hidden" id="formNoInv" value="">
-                
+            <form id="itemForm" class="p-6 space-y-4 max-h-[70vh] overflow-y-auto no-scrollbar">
+                <input type="hidden" id="formId">
                 <div class="space-y-1.5">
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nama Barang</label>
-                    <input type="text" id="addNama" placeholder="Contoh: Bor Tangan Bosch" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all font-bold text-slate-700">
+                    <label class="text-[12px] font-bold text-slate-400 uppercase tracking-widest ml-1">Nama Barang</label>
+                    <input type="text" id="inputNama" required class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all font-bold text-slate-700 touch-target" placeholder="Contoh: Genset Honda">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-1.5">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Kategori</label>
-                        <select id="addKategori" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 outline-none font-bold text-slate-700 appearance-none">
+                        <label class="text-[12px] font-bold text-slate-400 uppercase tracking-widest ml-1">Kategori</label>
+                        <select id="inputKategori" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-500/10 outline-none font-bold text-slate-700 touch-target">
                             <option value="Elektronik">Elektronik</option>
                             <option value="Mebel">Mebel</option>
                             <option value="Kendaraan">Kendaraan</option>
@@ -269,54 +236,36 @@
                         </select>
                     </div>
                     <div class="space-y-1.5">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Kondisi</label>
-                        <select id="addKondisi" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 outline-none font-bold text-slate-700 appearance-none">
+                        <label class="text-[12px] font-bold text-slate-400 uppercase tracking-widest ml-1">Kondisi</label>
+                        <select id="inputKondisi" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-500/10 outline-none font-bold text-slate-700 touch-target">
                             <option value="Baik">Baik</option>
                             <option value="Rusak Ringan">Rusak Ringan</option>
-                            <option value="Rusak Berat">Rusak Berat</option>
+                            <option value="Rusak">Rusak</option>
                         </select>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-1.5">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Jumlah</label>
-                        <input type="number" id="addJumlah" value="1" min="1" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 outline-none font-bold text-slate-700">
+                        <label class="text-[12px] font-bold text-slate-400 uppercase tracking-widest ml-1">Lokasi</label>
+                        <input type="text" id="inputLokasi" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-slate-700 touch-target" placeholder="Gudang A">
                     </div>
                     <div class="space-y-1.5">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Lokasi</label>
-                        <input type="text" id="addLokasi" placeholder="Gudang B" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 outline-none font-bold text-slate-700">
+                        <label class="text-[12px] font-bold text-slate-400 uppercase tracking-widest ml-1">Jumlah</label>
+                        <input type="number" id="inputJumlah" required min="1" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-slate-700 touch-target">
                     </div>
                 </div>
                 <div class="space-y-1.5">
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Keterangan</label>
-                    <textarea id="addKeterangan" rows="2" placeholder="..." class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 outline-none font-bold text-slate-700 h-24 no-scrollbar"></textarea>
+                    <label class="text-[12px] font-bold text-slate-400 uppercase tracking-widest ml-1">Keterangan</label>
+                    <textarea id="inputKeterangan" rows="2" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 no-scrollbar touch-target" placeholder="Catatan tambahan..."></textarea>
                 </div>
-            </div>
-            <div class="p-6 bg-slate-50 border-t border-slate-100">
-                <button id="submitBtn" class="w-full py-4 rounded-xl bg-emerald-600 text-white font-black shadow-lg shadow-emerald-900/20 active:scale-95 transition-all uppercase tracking-widest text-xs">Simpan Data</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- DETAIL MODAL -->
-    <div id="detailModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[110] flex items-center justify-center p-6 hidden">
-        <div class="bg-white rounded-[2rem] w-full max-w-lg shadow-2xl overflow-hidden border border-white/20">
-            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <h3 class="text-lg font-black text-slate-800 uppercase tracking-tight">Detail Inventaris</h3>
-                <button onclick="document.getElementById('detailModal').classList.add('hidden')" class="p-2 text-slate-400 hover:text-slate-600 transition-all">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
-            </div>
-            <div id="detailContent" class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-                <!-- Content injected via JS -->
-            </div>
+            </form>
             <div class="p-6 bg-slate-50 border-t border-slate-100 flex gap-4">
-                <button onclick="document.getElementById('detailModal').classList.add('hidden')" class="w-full py-4 rounded-xl bg-slate-200 text-slate-600 font-black uppercase tracking-widest text-xs">Tutup</button>
+                <button type="button" onclick="hideItemForm()" class="flex-1 py-4 rounded-xl bg-slate-200 text-slate-600 font-black uppercase tracking-widest text-xs touch-target">Batal</button>
+                <button type="submit" form="itemForm" class="flex-1 py-4 rounded-xl bg-accent text-white font-black uppercase tracking-widest text-xs shadow-lg shadow-emerald-900/20 touch-target active:scale-95 transition-all">Simpan</button>
             </div>
         </div>
     </div>
 
-    <!-- SCRIPTS -->
     <script src="app.js"></script>
 </body>
 </html>
