@@ -157,13 +157,14 @@ function renderAll() {
     container.innerHTML = paginated.map(item => {
         const isNew = (Date.now() - item.createdAt) < (7 * 24 * 60 * 60 * 1000);
         const badge = getBadgeStyle(item.kondisi);
+        const hasCode = item.noInventaris && item.noInventaris !== '-';
 
         return `
-            <div class="bg-white rounded-[14px] p-[14px] border border-[#EBEBEB] space-y-3.5">
+            <div class="bg-white rounded-[18px] p-5 border border-slate-100 shadow-sm space-y-4">
                 <!-- TOP ROW -->
-                <div class="flex justify-between items-start gap-2">
+                <div class="flex justify-between items-start gap-4">
                     <div class="flex items-center gap-2 min-w-0">
-                        <h3 class="text-[15px] font-medium text-slate-800 truncate">${item.namaBarang}</h3>
+                        <h3 class="text-[15px] font-bold text-slate-800 leading-tight truncate">${item.namaBarang}</h3>
                         ${isNew ? '<span class="bg-[#1DA874]/15 text-[#1DA874] text-[9px] font-bold px-2 py-0.5 rounded-full">Baru</span>' : ''}
                     </div>
                     <span class="px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap ${badge.bg} ${badge.text}">
@@ -172,29 +173,30 @@ function renderAll() {
                 </div>
 
                 <!-- MIDDLE ROW -->
-                <div class="flex justify-between items-end gap-2">
+                <div class="flex justify-between items-end gap-3">
                     <div class="flex-1 min-w-0">
-                        <p class="text-[11px] text-slate-400 truncate">
-                            ${item.noInventaris} · <span class="text-slate-600 font-medium">${item.jumlah} unit</span>
+                        <p class="text-[11px] font-medium text-slate-400 leading-none">
+                            ${hasCode ? `${item.noInventaris} <span class="mx-1 text-slate-200">·</span>` : ''} 
+                            <span class="text-slate-700 font-bold">${item.jumlah} unit</span>
                         </p>
                     </div>
-                    <div class="flex items-center gap-1 shrink-0">
-                        <div class="w-1 h-1 rounded-full bg-slate-300"></div>
-                        <span class="text-[11px] text-slate-400">${item.lokasi || '-'}</span>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <div class="w-1.5 h-1.5 rounded-full bg-slate-200"></div>
+                        <span class="text-[11px] font-bold text-slate-400">${item.lokasi || '-'}</span>
                     </div>
                 </div>
 
                 <!-- BOTTOM ROW (ACTIONS) -->
                 ${state.isAdmin ? `
-                    <div class="flex justify-end gap-2 pt-1">
-                        <button onclick="showItemForm('${item.id}')" class="w-9 h-9 rounded-lg bg-[#E1F5EE] text-[#0F6E56] flex items-center justify-center transition-transform active:scale-90">
-                            <i data-lucide="pencil" class="w-4 h-4"></i>
+                    <div class="flex justify-end gap-2.5 pt-1.5 border-t border-slate-50">
+                        <button onclick="showItemForm('${item.id}')" class="w-10 h-10 rounded-xl bg-[#E1F5EE] text-[#0F6E56] flex items-center justify-center transition-all active:scale-90">
+                            <i data-lucide="pencil" class="w-[18px] h-[18px]"></i>
                         </button>
-                        <button onclick="deleteItem('${item.id}')" class="w-9 h-9 rounded-lg bg-[#FCEBEB] text-[#A32D2D] flex items-center justify-center transition-transform active:scale-90">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        <button onclick="deleteItem('${item.id}')" class="w-10 h-10 rounded-xl bg-[#FCEBEB] text-[#A32D2D] flex items-center justify-center transition-all active:scale-90">
+                            <i data-lucide="trash-2" class="w-[18px] h-[18px]"></i>
                         </button>
-                        <button onclick="alert('Cetak QR: ${item.id}')" class="w-9 h-9 rounded-lg bg-[#F5F5F5] text-[#888] flex items-center justify-center transition-transform active:scale-90">
-                            <i data-lucide="qr-code" class="w-4 h-4"></i>
+                        <button onclick="alert('Cetak QR: ${item.id}')" class="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center transition-all active:scale-90">
+                            <i data-lucide="qr-code" class="w-[18px] h-[18px]"></i>
                         </button>
                     </div>
                 ` : ''}

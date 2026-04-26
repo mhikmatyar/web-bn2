@@ -119,23 +119,23 @@
 
                 <!-- SEARCH + FILTER AREA -->
                 <section class="px-5 space-y-4">
-                    <div class="search-input-wrapper">
+                    <div class="search-input-wrapper border border-slate-100 shadow-sm">
                         <i data-lucide="search" class="w-5 h-5 text-slate-400"></i>
                         <input type="text" id="searchInput" placeholder="Cari nama atau nomor barang..." 
-                            class="flex-1 bg-transparent border-none outline-none font-medium text-slate-700 h-11 placeholder:text-slate-400">
+                            class="flex-1 bg-transparent border-none outline-none font-medium text-slate-700 h-11 placeholder:text-slate-400 text-sm">
                     </div>
 
                     <div class="flex items-center gap-2">
-                        <button id="filterBtn" class="h-9 px-6 rounded-full border border-slate-200 font-bold text-sm text-slate-600 flex items-center gap-1.5 hover:bg-slate-50 transition-all">
-                            Filter <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                        <button id="filterBtn" class="h-9 px-5 rounded-full border border-slate-200 font-bold text-[13px] text-slate-600 flex items-center gap-2 hover:bg-slate-50 transition-all">
+                            Filter <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
                         </button>
-                        <button id="sortBtn" class="h-9 px-6 rounded-full border border-slate-200 font-bold text-sm text-slate-600 flex items-center gap-1.5 hover:bg-slate-50 transition-all">
-                            Sort <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                        <button id="sortBtn" class="h-9 px-5 rounded-full border border-slate-200 font-bold text-[13px] text-slate-600 flex items-center gap-2 hover:bg-slate-50 transition-all">
+                            Urutkan <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
                         </button>
                     </div>
 
                     <!-- FILTER ACTIVE BAR -->
-                    <div id="filterActiveBar" class="hidden h-10 px-4 bg-[#1DA874]/10 rounded-lg flex items-center justify-between">
+                    <div id="filterActiveBar" class="hidden h-9 px-4 bg-[#1DA874]/10 rounded-lg flex items-center justify-between">
                         <div class="flex items-center gap-2 overflow-hidden">
                             <span id="activeFilterText" class="text-[11px] font-bold text-[#1DA874] truncate">Aktif: Semua</span>
                         </div>
@@ -144,9 +144,9 @@
                 </section>
 
                 <!-- LIST INVENTARIS -->
-                <section class="p-5 space-y-3">
-                    <h2 class="text-[12px] font-bold text-slate-400 uppercase tracking-widest px-1">Daftar Inventaris</h2>
-                    <div id="inventoryGrid" class="space-y-3">
+                <section class="p-5 space-y-4">
+                    <h2 class="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">Daftar inventaris</h2>
+                    <div id="inventoryGrid" class="space-y-4">
                         <!-- Cards injected via JS -->
                     </div>
 
@@ -181,35 +181,35 @@
     </div>
 
     <!-- BOTTOM SHEET FILTER -->
-    <div id="filterSheet" class="bottom-sheet">
+    <div id="filterSheet" class="bottom-sheet shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
         <div class="sheet-handle"></div>
         <div class="p-6 pt-2 flex-1 overflow-y-auto no-scrollbar">
-            <h4 class="text-[14px] font-bold text-slate-800 mb-6">Filter</h4>
+            <h4 class="text-[16px] font-bold text-slate-800 mb-6">Filter</h4>
             
-            <div class="space-y-6">
+            <div class="space-y-8">
                 <div>
-                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">Kategori</p>
-                    <div class="flex flex-wrap gap-2" id="filterKategoriChips">
+                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4">Kategori</p>
+                    <div class="flex flex-wrap gap-2.5" id="filterKategoriChips">
                         <!-- Chips injected via JS -->
                     </div>
                 </div>
                 <div>
-                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">Kondisi</p>
-                    <div class="flex flex-wrap gap-2" id="filterKondisiChips">
+                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4">Kondisi</p>
+                    <div class="flex flex-wrap gap-2.5" id="filterKondisiChips">
                         <!-- Chips injected via JS -->
                     </div>
                 </div>
                 <div>
-                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">Lokasi</p>
-                    <div class="flex flex-wrap gap-2" id="filterLokasiChips">
+                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4">Lokasi</p>
+                    <div class="flex flex-wrap gap-2.5" id="filterLokasiChips">
                         <!-- Chips injected via JS -->
                     </div>
                 </div>
             </div>
         </div>
-        <div class="p-6 flex gap-4 bg-slate-50 border-t border-slate-100">
-            <button id="resetFilterBtn" class="flex-1 h-12 rounded-xl border border-slate-200 font-bold text-sm text-slate-600">Reset</button>
-            <button id="applyFilterBtn" class="flex-1 h-12 rounded-xl bg-[#1DA874] text-white font-bold text-sm">Terapkan</button>
+        <div class="p-6 flex gap-4 bg-white border-t border-slate-100">
+            <button id="resetFilterBtn" class="flex-1 h-12 rounded-xl border border-slate-200 font-bold text-sm text-slate-600 active:bg-slate-50">Reset</button>
+            <button id="applyFilterBtn" class="flex-1 h-12 rounded-xl bg-[#1DA874] text-white font-bold text-sm shadow-lg shadow-[#1DA874]/20 active:scale-95 transition-all">Terapkan</button>
         </div>
     </div>
 
