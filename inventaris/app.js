@@ -52,9 +52,15 @@
         $('#closeSidebar').onclick = () => $('#sidebar').classList.add('sidebar-closed');
         
         $('#minimizeSidebar').onclick = () => {
-            const isMin = $('#sidebar').classList.toggle('sidebar-minimized');
-            $('#minimizeIcon').dataset.lucide = isMin ? 'chevron-right' : 'chevron-left';
-            if (window.lucide) lucide.createIcons();
+            const sidebar = $('#sidebar');
+            const isMin = sidebar.classList.toggle('sidebar-minimized');
+            
+            // Toggle icon with Lucide
+            const icon = $('#minimizeIcon');
+            if (icon) {
+                icon.setAttribute('data-lucide', isMin ? 'chevron-right' : 'chevron-left');
+                if (window.lucide) lucide.createIcons();
+            }
         };
         
         // Navigation clicks
@@ -232,7 +238,7 @@
         }
 
         container.innerHTML = state.filteredItems.map(item => `
-            <div class="bg-white rounded-[2.5rem] p-6 shadow-sm border border-slate-100 relative group transition-all hover:shadow-xl hover:-translate-y-1">
+            <div class="bg-white rounded-[2.5rem] p-5 sm:p-6 shadow-sm border border-slate-100 relative group transition-all hover:shadow-xl hover:-translate-y-1">
                 ${item.isPending ? `
                     <div class="absolute inset-x-8 top-0 h-1 bg-amber-400 rounded-b-full animate-pulse shadow-[0_0_10px_rgba(251,191,36,0.5)]"></div>
                     <div class="absolute top-4 right-4 flex items-center gap-1.5 bg-amber-50 text-amber-600 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest">
@@ -240,24 +246,24 @@
                     </div>
                 ` : ''}
                 
-                <div class="mb-5">
+                <div class="mb-4 sm:mb-5">
                     <span class="inline-block px-3 py-1 rounded-lg bg-slate-100 text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">${item.kategori}</span>
-                    <h3 class="text-xl font-black text-slate-800 leading-tight mb-1">${item.namaBarang}</h3>
-                    <p class="text-[10px] font-bold text-slate-400 tracking-wider">${item.noInventaris}</p>
+                    <h3 class="text-lg sm:text-xl font-black text-slate-800 leading-tight mb-1">${item.namaBarang}</h3>
+                    <p class="text-[9px] sm:text-[10px] font-bold text-slate-400 tracking-wider">${item.noInventaris}</p>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3 mb-6">
-                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100/50">
+                <div class="grid grid-cols-2 gap-3 mb-5 sm:mb-6">
+                    <div class="bg-slate-50 p-3 sm:p-4 rounded-2xl border border-slate-100/50">
                         <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Kondisi</p>
-                        <p class="text-xs font-black ${getKondisiColor(item.kondisi)}">${item.kondisi}</p>
+                        <p class="text-[11px] sm:text-xs font-black ${getKondisiColor(item.kondisi)}">${item.kondisi}</p>
                     </div>
-                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100/50">
+                    <div class="bg-slate-50 p-3 sm:p-4 rounded-2xl border border-slate-100/50">
                         <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Lokasi</p>
-                        <p class="text-xs font-black text-slate-700 truncate">${item.lokasi || '-'}</p>
+                        <p class="text-[11px] sm:text-xs font-black text-slate-700 truncate">${item.lokasi || '-'}</p>
                     </div>
                 </div>
 
-                <div class="flex items-center justify-between gap-4">
+                <div class="flex items-center justify-between gap-3 sm:gap-4">
                     ${state.isAdmin ? `
                         <button onclick="window.editItem('${item.noInventaris}')" class="flex-1 bg-emerald-50 text-emerald-600 py-3.5 rounded-2xl flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest transition-all active:scale-95">
                             <i data-lucide="edit-3" class="w-4 h-4"></i> Edit
