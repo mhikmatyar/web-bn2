@@ -8,7 +8,9 @@ let state = {
     isAdmin: false,
     currentFilter: 'all',
     searchQuery: '',
-    pinInput: ''
+    pinInput: '',
+    currentPage: 1,
+    itemsPerPage: 6
 };
 
 const $ = (s) => document.querySelector(s);
@@ -24,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function fetchData() {
     // Show loading state
     $('#inventoryGrid').innerHTML = '<div class="col-span-full py-20 text-center"><i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4 text-emerald-600"></i><p class="font-bold text-slate-400">Memuat data barang...</p></div>';
+    $('#paginationContainer').innerHTML = '';
     lucide.createIcons();
 
     Papa.parse(CSV_URL, {
@@ -51,6 +54,7 @@ function bindEvents() {
     // SEARCH & FILTER
     $('#searchInput').oninput = (e) => {
         state.searchQuery = e.target.value.toLowerCase();
+        state.currentPage = 1; // Reset to page 1
         applyFilter();
     };
 
@@ -61,6 +65,7 @@ function bindEvents() {
             btn.classList.replace('bg-slate-100', 'bg-accent');
             btn.classList.replace('text-slate-600', 'text-white');
             state.currentFilter = btn.dataset.filter;
+            state.currentPage = 1; // Reset to page 1
             applyFilter();
         };
     });
