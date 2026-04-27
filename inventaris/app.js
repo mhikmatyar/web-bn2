@@ -183,11 +183,13 @@ function updateAdminUI() {
             navSettingsBtn.classList.add('text-rose-500');
             navSettingsBtn.classList.remove('text-slate-400');
             navSettingsBtn.title = 'Logout Admin';
+            navSettingsBtn.onclick = showAuth; // Re-bind
         }
         if (mobileSettingsBtn) {
             mobileSettingsBtn.innerHTML = '<i data-lucide="log-out" class="w-5 h-5"></i>';
             mobileSettingsBtn.classList.add('text-rose-500');
             mobileSettingsBtn.classList.remove('text-slate-400');
+            mobileSettingsBtn.onclick = showAuth; // Re-bind
         }
     } else {
         if (mobileAddBtn) mobileAddBtn.classList.add('hidden');
@@ -196,11 +198,13 @@ function updateAdminUI() {
             navSettingsBtn.classList.add('text-slate-400');
             navSettingsBtn.classList.remove('text-rose-500');
             navSettingsBtn.title = 'Login Admin';
+            navSettingsBtn.onclick = showAuth; // Re-bind
         }
         if (mobileSettingsBtn) {
             mobileSettingsBtn.innerHTML = '<i data-lucide="settings" class="w-5 h-5"></i>';
             mobileSettingsBtn.classList.add('text-slate-400');
             mobileSettingsBtn.classList.remove('text-rose-500');
+            mobileSettingsBtn.onclick = showAuth; // Re-bind
         }
     }
     if (window.lucide) lucide.createIcons();
@@ -388,12 +392,14 @@ function renderPagination(totalPages) {
 }
 function changePage(delta) { state.currentPage += delta; applyLogic(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
 function showAuth() { 
+    console.log('showAuth called, isAdmin:', state.isAdmin);
     if (state.isAdmin) {
         if (confirm('Keluar dari mode Admin?')) {
             state.isAdmin = false;
             localStorage.removeItem('bn2-isAdmin');
             updateAdminUI();
             renderAll();
+            alert('Berhasil Logout');
         }
     } else {
         $('#authModal').classList.remove('hidden'); 
@@ -404,11 +410,13 @@ function showAuth() {
 function hideAuth() { $('#authModal').classList.add('hidden'); }
 
 function handleLogin() { 
+    console.log('handleLogin called');
     if ($('#adminPass').value === ADMIN_PASS) { 
         state.isAdmin = true; 
         localStorage.setItem('bn2-isAdmin', 'true');
         hideAuth(); 
         renderAll(); 
+        alert('Login Berhasil!');
     } else { 
         alert('Password Salah!'); 
         $('#adminPass').value = '';
