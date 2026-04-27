@@ -242,49 +242,53 @@
 
     <!-- ITEM FORM (ADD/EDIT) -->
     <div id="itemModal" class="fixed inset-0 z-[150] flex items-center justify-center p-4 hidden">
-        <div class="bg-white w-full max-w-lg rounded-[28px] shadow-2xl overflow-hidden">
+        <div class="bg-white w-full max-w-sm rounded-[28px] shadow-2xl overflow-hidden">
             <div class="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
                 <h3 id="formTitle" class="text-lg font-black text-slate-800">Tambah Barang</h3>
                 <button onclick="hideItemForm()" class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
-            <form id="itemForm" class="p-6 space-y-4 max-h-[70vh] overflow-y-auto no-scrollbar">
+            <form id="itemForm" class="p-5 space-y-3.5 max-h-[75vh] overflow-y-auto no-scrollbar">
                 <input type="hidden" id="formId">
-                <div class="space-y-1.5">
-                    <label class="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">Nama Barang</label>
-                    <input type="text" id="inputNama" required class="w-full h-12 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Nomor Inventaris</label>
+                    <input type="text" id="inputNoInventaris" placeholder="Contoh: INVBN2/PRL/26/008" class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm font-bold">
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-1.5">
-                        <label class="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">Kategori</label>
-                        <select id="inputKategori" required class="w-full h-12 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Nama Barang</label>
+                    <input type="text" id="inputNama" required class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm font-medium">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Kategori</label>
+                        <select id="inputKategori" required class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm">
                             <option value="Perlengkapan">Perlengkapan</option>
                             <option value="Peralatan">Peralatan</option>
                             <option value="Elektronik">Elektronik</option>
                             <option value="Aset">Aset</option>
                         </select>
                     </div>
-                    <div class="space-y-1.5">
-                        <label class="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">Jumlah</label>
-                        <input type="number" id="inputJumlah" required class="w-full h-12 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Jumlah</label>
+                        <input type="number" id="inputJumlah" required class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm">
                     </div>
                 </div>
-                <div class="space-y-1.5">
-                    <label class="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">Kondisi</label>
-                    <select id="inputKondisi" required class="w-full h-12 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Kondisi</label>
+                    <select id="inputKondisi" required class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm">
                         <option value="Baik">Baik</option>
                         <option value="Rusak Ringan">Rusak Ringan</option>
                         <option value="Rusak">Rusak</option>
                     </select>
                 </div>
-                <div class="space-y-1.5">
-                    <label class="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">Lokasi</label>
-                    <input type="text" id="inputLokasi" required class="w-full h-12 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Lokasi</label>
+                    <input type="text" id="inputLokasi" required class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm">
                 </div>
-                <div class="space-y-1.5">
-                    <label class="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">Keterangan</label>
-                    <textarea id="inputKeterangan" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none min-h-[100px]"></textarea>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Keterangan</label>
+                    <textarea id="inputKeterangan" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none min-h-[80px] text-sm"></textarea>
                 </div>
-                <button type="submit" class="w-full h-14 bg-[#1DA874] text-white rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-[#1DA874]/20">Simpan Barang</button>
+                <button type="submit" class="w-full h-12 bg-[#1DA874] text-white rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-[#1DA874]/20 text-xs">Simpan Barang</button>
             </form>
         </div>
     </div>

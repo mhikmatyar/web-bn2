@@ -212,6 +212,7 @@ function showItemForm(id = null) {
         const item = state.items.find(i => i.id === id);
         $('#formTitle').innerText = 'Edit Barang';
         $('#formId').value = item.id;
+        $('#inputNoInventaris').value = item.noInventaris || '';
         $('#inputNama').value = item.namaBarang;
         $('#inputKategori').value = item.kategori;
         $('#inputJumlah').value = item.jumlah;
@@ -232,7 +233,7 @@ async function saveItem() {
     btn.innerText = 'Menyimpan...'; btn.disabled = true;
     const formData = {
         action: $('#formId').value ? 'editItem' : 'addItem',
-        noInventaris: $('#formId').value || `BN2-${Date.now()}`,
+        noInventaris: $('#inputNoInventaris').value.trim() || $('#formId').value || `BN2-${Date.now()}`,
         namaBarang: $('#inputNama').value, kategori: $('#inputKategori').value,
         jumlah: $('#inputJumlah').value, kondisi: $('#inputKondisi').value,
         lokasi: $('#inputLokasi').value, keterangan: $('#inputKeterangan').value,
