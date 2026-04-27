@@ -34,6 +34,7 @@ window.handleLogin = handleLogin;
 window.hideAuth = hideAuth;
 window.handleLogout = handleLogout;
 window.closeLogoutModal = closeLogoutModal;
+window.printQR = printQR;
 
 async function fetchData() {
     $('#inventoryGrid').innerHTML = '<div class="py-20 text-center"><i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4 text-[#1DA874]"></i><p class="font-bold text-slate-400">Memuat data...</p></div>';
@@ -416,4 +417,72 @@ function handleLogin() {
         alert('Password Salah!'); 
         $('#adminPass').value = '';
     } 
+}
+
+function printQR(id, name) {
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(id)}`;
+    
+    const printWindow = window.open('', '_blank', 'width=400,height=600');
+    printWindow.document.write(`
+        <html>
+        <head>
+            <title>Cetak QR - ${id}</title>
+            <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+            <style>
+                body { 
+                    font-family: 'Plus Jakarta Sans', sans-serif; 
+                    display: flex; 
+                    flex-direction: column; 
+                    align-items: center; 
+                    justify-content: center; 
+                    height: 100vh; 
+                    margin: 0;
+                    text-align: center;
+                }
+                .label-card {
+                    border: 2px solid #000;
+                    padding: 20px;
+                    border-radius: 15px;
+                    width: 250px;
+                }
+                .header {
+                    font-size: 12px;
+                    font-weight: 800;
+                    letter-spacing: 2px;
+                    margin-bottom: 10px;
+                    color: #1DA874;
+                }
+                .qr-img {
+                    width: 180px;
+                    height: 180px;
+                    margin-bottom: 15px;
+                }
+                .name {
+                    font-size: 16px;
+                    font-weight: 800;
+                    margin-bottom: 5px;
+                    text-transform: uppercase;
+                }
+                .code {
+                    font-size: 11px;
+                    font-weight: 600;
+                    color: #666;
+                }
+                @media print {
+                    body { height: auto; }
+                    .label-card { border: 1px solid #eee; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="label-card">
+                <div class="header">INVENTARIS BN2</div>
+                <img src="${qrUrl}" class="qr-img" onload="window.print(); window.close();">
+                <div class="name">${name}</div>
+                <div class="code">${id}</div>
+            </div>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
 }
