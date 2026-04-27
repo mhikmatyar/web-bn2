@@ -297,24 +297,24 @@
     </div>
 
     <!-- ADMIN LOGIN -->
-    <div id="authModal" class="fixed inset-0 bg-[#0D1B2A] z-[200] flex flex-col items-center justify-center p-8 hidden">
-        <div class="w-full max-w-xs text-center space-y-10">
-            <div class="space-y-4">
-                <div class="w-20 h-20 bg-[#1DA874]/20 text-[#1DA874] rounded-[2rem] flex items-center justify-center mx-auto"><i data-lucide="shield-check" class="w-10 h-10"></i></div>
-                <h2 class="text-white text-2xl font-black uppercase tracking-tight">Login Admin</h2>
-                <p class="text-slate-400 font-bold">Masukkan PIN Keamanan</p>
+    <!-- AUTH MODAL (MATCHED WITH JIMPITAN) -->
+    <div id="authModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[400] flex items-center justify-center p-6 hidden">
+        <div class="bg-white w-full max-w-xs rounded-3xl p-8 shadow-2xl scale-95 transition-all duration-300">
+            <div class="text-center mb-6">
+                <div class="bg-[#1DA874]/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="lock" class="w-8 h-8 text-[#1DA874]"></i>
+                </div>
+                <h3 class="text-lg font-extrabold">Akses Pengurus</h3>
+                <p class="text-xs text-slate-500 mt-1">Masukkan password admin untuk masuk ke mode pengelolaan</p>
             </div>
-            <div class="flex justify-center gap-4 py-4" id="pinDots">
-                <div class="w-5 h-5 rounded-full border-2 border-slate-700"></div>
-                <div class="w-5 h-5 rounded-full border-2 border-slate-700"></div>
-                <div class="w-5 h-5 rounded-full border-2 border-slate-700"></div>
-                <div class="w-5 h-5 rounded-full border-2 border-slate-700"></div>
+            <input type="password" id="adminPass" class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-center text-xl outline-none focus:ring-2 focus:ring-[#1DA874]/20 mb-6" placeholder="••••••••">
+            <div class="flex flex-col gap-3">
+                <button id="confirmAuthBtn" class="w-full bg-[#1DA874] text-white font-bold py-4 rounded-xl shadow-lg hover:bg-[#1DA874]/90 transition-all">Masuk Mode Admin</button>
+                <button id="closeAuthBtn" onclick="hideAuth()" class="w-full text-slate-400 text-xs font-bold py-2">Batal</button>
             </div>
-            <div class="grid grid-cols-3 gap-4 w-full" id="numpad"></div>
-            <button onclick="hideAuth()" class="text-slate-500 font-bold uppercase tracking-widest text-[10px] py-4">Batal</button>
         </div>
     </div>
 
-    <script src="app.js?v=1.4"></script>
+    <script src="app.js?v=1.5"></script>
 </body>
 </html>

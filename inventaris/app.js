@@ -1,6 +1,6 @@
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQfPsk4L2qxshegLjX6zTdY4mPv0e4xYFqbzYFKgqwHJrMuSXAeDJuIFAhdyK2vi4SwyJ2HXZX4h0un/pub?gid=0&single=true&output=csv';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxSb3F1apIZ1TGxKC2v5BinPsWE2DTRA843kILk0NtQcwealsRHLaB3yfodJtTkVrhV/exec';
-const ADMIN_PIN = '1122';
+const ADMIN_PASS = 'adminbn2';
 
 let state = {
     items: [],
@@ -19,14 +19,11 @@ const $$ = (s) => document.querySelectorAll(s);
 
 // INITIALIZATION
 document.addEventListener('DOMContentLoaded', () => {
-    // Check admin session
     if (localStorage.getItem('bn2-isAdmin') === 'true') {
         state.isAdmin = true;
     }
-    
     fetchData();
     bindEvents();
-    renderNumpad();
     updateAdminUI();
 });
 
@@ -87,6 +84,10 @@ function bindEvents() {
     $('#mobileSettingsBtn').onclick = showAuth;
     $('#mobileAddBtn').onclick = () => showItemForm();
     $('#itemForm').onsubmit = (e) => { e.preventDefault(); saveItem(); };
+
+    // Auth Modal Events
+    $('#confirmAuthBtn').onclick = handleLogin;
+    $('#closeAuthBtn').onclick = hideAuth;
 }
 
 // LOGIC
@@ -396,29 +397,20 @@ function showAuth() {
         }
     } else {
         $('#authModal').classList.remove('hidden'); 
-        state.pinInput = ''; 
-        updatePinDots(); 
+        $('#adminPass').value = '';
+        $('#adminPass').focus();
     }
 }
 function hideAuth() { $('#authModal').classList.add('hidden'); }
-function renderNumpad() {
-    const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', '⌫'];
-    $('#numpad').innerHTML = keys.map(k => `<button onclick="handlePin('${k}')" class="h-16 bg-slate-800 text-white rounded-2xl text-2xl font-bold active:bg-[#1DA874] transition-colors">${k}</button>`).join('');
-}
-function handlePin(key) {
-    if (key === 'C') state.pinInput = ''; else if (key === '⌫') state.pinInput = state.pinInput.slice(0, -1); else if (state.pinInput.length < 4) state.pinInput += key;
-    updatePinDots(); if (state.pinInput.length === 4) validatePIN();
-}
-function updatePinDots() { $$('#pinDots div').forEach((dot, i) => { dot.className = `w-5 h-5 rounded-full border-2 transition-all duration-200 ${i < state.pinInput.length ? 'bg-[#1DA874] border-[#1DA874]' : 'border-slate-700'}`; }); }
-function validatePIN() { 
-    if (state.pinInput === ADMIN_PIN) { 
+
+function handleLogin() { 
+    if ($('#adminPass').value === ADMIN_PASS) { 
         state.isAdmin = true; 
         localStorage.setItem('bn2-isAdmin', 'true');
         hideAuth(); 
         renderAll(); 
     } else { 
-        state.pinInput = ''; 
-        updatePinDots(); 
-        alert('PIN Salah'); 
+        alert('Password Salah!'); 
+        $('#adminPass').value = '';
     } 
 }
