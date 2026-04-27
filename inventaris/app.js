@@ -140,7 +140,7 @@ function renderAll() {
                     <div class="flex-1 min-w-0">
                         <p class="text-[11px] font-medium text-slate-400 leading-none">
                             ${hasCode ? `${item.noInventaris} <span class="mx-1 text-slate-200">·</span>` : ''} 
-                            <span class="text-slate-700 font-bold">${item.jumlah} unit</span>
+                            <span class="text-slate-700 font-bold">${item.jumlah}${isNaN(item.jumlah.toString().replace(',', '.')) ? '' : ' Unit'}</span>
                         </p>
                     </div>
                     <div class="flex items-center gap-1.5 shrink-0">
