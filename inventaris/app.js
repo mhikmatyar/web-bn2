@@ -211,6 +211,7 @@ function autoGenNo() {
     const generated = generateNoInventaris(kat);
     $('#inputNoInventaris').value = generated;
 }
+window.autoGenNo = autoGenNo;
 
 function generateNoInventaris(category) {
     const code = getCategoryCode(category);
