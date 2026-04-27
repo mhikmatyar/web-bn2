@@ -703,13 +703,7 @@
     function bindAdminAuth() {
         $('#adminBtn').addEventListener('click', () => {
             if (state.isAdmin) {
-                if (confirm('Keluar dari mode Admin?')) {
-                    state.isAdmin = false;
-                    localStorage.removeItem('bn2-isAdmin');
-                    updateAdminUI();
-                    renderAll();
-                    showToast('Mode Admin dimatikan');
-                }
+                $('#logoutModal').classList.remove('hidden');
             } else {
                 $('#authModal').classList.remove('hidden');
                 $('#adminPass').value = '';
@@ -737,12 +731,18 @@
 
         // Logout jika klik badge admin
         $('#adminBadge').addEventListener('click', () => {
-            if (confirm('Logout dari mode Admin?')) {
-                state.isAdmin = false;
-                localStorage.removeItem('bn2-isAdmin');
-                updateAdminUI();
-                renderAll();
-            }
+            if (state.isAdmin) $('#logoutModal').classList.remove('hidden');
+        });
+
+        $('#closeLogoutModal').addEventListener('click', () => $('#logoutModal').classList.add('hidden'));
+        
+        $('#confirmLogoutBtn').addEventListener('click', () => {
+            state.isAdmin = false;
+            localStorage.removeItem('bn2-isAdmin');
+            $('#logoutModal').classList.add('hidden');
+            updateAdminUI();
+            renderAll();
+            showToast('Mode Admin dimatikan');
         });
     }
 
