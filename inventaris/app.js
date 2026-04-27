@@ -247,6 +247,7 @@ function showItemForm(id = null) {
         const item = state.items.find(i => i.id === id);
         $('#formTitle').innerText = 'Edit Barang';
         $('#formId').value = item.id;
+        $('#formOldNama').value = item.namaBarang; // Hidden field to track old name
         $('#inputNoInventaris').value = item.noInventaris || '';
         $('#inputNama').value = item.namaBarang;
         $('#inputKategori').value = item.kategori;
@@ -258,6 +259,7 @@ function showItemForm(id = null) {
         $('#formTitle').innerText = 'Tambah Barang';
         $('#itemForm').reset();
         $('#formId').value = '';
+        $('#formOldNama').value = '';
     }
 }
 
@@ -272,8 +274,10 @@ async function saveItem() {
     
     const formData = {
         action: oldNo ? 'editItem' : 'addItem',
+        source: 'inventaris', // Added source for routing
         noInventaris: newNo || `BN2-${Date.now()}`,
         oldNoInventaris: oldNo || '',
+        oldNamaBarang: $('#formOldNama').value || '', // Extra anchor
         namaBarang: $('#inputNama').value, 
         kategori: $('#inputKategori').value,
         jumlah: $('#inputJumlah').value, 
@@ -292,7 +296,7 @@ async function saveItem() {
 async function deleteItem(id) {
     if (!confirm('Hapus barang?')) return;
     try {
-        await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'deleteItem', noInventaris: id, password: "adminbn2" }) });
+        await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'deleteItem', source: 'inventaris', noInventaris: id, password: "adminbn2" }) });
         alert('Berhasil dihapus!'); fetchData();
     } catch (e) { alert('Gagal!'); }
 }
