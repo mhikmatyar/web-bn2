@@ -206,6 +206,40 @@ function showDetail(id) {
 }
 
 // CRUD
+function autoGenNo() {
+    const kat = $('#inputKategori').value;
+    const generated = generateNoInventaris(kat);
+    $('#inputNoInventaris').value = generated;
+}
+
+function generateNoInventaris(category) {
+    const code = getCategoryCode(category);
+    const year = new Date().getFullYear().toString().slice(-2);
+    const prefix = `INVBN2/${code}/${year}/`;
+    
+    // Find highest sequence
+    const samePrefixItems = state.items.filter(i => i.noInventaris && i.noInventaris.startsWith(prefix));
+    let maxSeq = 0;
+    samePrefixItems.forEach(i => {
+        const parts = i.noInventaris.split('/');
+        const seq = parseInt(parts[parts.length - 1]);
+        if (!isNaN(seq) && seq > maxSeq) maxSeq = seq;
+    });
+    
+    const newSeq = (maxSeq + 1).toString().padStart(3, '0');
+    return `${prefix}${newSeq}`;
+}
+
+function getCategoryCode(kat) {
+    const map = {
+        'Perlengkapan': 'PLK',
+        'Peralatan': 'PRL',
+        'Elektronik': 'ELK',
+        'Aset': 'AST'
+    };
+    return map[kat] || 'BRG';
+}
+
 function showItemForm(id = null) {
     $('#itemModal').classList.remove('hidden');
     if (id) {
@@ -231,12 +265,20 @@ function hideItemForm() { $('#itemModal').classList.add('hidden'); }
 async function saveItem() {
     const btn = $('#itemForm button[type="submit"]');
     btn.innerText = 'Menyimpan...'; btn.disabled = true;
+    
+    const newNo = $('#inputNoInventaris').value.trim();
+    const oldNo = $('#formId').value;
+    
     const formData = {
-        action: $('#formId').value ? 'editItem' : 'addItem',
-        noInventaris: $('#inputNoInventaris').value.trim() || $('#formId').value || `BN2-${Date.now()}`,
-        namaBarang: $('#inputNama').value, kategori: $('#inputKategori').value,
-        jumlah: $('#inputJumlah').value, kondisi: $('#inputKondisi').value,
-        lokasi: $('#inputLokasi').value, keterangan: $('#inputKeterangan').value,
+        action: oldNo ? 'editItem' : 'addItem',
+        noInventaris: newNo || `BN2-${Date.now()}`,
+        oldNoInventaris: oldNo || '',
+        namaBarang: $('#inputNama').value, 
+        kategori: $('#inputKategori').value,
+        jumlah: $('#inputJumlah').value, 
+        kondisi: $('#inputKondisi').value,
+        lokasi: $('#inputLokasi').value, 
+        keterangan: $('#inputKeterangan').value,
         password: "adminbn2"
     };
     try {

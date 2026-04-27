@@ -251,7 +251,10 @@
                 <input type="hidden" id="formId">
                 <div class="space-y-1">
                     <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Nomor Inventaris</label>
-                    <input type="text" id="inputNoInventaris" placeholder="Contoh: INVBN2/PRL/26/008" class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm font-bold">
+                    <div class="flex gap-2">
+                        <input type="text" id="inputNoInventaris" placeholder="Contoh: INVBN2/PRL/26/008" class="flex-1 h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm font-bold">
+                        <button type="button" onclick="autoGenNo()" class="px-4 bg-slate-800 text-white rounded-xl text-[10px] font-black uppercase tracking-tighter hover:bg-slate-700 transition-all">Auto</button>
+                    </div>
                 </div>
                 <div class="space-y-1">
                     <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Nama Barang</label>
