@@ -19,9 +19,15 @@ const $$ = (s) => document.querySelectorAll(s);
 
 // INITIALIZATION
 document.addEventListener('DOMContentLoaded', () => {
+    // Check admin session
+    if (localStorage.getItem('bn2-isAdmin') === 'true') {
+        state.isAdmin = true;
+    }
+    
     fetchData();
     bindEvents();
     renderNumpad();
+    updateAdminUI();
 });
 
 async function fetchData() {
@@ -160,8 +166,43 @@ function renderAll() {
     }).join('');
 
     renderPagination(totalPages);
-    $('#mobileAddBtn').style.display = state.isAdmin ? 'flex' : 'none';
+    updateAdminUI();
     lucide.createIcons();
+}
+
+function updateAdminUI() {
+    const mobileAddBtn = $('#mobileAddBtn');
+    const navSettingsBtn = $('#navSettingsBtn');
+    const mobileSettingsBtn = $('#mobileSettingsBtn');
+
+    if (state.isAdmin) {
+        if (mobileAddBtn) mobileAddBtn.classList.remove('hidden');
+        if (navSettingsBtn) {
+            navSettingsBtn.innerHTML = '<i data-lucide="log-out" class="w-5 h-5"></i>';
+            navSettingsBtn.classList.add('text-rose-500');
+            navSettingsBtn.classList.remove('text-slate-400');
+            navSettingsBtn.title = 'Logout Admin';
+        }
+        if (mobileSettingsBtn) {
+            mobileSettingsBtn.innerHTML = '<i data-lucide="log-out" class="w-5 h-5"></i>';
+            mobileSettingsBtn.classList.add('text-rose-500');
+            mobileSettingsBtn.classList.remove('text-slate-400');
+        }
+    } else {
+        if (mobileAddBtn) mobileAddBtn.classList.add('hidden');
+        if (navSettingsBtn) {
+            navSettingsBtn.innerHTML = '<i data-lucide="settings" class="w-5 h-5"></i>';
+            navSettingsBtn.classList.add('text-slate-400');
+            navSettingsBtn.classList.remove('text-rose-500');
+            navSettingsBtn.title = 'Login Admin';
+        }
+        if (mobileSettingsBtn) {
+            mobileSettingsBtn.innerHTML = '<i data-lucide="settings" class="w-5 h-5"></i>';
+            mobileSettingsBtn.classList.add('text-slate-400');
+            mobileSettingsBtn.classList.remove('text-rose-500');
+        }
+    }
+    if (window.lucide) lucide.createIcons();
 }
 
 function getBadgeStyle(kondisi) {
@@ -345,7 +386,20 @@ function renderPagination(totalPages) {
     container.innerHTML = `<button onclick="changePage(-1)" ${state.currentPage === 1 ? 'disabled' : ''} class="pagination-btn flex items-center gap-2 text-[11px] font-bold text-slate-400 disabled:opacity-20"><i data-lucide="chevron-left" class="w-4 h-4"></i> Sebelumnya</button><span class="text-[11px] font-bold text-slate-800">Halaman ${state.currentPage} / ${totalPages}</span><button onclick="changePage(1)" ${state.currentPage === totalPages ? 'disabled' : ''} class="pagination-btn flex items-center gap-2 text-[11px] font-bold text-[#1DA874] disabled:opacity-20">Selanjutnya <i data-lucide="chevron-right" class="w-4 h-4"></i></button>`;
 }
 function changePage(delta) { state.currentPage += delta; applyLogic(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
-function showAuth() { $('#authModal').classList.remove('hidden'); state.pinInput = ''; updatePinDots(); }
+function showAuth() { 
+    if (state.isAdmin) {
+        if (confirm('Keluar dari mode Admin?')) {
+            state.isAdmin = false;
+            localStorage.removeItem('bn2-isAdmin');
+            updateAdminUI();
+            renderAll();
+        }
+    } else {
+        $('#authModal').classList.remove('hidden'); 
+        state.pinInput = ''; 
+        updatePinDots(); 
+    }
+}
 function hideAuth() { $('#authModal').classList.add('hidden'); }
 function renderNumpad() {
     const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', '⌫'];
@@ -356,4 +410,15 @@ function handlePin(key) {
     updatePinDots(); if (state.pinInput.length === 4) validatePIN();
 }
 function updatePinDots() { $$('#pinDots div').forEach((dot, i) => { dot.className = `w-5 h-5 rounded-full border-2 transition-all duration-200 ${i < state.pinInput.length ? 'bg-[#1DA874] border-[#1DA874]' : 'border-slate-700'}`; }); }
-function validatePIN() { if (state.pinInput === ADMIN_PIN) { state.isAdmin = true; hideAuth(); renderAll(); alert('Admin Aktif'); } else { state.pinInput = ''; updatePinDots(); alert('PIN Salah'); } }
+function validatePIN() { 
+    if (state.pinInput === ADMIN_PIN) { 
+        state.isAdmin = true; 
+        localStorage.setItem('bn2-isAdmin', 'true');
+        hideAuth(); 
+        renderAll(); 
+    } else { 
+        state.pinInput = ''; 
+        updatePinDots(); 
+        alert('PIN Salah'); 
+    } 
+}
