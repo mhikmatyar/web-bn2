@@ -168,7 +168,7 @@ function renderAll() {
                     <div class="flex justify-end gap-2.5 pt-1.5 border-t border-slate-50">
                         <button onclick="event.stopPropagation(); showItemForm('${item.id}')" class="w-10 h-10 rounded-xl bg-[#E1F5EE] text-[#0F6E56] flex items-center justify-center"><i data-lucide="pencil" class="w-[18px] h-[18px]"></i></button>
                         <button onclick="event.stopPropagation(); deleteItem('${item.id}')" class="w-10 h-10 rounded-xl bg-[#FCEBEB] text-[#A32D2D] flex items-center justify-center"><i data-lucide="trash-2" class="w-[18px] h-[18px]"></i></button>
-                        <button onclick="event.stopPropagation(); alert('QR: ${item.id}')" class="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center"><i data-lucide="qr-code" class="w-[18px] h-[18px]"></i></button>
+                        <button onclick="event.stopPropagation(); printQR('${item.noInventaris}', '${item.namaBarang}')" class="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center"><i data-lucide="qr-code" class="w-[18px] h-[18px]"></i></button>
                     </div>
                 ` : ''}
             </div>
