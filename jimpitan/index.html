@@ -50,7 +50,7 @@
 </head>
 <body class="bg-slate-50 text-slate-900">
 
-    <div class="max-w-md mx-auto min-h-screen bg-white shadow-xl relative pb-20">
+    <div class="max-w-md mx-auto min-h-screen bg-white shadow-xl relative pb-44">
         
         <!-- HEADER -->
         <header class="bg-emerald-700 text-white p-6 rounded-b-[2rem] shadow-lg">
@@ -64,11 +64,7 @@
                     <p class="text-xs text-emerald-100 opacity-80">Bumi Neikarta 2 • Smart Tracker</p>
                 </div>
                 <div class="flex gap-1">
-                    <button id="adminBtn" class="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all" title="Login Admin"><i data-lucide="lock" class="w-4 h-4 text-white"></i></button>
-                    <button id="settingsBtn" class="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all hidden" title="Pengaturan"><i data-lucide="settings" class="w-4 h-4 text-white"></i></button>
-                    <button id="shareBtn" class="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all" title="Bagikan Laporan"><i data-lucide="share-2" class="w-4 h-4 text-white"></i></button>
-                    <button id="exportBtn" class="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all" title="Export CSV"><i data-lucide="download" class="w-4 h-4 text-white"></i></button>
-                    <button id="refreshBtn" class="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all hidden" title="Refresh Data"><i data-lucide="rotate-cw" class="w-4 h-4 text-white"></i></button>
+                    <!-- Header now only contains simple portal link -->
                 </div>
             </div>
 
@@ -136,11 +132,28 @@
             </div>
         </div>
 
-        <!-- FLOATING ADD BUTTON -->
-        <button id="addDataBtn" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-emerald-700 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 active:scale-95 transition-all hidden z-50">
-            <i data-lucide="plus" class="w-5 h-5"></i>
-            <span class="text-sm font-bold">Tambah Data</span>
-        </button>
+        <!-- BOTTOM FLOATING CONTROLS -->
+        <div class="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-md px-6 z-50 flex flex-col gap-4 items-center pointer-events-none">
+            <!-- TAMBAH DATA BUTTON (Above Dock) -->
+            <button id="addDataBtn" class="bg-emerald-700 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 active:scale-95 transition-all hidden pointer-events-auto">
+                <i data-lucide="plus" class="w-6 h-6"></i>
+                <span class="text-base font-black">Tambah Data</span>
+            </button>
+
+            <!-- BOTTOM ACTION DOCK -->
+            <div class="bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-[2rem] p-2 px-4 flex items-center justify-center gap-2 shadow-2xl w-fit pointer-events-auto">
+                <div class="flex items-center gap-1">
+                    <button id="adminBtn" class="p-4 text-white hover:bg-white/10 rounded-2xl transition-all" title="Login Admin"><i data-lucide="lock" class="w-5 h-5"></i></button>
+                    <button id="settingsBtn" class="p-4 text-white hover:bg-white/10 rounded-2xl transition-all hidden" title="Pengaturan"><i data-lucide="settings" class="w-5 h-5"></i></button>
+                    <button id="refreshBtn" class="p-4 text-white hover:bg-white/10 rounded-2xl transition-all hidden" title="Refresh Data"><i data-lucide="rotate-cw" class="w-5 h-5"></i></button>
+                </div>
+                <div class="h-8 w-[1px] bg-white/10 mx-1"></div>
+                <div class="flex items-center gap-1">
+                    <button id="shareBtn" class="p-4 text-white hover:bg-white/10 rounded-2xl transition-all" title="Bagikan Laporan"><i data-lucide="share-2" class="w-5 h-5"></i></button>
+                    <button id="exportBtn" class="p-4 text-white hover:bg-white/10 rounded-2xl transition-all" title="Export CSV"><i data-lucide="download" class="w-5 h-5"></i></button>
+                </div>
+            </div>
+        </div>
 
     </div>
 
@@ -289,6 +302,6 @@
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <script src="app.js?v=1.2"></script>
 </body>
 </html>

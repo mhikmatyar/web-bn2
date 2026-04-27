@@ -79,15 +79,17 @@
             addBtn.classList.remove('hidden');
             if (setBtn) setBtn.classList.remove('hidden');
             if (refBtn) refBtn.classList.remove('hidden');
-            adminBtn.classList.add('bg-emerald-500/30', 'text-emerald-300');
-            adminBtn.innerHTML = '<i data-lucide="unlock" class="w-4 h-4"></i>';
+            adminBtn.classList.add('bg-emerald-500/20', 'text-emerald-400');
+            adminBtn.innerHTML = '<i data-lucide="log-out" class="w-5 h-5"></i>';
+            adminBtn.title = 'Logout Admin';
         } else {
             badge.classList.add('hidden');
             addBtn.classList.add('hidden');
             if (setBtn) setBtn.classList.add('hidden');
             if (refBtn) refBtn.classList.add('hidden');
-            adminBtn.classList.remove('bg-emerald-500/30', 'text-emerald-300');
-            adminBtn.innerHTML = '<i data-lucide="lock" class="w-4 h-4"></i>';
+            adminBtn.classList.remove('bg-emerald-500/20', 'text-emerald-400');
+            adminBtn.innerHTML = '<i data-lucide="lock" class="w-5 h-5"></i>';
+            adminBtn.title = 'Login Admin';
         }
         if (window.lucide) lucide.createIcons();
     }
@@ -401,9 +403,9 @@
                             <div class="text-right">
                                 <div class="text-sm font-black ${item.tipe === 'Pemasukan' ? 'text-emerald-600' : 'text-rose-600'}">${formatRp(item.nominal)}</div>
                                 ${state.isAdmin ? `
-                                    <div class="flex gap-2 mt-1 justify-end">
-                                        <button onclick="event.stopPropagation(); window.handleEdit(${item.idx})" class="text-slate-400 hover:text-emerald-600"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
-                                        <button onclick="event.stopPropagation(); window.handleDelete(${item.idx})" class="text-slate-400 hover:text-rose-600"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                                    <div class="flex gap-1 -mr-2 justify-end">
+                                        <button onclick="event.stopPropagation(); window.handleEdit(${item.idx})" class="w-11 h-11 flex items-center justify-center text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-full transition-colors"><i data-lucide="edit-3" class="w-5 h-5"></i></button>
+                                        <button onclick="event.stopPropagation(); window.handleDelete(${item.idx})" class="w-11 h-11 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-full transition-colors"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
                                     </div>
                                 ` : ''}
                             </div>
