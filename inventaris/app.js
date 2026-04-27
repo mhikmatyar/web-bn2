@@ -7,12 +7,8 @@ let state = {
     filteredItems: [],
     isAdmin: false,
     searchQuery: '',
-    filters: {
-        kategori: [],
-        kondisi: [],
-        lokasi: []
-    },
-    sortBy: 'newest', // newest, oldest, az, za, broken_first
+    filters: { kategori: [], kondisi: [], lokasi: [] },
+    sortBy: 'newest',
     currentPage: 1,
     itemsPerPage: 6,
     pinInput: ''
@@ -62,69 +58,41 @@ function extractTimestamp(code) {
 }
 
 function bindEvents() {
-    // SEARCH
     $('#searchInput').oninput = (e) => {
         state.searchQuery = e.target.value.toLowerCase();
         state.currentPage = 1;
         applyLogic();
     };
 
-    // SHEET TOGGLES
     $('#filterBtn').onclick = () => openSheet('filterSheet');
     $('#sortBtn').onclick = () => openSheet('sortSheet');
     $('#sheetOverlay').onclick = closeAllSheets;
+    $('#applyFilterBtn').onclick = () => { closeAllSheets(); applyLogic(); };
+    $('#resetFilterBtn').onclick = () => { state.filters = { kategori: [], kondisi: [], lokasi: [] }; updateFilterChips(); applyLogic(); };
+    $('#clearFiltersBtn').onclick = () => { state.filters = { kategori: [], kondisi: [], lokasi: [] }; state.searchQuery = ''; $('#searchInput').value = ''; applyLogic(); };
 
-    // FILTER ACTIONS
-    $('#applyFilterBtn').onclick = () => {
-        closeAllSheets();
-        applyLogic();
-    };
-    $('#resetFilterBtn').onclick = () => {
-        state.filters = { kategori: [], kondisi: [], lokasi: [] };
-        updateFilterChips();
-        applyLogic();
-    };
-    $('#clearFiltersBtn').onclick = () => {
-        state.filters = { kategori: [], kondisi: [], lokasi: [] };
-        state.searchQuery = '';
-        $('#searchInput').value = '';
-        applyLogic();
-    };
-
-    // NAV
     $$('[data-page]').forEach(btn => {
         btn.onclick = () => {
-            if (btn.dataset.page === 'inventaris') {
-                $('#inventoryGrid').scrollIntoView({ behavior: 'smooth' });
-            } else {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
+            if (btn.dataset.page === 'inventaris') $('#inventoryGrid').scrollIntoView({ behavior: 'smooth' });
+            else window.scrollTo({ top: 0, behavior: 'smooth' });
         };
     });
 
-    // ADMIN
     $('#mobileSettingsBtn').onclick = showAuth;
     $('#mobileAddBtn').onclick = () => showItemForm();
+    $('#itemForm').onsubmit = (e) => { e.preventDefault(); saveItem(); };
 }
 
-// LOGIC: FILTER & SORT
+// LOGIC
 function applyLogic() {
     let results = [...state.items];
-
-    // Search
     if (state.searchQuery) {
-        results = results.filter(i => 
-            i.namaBarang.toLowerCase().includes(state.searchQuery) || 
-            i.noInventaris.toLowerCase().includes(state.searchQuery)
-        );
+        results = results.filter(i => i.namaBarang.toLowerCase().includes(state.searchQuery) || i.noInventaris.toLowerCase().includes(state.searchQuery));
     }
-
-    // Filter
     if (state.filters.kategori.length) results = results.filter(i => state.filters.kategori.includes(i.kategori));
     if (state.filters.kondisi.length) results = results.filter(i => state.filters.kondisi.includes(i.kondisi));
     if (state.filters.lokasi.length) results = results.filter(i => state.filters.lokasi.includes(i.lokasi));
 
-    // Sort
     if (state.sortBy === 'newest') results.sort((a, b) => b.createdAt - a.createdAt);
     else if (state.sortBy === 'oldest') results.sort((a, b) => a.createdAt - b.createdAt);
     else if (state.sortBy === 'az') results.sort((a, b) => a.namaBarang.localeCompare(b.namaBarang));
@@ -142,8 +110,6 @@ function applyLogic() {
 function renderAll() {
     updateStats();
     const container = $('#inventoryGrid');
-    
-    // Pagination
     const totalPages = Math.ceil(state.filteredItems.length / state.itemsPerPage);
     const start = (state.currentPage - 1) * state.itemsPerPage;
     const paginated = state.filteredItems.slice(start, start + state.itemsPerPage);
@@ -160,8 +126,7 @@ function renderAll() {
         const hasCode = item.noInventaris && item.noInventaris !== '-';
 
         return `
-            <div class="bg-white rounded-[18px] p-5 border border-slate-100 shadow-sm space-y-4">
-                <!-- TOP ROW -->
+            <div onclick="showDetail('${item.id}')" class="bg-white rounded-[18px] p-5 border border-slate-100 shadow-sm space-y-4 active:scale-95 transition-all">
                 <div class="flex justify-between items-start gap-4">
                     <div class="flex items-center gap-2 min-w-0">
                         <h3 class="text-[15px] font-bold text-slate-800 leading-tight truncate">${item.namaBarang}</h3>
@@ -171,8 +136,6 @@ function renderAll() {
                         ${item.kondisi}
                     </span>
                 </div>
-
-                <!-- MIDDLE ROW -->
                 <div class="flex justify-between items-end gap-3">
                     <div class="flex-1 min-w-0">
                         <p class="text-[11px] font-medium text-slate-400 leading-none">
@@ -185,19 +148,11 @@ function renderAll() {
                         <span class="text-[11px] font-bold text-slate-400">${item.lokasi || '-'}</span>
                     </div>
                 </div>
-
-                <!-- BOTTOM ROW (ACTIONS) -->
                 ${state.isAdmin ? `
                     <div class="flex justify-end gap-2.5 pt-1.5 border-t border-slate-50">
-                        <button onclick="showItemForm('${item.id}')" class="w-10 h-10 rounded-xl bg-[#E1F5EE] text-[#0F6E56] flex items-center justify-center transition-all active:scale-90">
-                            <i data-lucide="pencil" class="w-[18px] h-[18px]"></i>
-                        </button>
-                        <button onclick="deleteItem('${item.id}')" class="w-10 h-10 rounded-xl bg-[#FCEBEB] text-[#A32D2D] flex items-center justify-center transition-all active:scale-90">
-                            <i data-lucide="trash-2" class="w-[18px] h-[18px]"></i>
-                        </button>
-                        <button onclick="alert('Cetak QR: ${item.id}')" class="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center transition-all active:scale-90">
-                            <i data-lucide="qr-code" class="w-[18px] h-[18px]"></i>
-                        </button>
+                        <button onclick="event.stopPropagation(); showItemForm('${item.id}')" class="w-10 h-10 rounded-xl bg-[#E1F5EE] text-[#0F6E56] flex items-center justify-center"><i data-lucide="pencil" class="w-[18px] h-[18px]"></i></button>
+                        <button onclick="event.stopPropagation(); deleteItem('${item.id}')" class="w-10 h-10 rounded-xl bg-[#FCEBEB] text-[#A32D2D] flex items-center justify-center"><i data-lucide="trash-2" class="w-[18px] h-[18px]"></i></button>
+                        <button onclick="event.stopPropagation(); alert('QR: ${item.id}')" class="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center"><i data-lucide="qr-code" class="w-[18px] h-[18px]"></i></button>
                     </div>
                 ` : ''}
             </div>
@@ -205,6 +160,7 @@ function renderAll() {
     }).join('');
 
     renderPagination(totalPages);
+    $('#mobileAddBtn').style.display = state.isAdmin ? 'flex' : 'none';
     lucide.createIcons();
 }
 
@@ -215,96 +171,89 @@ function getBadgeStyle(kondisi) {
     return { bg: 'bg-slate-100', text: 'text-slate-500' };
 }
 
-// FILTERS & SHEETS
-function populateFilterOptions() {
-    const kats = ['Semua', ...new Set(state.items.map(i => i.kategori))];
-    const kondisis = ['Semua', 'Baik', 'Rusak Ringan', 'Rusak'];
-    const lokasis = ['Semua', ...new Set(state.items.map(i => i.lokasi))];
-
-    renderChips('filterKategoriChips', kats, 'kategori');
-    renderChips('filterKondisiChips', kondisis, 'kondisi');
-    renderChips('filterLokasiChips', lokasis, 'lokasi');
-    renderSortOptions();
-}
-
-function renderChips(id, options, type) {
-    $(`#${id}`).innerHTML = options.map(opt => {
-        const isActive = opt === 'Semua' ? state.filters[type].length === 0 : state.filters[type].includes(opt);
-        return `<button onclick="toggleChip('${type}', '${opt}')" class="filter-chip ${isActive ? 'active' : ''}">${opt}</button>`;
-    }).join('');
-}
-
-function toggleChip(type, val) {
-    if (val === 'Semua') {
-        state.filters[type] = [];
-    } else {
-        const idx = state.filters[type].indexOf(val);
-        if (idx > -1) state.filters[type].splice(idx, 1);
-        else state.filters[type].push(val);
-    }
-    updateFilterChips();
-}
-
-function updateFilterChips() {
-    populateFilterOptions();
-}
-
-function renderSortOptions() {
-    const opts = [
-        { id: 'newest', label: 'Terbaru ditambahkan' },
-        { id: 'oldest', label: 'Terlama ditambahkan' },
-        { id: 'az', label: 'Nama A–Z' },
-        { id: 'za', label: 'Nama Z–A' },
-        { id: 'broken_first', label: 'Kondisi rusak dulu' }
-    ];
-    $('#sortOptions').innerHTML = opts.map(opt => `
-        <button onclick="setSort('${opt.id}')" class="w-full flex items-center justify-between py-4 group">
-            <span class="text-[14px] font-medium ${state.sortBy === opt.id ? 'text-[#1DA874]' : 'text-slate-600'}">${opt.label}</span>
-            <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center ${state.sortBy === opt.id ? 'border-[#1DA874]' : 'border-slate-200'}">
-                ${state.sortBy === opt.id ? '<div class="w-2.5 h-2.5 bg-[#1DA874] rounded-full"></div>' : ''}
-            </div>
-        </button>
-    `).join('');
-}
-
-function setSort(id) {
-    state.sortBy = id;
-    closeAllSheets();
-    applyLogic();
-}
-
-function updateActiveFilterBar() {
-    const active = [];
-    if (state.filters.kategori.length) active.push(...state.filters.kategori);
-    if (state.filters.kondisi.length) active.push(...state.filters.kondisi);
-    if (state.filters.lokasi.length) active.push(...state.filters.lokasi);
-
-    const bar = $('#filterActiveBar');
-    const btn = $('#filterBtn');
-
-    if (active.length) {
-        bar.classList.remove('hidden');
-        $('#activeFilterText').innerText = `Aktif: ${active.join(' · ')}`;
-        btn.classList.add('bg-[#1DA874]', 'text-white');
-    } else {
-        bar.classList.add('hidden');
-        btn.classList.remove('bg-[#1DA874]', 'text-white');
-    }
-}
-
 // UI HELPERS
 function openSheet(id) {
     $(`#${id}`).classList.add('active');
     $('#sheetOverlay').classList.add('active');
-    document.body.style.overflow = 'hidden';
 }
 
 function closeAllSheets() {
     $$('.bottom-sheet').forEach(s => s.classList.remove('active'));
     $('#sheetOverlay').classList.remove('active');
-    document.body.style.overflow = '';
 }
 
+function showDetail(id) {
+    const item = state.items.find(i => i.id === id);
+    if (!item) return;
+    $('#sheetContent').innerHTML = `
+        <div class="space-y-6">
+            <div class="flex items-center gap-4 border-b border-slate-50 pb-6">
+                <div class="w-14 h-14 bg-[#1DA874]/10 rounded-2xl flex items-center justify-center text-[#1DA874] shrink-0"><i data-lucide="package" class="w-8 h-8"></i></div>
+                <div class="min-w-0"><h4 class="text-[12px] font-bold text-slate-400 uppercase tracking-widest mb-1">Nama Barang</h4><p class="text-lg font-black text-slate-800 truncate">${item.namaBarang}</p></div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="p-4 bg-slate-50 rounded-2xl"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Kategori</p><p class="text-[14px] font-bold text-slate-800">${item.kategori}</p></div>
+                <div class="p-4 bg-slate-50 rounded-2xl"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Jumlah</p><p class="text-[14px] font-bold text-slate-800">${item.jumlah} Unit</p></div>
+            </div>
+            <div class="p-4 bg-slate-50 rounded-2xl"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Lokasi</p><p class="text-[14px] font-bold text-slate-800">${item.lokasi || '-'}</p></div>
+            <div class="p-4 bg-[#0D1B2A] rounded-2xl text-white"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">No. Inventaris</p><p class="text-[16px] font-black tracking-widest">${item.noInventaris}</p></div>
+            ${item.keterangan ? `<div class="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100"><p class="text-[10px] font-bold text-emerald-600 uppercase mb-1">Keterangan</p><p class="text-[13px] text-slate-600 font-medium">${item.keterangan}</p></div>` : ''}
+            <button onclick="closeAllSheets()" class="w-full py-4 bg-slate-100 rounded-2xl font-bold text-slate-500 uppercase text-xs">Tutup</button>
+        </div>
+    `;
+    openSheet('detailSheet');
+    lucide.createIcons();
+}
+
+// CRUD
+function showItemForm(id = null) {
+    $('#itemModal').classList.remove('hidden');
+    if (id) {
+        const item = state.items.find(i => i.id === id);
+        $('#formTitle').innerText = 'Edit Barang';
+        $('#formId').value = item.id;
+        $('#inputNama').value = item.namaBarang;
+        $('#inputKategori').value = item.kategori;
+        $('#inputJumlah').value = item.jumlah;
+        $('#inputKondisi').value = item.kondisi;
+        $('#inputLokasi').value = item.lokasi;
+        $('#inputKeterangan').value = item.keterangan || '';
+    } else {
+        $('#formTitle').innerText = 'Tambah Barang';
+        $('#itemForm').reset();
+        $('#formId').value = '';
+    }
+}
+
+function hideItemForm() { $('#itemModal').classList.add('hidden'); }
+
+async function saveItem() {
+    const btn = $('#itemForm button[type="submit"]');
+    btn.innerText = 'Menyimpan...'; btn.disabled = true;
+    const formData = {
+        action: $('#formId').value ? 'editItem' : 'addItem',
+        noInventaris: $('#formId').value || `BN2-${Date.now()}`,
+        namaBarang: $('#inputNama').value, kategori: $('#inputKategori').value,
+        jumlah: $('#inputJumlah').value, kondisi: $('#inputKondisi').value,
+        lokasi: $('#inputLokasi').value, keterangan: $('#inputKeterangan').value,
+        password: "adminbn2"
+    };
+    try {
+        await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(formData) });
+        hideItemForm(); alert('Berhasil! Silakan refresh dalam 1 menit.'); fetchData();
+    } catch (e) { alert('Gagal!'); }
+    finally { btn.innerText = 'Simpan Barang'; btn.disabled = false; }
+}
+
+async function deleteItem(id) {
+    if (!confirm('Hapus barang?')) return;
+    try {
+        await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'deleteItem', noInventaris: id, password: "adminbn2" }) });
+        alert('Berhasil dihapus!'); fetchData();
+    } catch (e) { alert('Gagal!'); }
+}
+
+// REST OF UI (Pagin, Stats, Chips, etc - see previous working)
 function updateStats() {
     const total = state.items.length;
     const baik = state.items.filter(i => i.kondisi === 'Baik').length;
@@ -314,71 +263,49 @@ function updateStats() {
     $('#statBaik').innerText = total ? Math.round((baik/total)*100) + '%' : '0%';
     $('#statRusak').innerText = total ? Math.round((rusak/total)*100) + '%' : '0%';
 }
-
+function populateFilterOptions() {
+    const kats = ['Semua', ...new Set(state.items.map(i => i.kategori))];
+    const kondisis = ['Semua', 'Baik', 'Rusak Ringan', 'Rusak'];
+    const lokasis = ['Semua', ...new Set(state.items.map(i => i.lokasi))];
+    renderChips('filterKategoriChips', kats, 'kategori');
+    renderChips('filterKondisiChips', kondisis, 'kondisi');
+    renderChips('filterLokasiChips', lokasis, 'lokasi');
+    renderSortOptions();
+}
+function renderChips(id, options, type) {
+    $(`#${id}`).innerHTML = options.map(opt => {
+        const isActive = opt === 'Semua' ? state.filters[type].length === 0 : state.filters[type].includes(opt);
+        return `<button onclick="toggleChip('${type}', '${opt}')" class="filter-chip ${isActive ? 'active' : ''}">${opt}</button>`;
+    }).join('');
+}
+function toggleChip(type, val) {
+    if (val === 'Semua') state.filters[type] = [];
+    else { const idx = state.filters[type].indexOf(val); if (idx > -1) state.filters[type].splice(idx, 1); else state.filters[type].push(val); }
+    populateFilterOptions();
+}
+function renderSortOptions() {
+    const opts = [{ id: 'newest', label: 'Terbaru ditambahkan' }, { id: 'oldest', label: 'Terlama ditambahkan' }, { id: 'az', label: 'Nama A–Z' }, { id: 'za', label: 'Nama Z–A' }, { id: 'broken_first', label: 'Kondisi rusak dulu' }];
+    $('#sortOptions').innerHTML = opts.map(opt => `<button onclick="setSort('${opt.id}')" class="w-full flex items-center justify-between py-4 px-6 group"><span class="text-[14px] font-medium ${state.sortBy === opt.id ? 'text-[#1DA874]' : 'text-slate-600'}">${opt.label}</span><div class="w-5 h-5 rounded-full border-2 flex items-center justify-center ${state.sortBy === opt.id ? 'border-[#1DA874]' : 'border-slate-200'}">${state.sortBy === opt.id ? '<div class="w-2.5 h-2.5 bg-[#1DA874] rounded-full"></div>' : ''}</div></button>`).join('');
+}
+function setSort(id) { state.sortBy = id; closeAllSheets(); applyLogic(); }
+function updateActiveFilterBar() {
+    const active = []; if (state.filters.kategori.length) active.push(...state.filters.kategori); if (state.filters.kondisi.length) active.push(...state.filters.kondisi); if (state.filters.lokasi.length) active.push(...state.filters.lokasi);
+    const bar = $('#filterActiveBar'); if (active.length) { bar.classList.remove('hidden'); $('#activeFilterText').innerText = `Aktif: ${active.join(' · ')}`; $('#filterBtn').classList.add('bg-[#1DA874]', 'text-white'); } else { bar.classList.add('hidden'); $('#filterBtn').classList.remove('bg-[#1DA874]', 'text-white'); }
+}
 function renderPagination(totalPages) {
-    const container = $('#paginationContainer');
-    if (totalPages <= 1) { container.innerHTML = ''; return; }
-
-    container.innerHTML = `
-        <button onclick="changePage(-1)" ${state.currentPage === 1 ? 'disabled' : ''} class="pagination-btn flex items-center gap-2 text-[11px] font-bold text-slate-400 disabled:opacity-20">
-            <i data-lucide="chevron-left" class="w-4 h-4"></i> Sebelumnya
-        </button>
-        <span class="text-[11px] font-bold text-slate-800">Halaman ${state.currentPage} / ${totalPages}</span>
-        <button onclick="changePage(1)" ${state.currentPage === totalPages ? 'disabled' : ''} class="pagination-btn flex items-center gap-2 text-[11px] font-bold text-[#1DA874] disabled:opacity-20">
-            Selanjutnya <i data-lucide="chevron-right" class="w-4 h-4"></i>
-        </button>
-    `;
+    const container = $('#paginationContainer'); if (totalPages <= 1) { container.innerHTML = ''; return; }
+    container.innerHTML = `<button onclick="changePage(-1)" ${state.currentPage === 1 ? 'disabled' : ''} class="pagination-btn flex items-center gap-2 text-[11px] font-bold text-slate-400 disabled:opacity-20"><i data-lucide="chevron-left" class="w-4 h-4"></i> Sebelumnya</button><span class="text-[11px] font-bold text-slate-800">Halaman ${state.currentPage} / ${totalPages}</span><button onclick="changePage(1)" ${state.currentPage === totalPages ? 'disabled' : ''} class="pagination-btn flex items-center gap-2 text-[11px] font-bold text-[#1DA874] disabled:opacity-20">Selanjutnya <i data-lucide="chevron-right" class="w-4 h-4"></i></button>`;
 }
-
-function changePage(delta) {
-    state.currentPage += delta;
-    renderAll();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// ADMIN AUTH (NUMPAD)
-function showAuth() {
-    $('#authModal').classList.remove('hidden');
-    state.pinInput = '';
-    updatePinDots();
-}
-
+function changePage(delta) { state.currentPage += delta; applyLogic(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+function showAuth() { $('#authModal').classList.remove('hidden'); state.pinInput = ''; updatePinDots(); }
 function hideAuth() { $('#authModal').classList.add('hidden'); }
-
 function renderNumpad() {
     const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', '⌫'];
-    $('#numpad').innerHTML = keys.map(k => `
-        <button onclick="handlePin('${k}')" class="h-16 bg-slate-800 text-white rounded-2xl text-2xl font-bold active:bg-[#1DA874] transition-colors">${k}</button>
-    `).join('');
+    $('#numpad').innerHTML = keys.map(k => `<button onclick="handlePin('${k}')" class="h-16 bg-slate-800 text-white rounded-2xl text-2xl font-bold active:bg-[#1DA874] transition-colors">${k}</button>`).join('');
 }
-
 function handlePin(key) {
-    if (key === 'C') state.pinInput = '';
-    else if (key === '⌫') state.pinInput = state.pinInput.slice(0, -1);
-    else if (state.pinInput.length < 4) state.pinInput += key;
-    updatePinDots();
-    if (state.pinInput.length === 4) validatePIN();
+    if (key === 'C') state.pinInput = ''; else if (key === '⌫') state.pinInput = state.pinInput.slice(0, -1); else if (state.pinInput.length < 4) state.pinInput += key;
+    updatePinDots(); if (state.pinInput.length === 4) validatePIN();
 }
-
-function updatePinDots() {
-    $$('#pinDots div').forEach((dot, i) => {
-        dot.className = `w-5 h-5 rounded-full border-2 transition-all duration-200 ${i < state.pinInput.length ? 'bg-[#1DA874] border-[#1DA874]' : 'border-slate-700'}`;
-    });
-}
-
-function validatePIN() {
-    if (state.pinInput === ADMIN_PIN) {
-        state.isAdmin = true;
-        hideAuth();
-        renderAll();
-        alert('Mode Admin Aktif');
-    } else {
-        state.pinInput = '';
-        updatePinDots();
-        alert('PIN Salah!');
-    }
-}
-
-// CRUD STUBS (Keep existing IDs)
-function showItemForm(id = null) { alert('Formulir Barang (Tambah/Edit) akan muncul di sini'); }
-function deleteItem(id) { if (confirm('Hapus barang ini?')) alert('Barang dihapus'); }
+function updatePinDots() { $$('#pinDots div').forEach((dot, i) => { dot.className = `w-5 h-5 rounded-full border-2 transition-all duration-200 ${i < state.pinInput.length ? 'bg-[#1DA874] border-[#1DA874]' : 'border-slate-700'}`; }); }
+function validatePIN() { if (state.pinInput === ADMIN_PIN) { state.isAdmin = true; hideAuth(); renderAll(); alert('Admin Aktif'); } else { state.pinInput = ''; updatePinDots(); alert('PIN Salah'); } }

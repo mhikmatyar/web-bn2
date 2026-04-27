@@ -114,7 +114,7 @@
             </header>
 
             <div class="flex-1 overflow-y-auto no-scrollbar pb-32">
-                <!-- DASHBOARD STATS (REFINED 2x2) -->
+                <!-- DASHBOARD STATS -->
                 <section class="p-5 grid grid-cols-2 gap-4">
                     <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
                         <p class="text-[11px] font-medium text-slate-400 uppercase tracking-wide">Total Barang</p>
@@ -197,74 +197,117 @@
         </main>
     </div>
 
-    <!-- BOTTOM SHEET FILTER -->
+    <!-- BOTTOM SHEETS & MODALS -->
+    
+    <!-- FILTER -->
     <div id="filterSheet" class="bottom-sheet shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
         <div class="sheet-handle"></div>
         <div class="p-6 pt-2 flex-1 overflow-y-auto no-scrollbar">
             <h4 class="text-[16px] font-bold text-slate-800 mb-6">Filter</h4>
-            
             <div class="space-y-8">
                 <div>
                     <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4">Kategori</p>
-                    <div class="flex flex-wrap gap-2.5" id="filterKategoriChips">
-                        <!-- Chips injected via JS -->
-                    </div>
+                    <div class="flex flex-wrap gap-2.5" id="filterKategoriChips"></div>
                 </div>
                 <div>
                     <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4">Kondisi</p>
-                    <div class="flex flex-wrap gap-2.5" id="filterKondisiChips">
-                        <!-- Chips injected via JS -->
-                    </div>
+                    <div class="flex flex-wrap gap-2.5" id="filterKondisiChips"></div>
                 </div>
                 <div>
                     <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4">Lokasi</p>
-                    <div class="flex flex-wrap gap-2.5" id="filterLokasiChips">
-                        <!-- Chips injected via JS -->
-                    </div>
+                    <div class="flex flex-wrap gap-2.5" id="filterLokasiChips"></div>
                 </div>
             </div>
         </div>
         <div class="p-6 flex gap-4 bg-white border-t border-slate-100">
-            <button id="resetFilterBtn" class="flex-1 h-12 rounded-xl border border-slate-200 font-bold text-sm text-slate-600 active:bg-slate-50">Reset</button>
-            <button id="applyFilterBtn" class="flex-1 h-12 rounded-xl bg-[#1DA874] text-white font-bold text-sm shadow-lg shadow-[#1DA874]/20 active:scale-95 transition-all">Terapkan</button>
+            <button id="resetFilterBtn" class="flex-1 h-12 rounded-xl border border-slate-200 font-bold text-sm text-slate-600">Reset</button>
+            <button id="applyFilterBtn" class="flex-1 h-12 rounded-xl bg-[#1DA874] text-white font-bold text-sm shadow-lg shadow-[#1DA874]/20">Terapkan</button>
         </div>
     </div>
 
-    <!-- BOTTOM SHEET SORT -->
+    <!-- SORT -->
     <div id="sortSheet" class="bottom-sheet">
         <div class="sheet-handle"></div>
         <div class="p-6 pt-2">
             <h4 class="text-[14px] font-bold text-slate-800 mb-6">Urutkan</h4>
-            <div class="space-y-1" id="sortOptions">
-                <!-- Radio options injected via JS -->
-            </div>
+            <div class="space-y-1" id="sortOptions"></div>
         </div>
     </div>
 
-    <!-- ADMIN PIN SCREEN -->
+    <!-- DETAIL -->
+    <div id="detailSheet" class="bottom-sheet shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
+        <div class="sheet-handle"></div>
+        <div id="sheetContent" class="p-6 pt-2"></div>
+    </div>
+
+    <!-- ITEM FORM (ADD/EDIT) -->
+    <div id="itemModal" class="fixed inset-0 z-[150] flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-lg rounded-[28px] shadow-2xl overflow-hidden">
+            <div class="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                <h3 id="formTitle" class="text-lg font-black text-slate-800">Tambah Barang</h3>
+                <button onclick="hideItemForm()" class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="itemForm" class="p-6 space-y-4 max-h-[70vh] overflow-y-auto no-scrollbar">
+                <input type="hidden" id="formId">
+                <div class="space-y-1.5">
+                    <label class="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">Nama Barang</label>
+                    <input type="text" id="inputNama" required class="w-full h-12 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1.5">
+                        <label class="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">Kategori</label>
+                        <select id="inputKategori" required class="w-full h-12 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none">
+                            <option value="Perlengkapan">Perlengkapan</option>
+                            <option value="Peralatan">Peralatan</option>
+                            <option value="Elektronik">Elektronik</option>
+                            <option value="Aset">Aset</option>
+                        </select>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">Jumlah</label>
+                        <input type="number" id="inputJumlah" required class="w-full h-12 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none">
+                    </div>
+                </div>
+                <div class="space-y-1.5">
+                    <label class="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">Kondisi</label>
+                    <select id="inputKondisi" required class="w-full h-12 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none">
+                        <option value="Baik">Baik</option>
+                        <option value="Rusak Ringan">Rusak Ringan</option>
+                        <option value="Rusak">Rusak</option>
+                    </select>
+                </div>
+                <div class="space-y-1.5">
+                    <label class="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">Lokasi</label>
+                    <input type="text" id="inputLokasi" required class="w-full h-12 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none">
+                </div>
+                <div class="space-y-1.5">
+                    <label class="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-1">Keterangan</label>
+                    <textarea id="inputKeterangan" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none min-h-[100px]"></textarea>
+                </div>
+                <button type="submit" class="w-full h-14 bg-[#1DA874] text-white rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-[#1DA874]/20">Simpan Barang</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADMIN LOGIN -->
     <div id="authModal" class="fixed inset-0 bg-[#0D1B2A] z-[200] flex flex-col items-center justify-center p-8 hidden">
         <div class="w-full max-w-xs text-center space-y-10">
             <div class="space-y-4">
-                <div class="w-20 h-20 bg-[#1DA874]/20 text-[#1DA874] rounded-[2rem] flex items-center justify-center mx-auto">
-                    <i data-lucide="shield-check" class="w-10 h-10"></i>
-                </div>
+                <div class="w-20 h-20 bg-[#1DA874]/20 text-[#1DA874] rounded-[2rem] flex items-center justify-center mx-auto"><i data-lucide="shield-check" class="w-10 h-10"></i></div>
                 <h2 class="text-white text-2xl font-black uppercase tracking-tight">Login Admin</h2>
                 <p class="text-slate-400 font-bold">Masukkan PIN Keamanan</p>
             </div>
             <div class="flex justify-center gap-4 py-4" id="pinDots">
-                <div class="w-5 h-5 rounded-full border-2 border-slate-700 transition-all duration-200"></div>
-                <div class="w-5 h-5 rounded-full border-2 border-slate-700 transition-all duration-200"></div>
-                <div class="w-5 h-5 rounded-full border-2 border-slate-700 transition-all duration-200"></div>
-                <div class="w-5 h-5 rounded-full border-2 border-slate-700 transition-all duration-200"></div>
+                <div class="w-5 h-5 rounded-full border-2 border-slate-700"></div>
+                <div class="w-5 h-5 rounded-full border-2 border-slate-700"></div>
+                <div class="w-5 h-5 rounded-full border-2 border-slate-700"></div>
+                <div class="w-5 h-5 rounded-full border-2 border-slate-700"></div>
             </div>
-            <div class="grid grid-cols-3 gap-4 w-full" id="numpad">
-                <!-- Numpad injected via JS -->
-            </div>
+            <div class="grid grid-cols-3 gap-4 w-full" id="numpad"></div>
             <button onclick="hideAuth()" class="text-slate-500 font-bold uppercase tracking-widest text-[10px] py-4">Batal</button>
         </div>
     </div>
 
-    <!-- SCRIPTS -->
     <script src="app.js"></script>
 </body>
 </html>
