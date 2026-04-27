@@ -314,6 +314,21 @@
         </div>
     </div>
 
-    <script src="app.js?v=1.8"></script>
+    <!-- LOGOUT MODAL -->
+    <div id="logoutModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[400] flex items-center justify-center p-6 hidden">
+        <div class="bg-white w-full max-w-xs rounded-3xl p-8 shadow-2xl text-center">
+            <div class="bg-rose-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="log-out" class="w-8 h-8 text-rose-500"></i>
+            </div>
+            <h3 class="text-lg font-extrabold">Keluar Admin?</h3>
+            <p class="text-xs text-slate-500 mt-1 mb-6">Anda akan keluar dari mode pengelolaan data.</p>
+            <div class="flex flex-col gap-3">
+                <button onclick="handleLogout()" class="w-full bg-rose-500 text-white font-bold py-4 rounded-xl shadow-lg">Ya, Keluar</button>
+                <button onclick="closeLogoutModal()" class="w-full text-slate-400 text-xs font-bold py-2">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js?v=1.9"></script>
 </body>
 </html>

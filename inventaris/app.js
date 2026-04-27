@@ -32,6 +32,8 @@ document.addEventListener('DOMContentLoaded', () => {
 window.showAuth = showAuth;
 window.handleLogin = handleLogin;
 window.hideAuth = hideAuth;
+window.handleLogout = handleLogout;
+window.closeLogoutModal = closeLogoutModal;
 
 async function fetchData() {
     $('#inventoryGrid').innerHTML = '<div class="py-20 text-center"><i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4 text-[#1DA874]"></i><p class="font-bold text-slate-400">Memuat data...</p></div>';
@@ -384,15 +386,8 @@ function renderPagination(totalPages) {
 }
 function changePage(delta) { state.currentPage += delta; applyLogic(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
 function showAuth() { 
-    alert('DEBUG: showAuth terpanggil. Status Admin: ' + state.isAdmin);
     if (state.isAdmin) {
-        if (confirm('Keluar dari mode Admin?')) {
-            state.isAdmin = false;
-            localStorage.removeItem('bn2-isAdmin');
-            updateAdminUI();
-            renderAll();
-            alert('Berhasil Logout');
-        }
+        $('#logoutModal').classList.remove('hidden');
     } else {
         $('#authModal').classList.remove('hidden'); 
         $('#adminPass').value = '';
@@ -400,15 +395,22 @@ function showAuth() {
     }
 }
 function hideAuth() { $('#authModal').classList.add('hidden'); }
+function closeLogoutModal() { $('#logoutModal').classList.add('hidden'); }
+
+function handleLogout() {
+    state.isAdmin = false;
+    localStorage.removeItem('bn2-isAdmin');
+    closeLogoutModal();
+    updateAdminUI();
+    renderAll();
+}
 
 function handleLogin() { 
-    console.log('handleLogin called');
     if ($('#adminPass').value === ADMIN_PASS) { 
         state.isAdmin = true; 
         localStorage.setItem('bn2-isAdmin', 'true');
         hideAuth(); 
         renderAll(); 
-        alert('Login Berhasil!');
     } else { 
         alert('Password Salah!'); 
         $('#adminPass').value = '';
