@@ -702,13 +702,14 @@
 
     function bindAdminAuth() {
         $('#adminBtn').addEventListener('click', () => {
-            if (state.isAdmin) {
+                alert('DEBUG: Logout jimpitan terpanggil');
                 if (confirm('Keluar dari mode Admin?')) {
                     state.isAdmin = false;
                     localStorage.removeItem('bn2-isAdmin');
                     updateAdminUI();
                     renderAll();
                     showToast('Mode Admin dimatikan');
+                    alert('Logout Berhasil (Jimpitan)');
                 }
             } else {
                 $('#authModal').classList.remove('hidden');
