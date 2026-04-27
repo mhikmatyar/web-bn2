@@ -45,7 +45,7 @@ async function fetchData() {
         complete: (results) => {
             state.items = results.data
                 .filter(i => i.namaBarang || i['NAMA BARANG'])
-                .map(i => ({
+                .map((i, idx) => ({
                     id: i.noInventaris || i['NO INVENTARIS'],
                     noInventaris: i.noInventaris || i['NO INVENTARIS'],
                     namaBarang: i.namaBarang || i['NAMA BARANG'],
@@ -54,7 +54,8 @@ async function fetchData() {
                     kondisi: i.kondisi || i['KONDISI'],
                     lokasi: i.lokasi || i['LOKASI'],
                     keterangan: i.keterangan || i['KETERANGAN'],
-                    createdAt: extractTimestamp(i.noInventaris || i['NO INVENTARIS'])
+                    rowIdx: idx, // Keep track of original order
+                    createdAt: extractTimestamp(i.noInventaris || i['NO INVENTARIS']) || idx
                 }));
             populateFilterOptions();
             applyLogic();
