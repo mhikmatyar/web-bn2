@@ -87,7 +87,6 @@ function bindEvents() {
         };
     });
 
-    $('#mobileSettingsBtn').onclick = showAuth;
     $('#mobileAddBtn').onclick = () => showItemForm();
     $('#itemForm').onsubmit = (e) => { e.preventDefault(); saveItem(); };
 
@@ -180,7 +179,6 @@ function renderAll() {
 function updateAdminUI() {
     const mobileAddBtn = $('#mobileAddBtn');
     const navSettingsBtn = $('#navSettingsBtn');
-    const mobileSettingsBtn = $('#mobileSettingsBtn');
 
     if (state.isAdmin) {
         if (mobileAddBtn) mobileAddBtn.classList.remove('hidden');
@@ -191,12 +189,6 @@ function updateAdminUI() {
             navSettingsBtn.title = 'Logout Admin';
             navSettingsBtn.onclick = showAuth; // Re-bind
         }
-        if (mobileSettingsBtn) {
-            mobileSettingsBtn.innerHTML = '<i data-lucide="log-out" class="w-5 h-5"></i>';
-            mobileSettingsBtn.classList.add('text-rose-500');
-            mobileSettingsBtn.classList.remove('text-slate-400');
-            mobileSettingsBtn.onclick = showAuth; // Re-bind
-        }
     } else {
         if (mobileAddBtn) mobileAddBtn.classList.add('hidden');
         if (navSettingsBtn) {
@@ -205,12 +197,6 @@ function updateAdminUI() {
             navSettingsBtn.classList.remove('text-rose-500');
             navSettingsBtn.title = 'Login Admin';
             navSettingsBtn.onclick = showAuth; // Re-bind
-        }
-        if (mobileSettingsBtn) {
-            mobileSettingsBtn.innerHTML = '<i data-lucide="settings" class="w-5 h-5"></i>';
-            mobileSettingsBtn.classList.add('text-slate-400');
-            mobileSettingsBtn.classList.remove('text-rose-500');
-            mobileSettingsBtn.onclick = showAuth; // Re-bind
         }
     }
     if (window.lucide) lucide.createIcons();
