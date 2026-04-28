@@ -61,6 +61,12 @@ async function fetchData() {
                 }));
             populateFilterOptions();
             applyLogic();
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const itemId = urlParams.get('id');
+            if (itemId) {
+                setTimeout(() => showDetail(itemId), 500);
+            }
         }
     });
 }
@@ -248,6 +254,10 @@ function showDetail(id) {
     lucide.createIcons();
 }
 
+function toTitleCase(str) {
+    return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
+}
+
 // CRUD
 function autoGenNo() {
     const kat = $('#inputKategori').value;
@@ -321,7 +331,7 @@ async function saveItem() {
         noInventaris: newNo || `BN2-${Date.now()}`,
         oldNoInventaris: oldNo || '',
         oldNamaBarang: $('#formOldNama').value || '', // Extra anchor
-        namaBarang: $('#inputNama').value, 
+        namaBarang: toTitleCase($('#inputNama').value.trim()), 
         kategori: $('#inputKategori').value,
         jumlah: $('#inputJumlah').value, 
         kondisi: $('#inputKondisi').value,
@@ -421,7 +431,9 @@ function handleLogin() {
 }
 
 function printQR(id, name) {
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(id)}`;
+    const baseUrl = window.location.origin + window.location.pathname;
+    const itemUrl = baseUrl + '?id=' + encodeURIComponent(id);
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(itemUrl)}`;
     
     const printWindow = window.open('', '_blank', 'width=400,height=600');
     printWindow.document.write(`
@@ -614,7 +626,9 @@ function printAllQR() {
     `;
 
     itemsToPrint.forEach(item => {
-        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(item.noInventaris)}`;
+        const baseUrl = window.location.origin + window.location.pathname;
+        const itemUrl = baseUrl + '?id=' + encodeURIComponent(item.noInventaris);
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(itemUrl)}`;
         html += `
             <div class="label-page">
                 <div class="label-container">
