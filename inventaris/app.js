@@ -420,66 +420,94 @@ function handleLogin() {
 }
 
 function printQR(id, name) {
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(id)}`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(id)}`;
     
     const printWindow = window.open('', '_blank', 'width=400,height=600');
     printWindow.document.write(`
         <html>
         <head>
-            <title>Cetak QR - ${id}</title>
-            <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+            <title>Cetak Label 103 - ${id}</title>
+            <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&display=swap" rel="stylesheet">
             <style>
+                @page {
+                    size: 64mm 32mm; /* Label 103 Standard Size */
+                    margin: 0;
+                }
                 body { 
                     font-family: 'Plus Jakarta Sans', sans-serif; 
-                    display: flex; 
-                    flex-direction: column; 
-                    align-items: center; 
-                    justify-content: center; 
-                    height: 100vh; 
                     margin: 0;
-                    text-align: center;
+                    padding: 0;
+                    width: 64mm;
+                    height: 32mm;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: white;
+                    box-sizing: border-box;
                 }
-                .label-card {
-                    border: 2px solid #000;
-                    padding: 20px;
-                    border-radius: 15px;
-                    width: 250px;
+                .label-container {
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    align-items: center;
+                    padding: 3mm 4mm;
+                    box-sizing: border-box;
+                    gap: 3mm;
                 }
-                .header {
-                    font-size: 12px;
-                    font-weight: 800;
-                    letter-spacing: 2px;
-                    margin-bottom: 10px;
-                    color: #1DA874;
+                .qr-section {
+                    height: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
                 }
                 .qr-img {
-                    width: 180px;
-                    height: 180px;
-                    margin-bottom: 15px;
+                    width: 24mm;
+                    height: 24mm;
+                }
+                .info-section {
+                    flex: 1;
+                    height: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    min-width: 0; /* for text truncation */
+                }
+                .header {
+                    font-size: 6pt;
+                    font-weight: 800;
+                    color: #1DA874;
+                    margin-bottom: 2px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
                 }
                 .name {
-                    font-size: 16px;
+                    font-size: 8pt;
                     font-weight: 800;
-                    margin-bottom: 5px;
-                    text-transform: uppercase;
+                    line-height: 1.1;
+                    margin-bottom: 2px;
+                    color: #000;
+                    display: -webkit-box;
+                    -webkit-line-clamp: 2;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
                 }
                 .code {
-                    font-size: 11px;
+                    font-size: 6pt;
                     font-weight: 600;
-                    color: #666;
-                }
-                @media print {
-                    body { height: auto; }
-                    .label-card { border: 1px solid #eee; }
+                    color: #444;
                 }
             </style>
         </head>
         <body>
-            <div class="label-card">
-                <div class="header">INVENTARIS BN2</div>
-                <img src="${qrUrl}" class="qr-img" onload="window.print(); window.close();">
-                <div class="name">${name}</div>
-                <div class="code">${id}</div>
+            <div class="label-container">
+                <div class="qr-section">
+                    <img src="${qrUrl}" class="qr-img" onload="window.print(); window.close();">
+                </div>
+                <div class="info-section">
+                    <div class="header">INVEN BN2</div>
+                    <div class="name">${name}</div>
+                    <div class="code">${id}</div>
+                </div>
             </div>
         </body>
         </html>
