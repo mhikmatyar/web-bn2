@@ -265,12 +265,9 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div class="space-y-1">
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Kategori</label>
-                        <select id="inputKategori" required class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm">
-                            <option value="Perlengkapan">Perlengkapan</option>
-                            <option value="Peralatan">Peralatan</option>
-                            <option value="Elektronik">Elektronik</option>
-                            <option value="Aset">Aset</option>
+                        <select id="inputKategoriSelect" class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm" onchange="handleKategoriChange(this)">
                         </select>
+                        <input type="text" id="inputKategoriText" placeholder="Ketik kategori baru..." class="w-full h-11 px-4 mt-2 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm hidden">
                     </div>
                     <div class="space-y-1">
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Jumlah</label>
@@ -354,6 +351,6 @@
         </div>
     </div>
 
-    <script src="/inventaris/app.js?v=3.9"></script>
+    <script src="/inventaris/app.js?v=3.10"></script>
 </body>
 </html>

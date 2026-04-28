@@ -85,6 +85,18 @@ function handleLokasiChange(select) {
     }
 }
 
+function handleKategoriChange(select) {
+    const textInput = $('#inputKategoriText');
+    if (select.value === '__NEW__') {
+        textInput.classList.remove('hidden');
+        textInput.required = true;
+        textInput.focus();
+    } else {
+        textInput.classList.add('hidden');
+        textInput.required = false;
+    }
+}
+
 function extractTimestamp(code) {
     if (!code) return 0;
     const match = code.match(/BN2-(\d+)/);
@@ -406,7 +418,20 @@ function showItemForm(id = null) {
         $('#formOldNama').value = item.namaBarang; // Hidden field to track old name
         $('#inputNoInventaris').value = item.noInventaris || '';
         $('#inputNama').value = item.namaBarang;
-        $('#inputKategori').value = item.kategori;
+        
+        const selectKat = $('#inputKategoriSelect');
+        const existsKat = Array.from(selectKat.options).some(o => o.value === item.kategori);
+        if (existsKat && item.kategori) {
+            selectKat.value = item.kategori;
+            $('#inputKategoriText').classList.add('hidden');
+            $('#inputKategoriText').required = false;
+        } else {
+            selectKat.value = '__NEW__';
+            $('#inputKategoriText').value = item.kategori || '';
+            $('#inputKategoriText').classList.remove('hidden');
+            $('#inputKategoriText').required = true;
+        }
+        
         $('#inputJumlah').value = item.jumlah;
         $('#inputKondisi').value = item.kondisi;
         $('#inputTahun').value = item.tahun || '';
@@ -449,10 +474,16 @@ function showItemForm(id = null) {
         $('#formId').value = '';
         $('#formOldNama').value = '';
         
-        const select = $('#inputLokasiSelect');
-        if (select) {
-            select.value = Array.from(select.options)[0]?.value || '__NEW__';
-            handleLokasiChange(select);
+        const selectKat = $('#inputKategoriSelect');
+        if (selectKat) {
+            selectKat.value = Array.from(selectKat.options)[0]?.value || '__NEW__';
+            handleKategoriChange(selectKat);
+        }
+        
+        const selectLok = $('#inputLokasiSelect');
+        if (selectLok) {
+            selectLok.value = Array.from(selectLok.options)[0]?.value || '__NEW__';
+            handleLokasiChange(selectLok);
         }
         
         const inputFotoBase64 = $('#inputFotoBase64');
@@ -485,7 +516,7 @@ async function saveItem() {
         oldNoInventaris: oldNo || '',
         oldNamaBarang: $('#formOldNama').value || '', // Extra anchor
         namaBarang: toTitleCase($('#inputNama').value.trim()), 
-        kategori: $('#inputKategori').value,
+        kategori: $('#inputKategoriSelect').value === '__NEW__' ? $('#inputKategoriText').value : $('#inputKategoriSelect').value,
         jumlah: $('#inputJumlah').value, 
         kondisi: $('#inputKondisi').value,
         tahun: $('#inputTahun') ? $('#inputTahun').value : '',
@@ -524,8 +555,17 @@ function populateFilterOptions() {
     const kondisis = ['Semua', 'Baik', 'Rusak Ringan', 'Rusak'];
     const lokasis = ['Semua', ...new Set(state.items.map(i => i.lokasi))];
     
-    const select = $('#inputLokasiSelect');
-    if (select) {
+    const selectKat = $('#inputKategoriSelect');
+    if (selectKat) {
+        const defaultKats = ['Perlengkapan', 'Peralatan', 'Elektronik', 'Aset'];
+        const uniqueKats = [...new Set(state.items.map(i => i.kategori).filter(Boolean))];
+        const allKats = [...new Set([...defaultKats, ...uniqueKats])];
+        const optionsHtmlKat = allKats.map(k => `<option value="${k}">${k}</option>`).join('');
+        selectKat.innerHTML = optionsHtmlKat + '<option value="__NEW__">+ Tambah Kategori Baru...</option>';
+    }
+
+    const selectLok = $('#inputLokasiSelect');
+    if (selectLok) {
         const uniqueLokasis = [...new Set(state.items.map(i => i.lokasi).filter(Boolean))];
         const optionsHtml = uniqueLokasis.map(l => `<option value="${l}">${l}</option>`).join('');
         select.innerHTML = optionsHtml + '<option value="__NEW__">+ Tambah Lokasi Baru...</option>';
