@@ -129,7 +129,7 @@ function handleFotoUpload(e) {
             const canvas = document.createElement('canvas');
             let width = img.width;
             let height = img.height;
-            const maxSize = 300; // Resize to max 300px to ensure base64 fits in Google Sheet
+            const maxSize = 1024; // Increased size since it now goes to Drive, not direct to Sheets
 
             if (width > height) {
                 if (width > maxSize) {
@@ -148,7 +148,7 @@ function handleFotoUpload(e) {
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
 
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.6); // Quality 0.6 to keep size small
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.85); // Increased quality
             
             const inputFotoBase64 = $('#inputFotoBase64');
             if (inputFotoBase64) inputFotoBase64.value = dataUrl;
