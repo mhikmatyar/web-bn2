@@ -475,7 +475,7 @@ function printQR(id, name) {
                 .header {
                     font-size: 6pt;
                     font-weight: 800;
-                    color: #1DA874;
+                    color: #000;
                     margin-bottom: 2px;
                     text-transform: uppercase;
                     letter-spacing: 0.5px;
@@ -504,7 +504,7 @@ function printQR(id, name) {
                     <img src="${qrUrl}" class="qr-img" onload="window.print(); window.close();">
                 </div>
                 <div class="info-section">
-                    <div class="header">INVEN BN2</div>
+                    <div class="header">Bumi Neikarta 2</div>
                     <div class="name">${name}</div>
                     <div class="code">${id}</div>
                 </div>
