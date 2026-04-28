@@ -47,7 +47,7 @@ async function fetchData() {
 
     const fetchBarang = new Promise((resolve) => {
         Papa.parse(CSV_URL, {
-            download: true, header: true,
+            download: true, header: true, transformHeader: h => h.trim(),
             complete: (results) => {
                 state.items = results.data
                     .filter(i => i.namaBarang || i['NAMA BARANG'])
@@ -72,7 +72,7 @@ async function fetchData() {
 
     const fetchPinjam = new Promise((resolve) => {
         Papa.parse(CSV_URL_PEMINJAMAN, {
-            download: true, header: true,
+            download: true, header: true, transformHeader: h => h.trim(),
             complete: (results) => {
                 state.peminjaman = results.data
                     .filter(i => i['ID Pinjam'])
