@@ -35,6 +35,7 @@ window.hideAuth = hideAuth;
 window.handleLogout = handleLogout;
 window.closeLogoutModal = closeLogoutModal;
 window.printQR = printQR;
+window.printAllQR = printAllQR;
 
 async function fetchData() {
     $('#inventoryGrid').innerHTML = '<div class="py-20 text-center"><i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4 text-[#1DA874]"></i><p class="font-bold text-slate-400">Memuat data...</p></div>';
@@ -512,5 +513,132 @@ function printQR(id, name) {
         </body>
         </html>
     `);
+    printWindow.document.close();
+}
+
+function printAllQR() {
+    const itemsToPrint = state.items.filter(item => item.noInventaris && item.noInventaris !== '-');
+    if (itemsToPrint.length === 0) {
+        alert("Tidak ada data barang yang memiliki nomor inventaris untuk dicetak.");
+        return;
+    }
+
+    const printWindow = window.open('', '_blank', 'width=400,height=600');
+    let html = `
+        <html>
+        <head>
+            <title>Cetak Semua Label 103</title>
+            <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&display=swap" rel="stylesheet">
+            <style>
+                @page {
+                    size: 64mm 32mm; /* Label 103 Standard Size */
+                    margin: 0;
+                }
+                body { 
+                    font-family: 'Plus Jakarta Sans', sans-serif; 
+                    margin: 0;
+                    padding: 0;
+                    background: white;
+                }
+                .label-page {
+                    width: 64mm;
+                    height: 32mm;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-sizing: border-box;
+                    page-break-after: always; /* Force each label to a new page */
+                }
+                .label-page:last-child {
+                    page-break-after: auto;
+                }
+                .label-container {
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    align-items: center;
+                    padding: 3mm 4mm;
+                    box-sizing: border-box;
+                    gap: 3mm;
+                }
+                .qr-section {
+                    height: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .qr-img {
+                    width: 24mm;
+                    height: 24mm;
+                }
+                .info-section {
+                    flex: 1;
+                    height: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    min-width: 0; /* for text truncation */
+                }
+                .header {
+                    font-size: 6pt;
+                    font-weight: 800;
+                    color: #000;
+                    margin-bottom: 2px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+                .name {
+                    font-size: 8pt;
+                    font-weight: 800;
+                    line-height: 1.1;
+                    margin-bottom: 2px;
+                    color: #000;
+                    display: -webkit-box;
+                    -webkit-line-clamp: 2;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
+                }
+                .code {
+                    font-size: 6pt;
+                    font-weight: 600;
+                    color: #444;
+                }
+            </style>
+        </head>
+        <body>
+    `;
+
+    itemsToPrint.forEach(item => {
+        const qrUrl = \`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=\${encodeURIComponent(item.noInventaris)}\`;
+        html += \`
+            <div class="label-page">
+                <div class="label-container">
+                    <div class="qr-section">
+                        <img src="\${qrUrl}" class="qr-img">
+                    </div>
+                    <div class="info-section">
+                        <div class="header">Bumi Neikarta 2</div>
+                        <div class="name">\${item.namaBarang}</div>
+                        <div class="code">\${item.noInventaris}</div>
+                    </div>
+                </div>
+            </div>
+        \`;
+    });
+
+    html += \`
+        <script>
+            window.onload = () => {
+                setTimeout(() => {
+                    window.print();
+                    window.close();
+                }, 500); // Give a little time for QRs to render
+            };
+        </script>
+        </body>
+        </html>
+    \`;
+    
+    printWindow.document.write(html);
     printWindow.document.close();
 }
