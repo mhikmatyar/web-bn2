@@ -289,9 +289,19 @@
                     <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Lokasi</label>
                     <input type="text" id="inputLokasi" required class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm">
                 </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Link Foto (Google Drive)</label>
-                    <input type="url" id="inputFoto" placeholder="https://lh3.googleusercontent.com/d/..." class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm">
+                <div class="space-y-2">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Foto Barang</label>
+                    <div class="flex items-center gap-3">
+                        <div id="fotoPreviewContainer" class="w-12 h-12 bg-slate-100 rounded-xl border border-slate-200 overflow-hidden hidden shrink-0">
+                            <img id="fotoPreview" src="" class="w-full h-full object-cover">
+                        </div>
+                        <label class="flex-1 h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl hover:border-[#1DA874] cursor-pointer flex items-center justify-between text-sm font-medium text-slate-500 transition-colors">
+                            <span id="fotoFileName" class="truncate">Pilih atau Ambil Foto...</span>
+                            <i data-lucide="camera" class="w-4 h-4 shrink-0 text-slate-400"></i>
+                            <input type="file" id="inputFileFoto" accept="image/*" class="hidden">
+                        </label>
+                    </div>
+                    <input type="hidden" id="inputFotoBase64">
                 </div>
                 <div class="space-y-1">
                     <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Keterangan</label>
@@ -336,6 +346,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=3.0"></script>
+    <script src="app.js?v=3.1"></script>
 </body>
 </html>

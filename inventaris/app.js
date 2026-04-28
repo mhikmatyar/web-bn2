@@ -101,10 +101,55 @@ function bindEvents() {
 
     $('#mobileAddBtn').onclick = () => showItemForm();
     $('#itemForm').onsubmit = (e) => { e.preventDefault(); saveItem(); };
+    $('#inputFileFoto').onchange = handleFotoUpload;
 
     // Auth Modal Events
     $('#confirmAuthBtn').onclick = handleLogin;
     $('#closeAuthBtn').onclick = hideAuth;
+}
+
+function handleFotoUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    $('#fotoFileName').innerText = 'Memproses...';
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            const maxSize = 400; // Resize to max 400px
+
+            if (width > height) {
+                if (width > maxSize) {
+                    height *= maxSize / width;
+                    width = maxSize;
+                }
+            } else {
+                if (height > maxSize) {
+                    width *= maxSize / height;
+                    height = maxSize;
+                }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            
+            $('#inputFotoBase64').value = dataUrl;
+            $('#fotoPreview').src = dataUrl;
+            $('#fotoPreviewContainer').classList.remove('hidden');
+            $('#fotoFileName').innerText = 'Foto Siap';
+        };
+        img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
 }
 
 // LOGIC
@@ -309,13 +354,28 @@ function showItemForm(id = null) {
         $('#inputJumlah').value = item.jumlah;
         $('#inputKondisi').value = item.kondisi;
         $('#inputLokasi').value = item.lokasi;
-        $('#inputFoto').value = item.foto || '';
+        
+        $('#inputFotoBase64').value = item.foto || '';
+        if (item.foto) {
+            $('#fotoPreview').src = item.foto;
+            $('#fotoPreviewContainer').classList.remove('hidden');
+            $('#fotoFileName').innerText = 'Foto Tersimpan';
+        } else {
+            $('#fotoPreview').src = '';
+            $('#fotoPreviewContainer').classList.add('hidden');
+            $('#fotoFileName').innerText = 'Pilih atau Ambil Foto...';
+        }
+
         $('#inputKeterangan').value = item.keterangan || '';
     } else {
         $('#formTitle').innerText = 'Tambah Barang';
         $('#itemForm').reset();
         $('#formId').value = '';
         $('#formOldNama').value = '';
+        $('#inputFotoBase64').value = '';
+        $('#fotoPreview').src = '';
+        $('#fotoPreviewContainer').classList.add('hidden');
+        $('#fotoFileName').innerText = 'Pilih atau Ambil Foto...';
     }
 }
 
@@ -339,7 +399,7 @@ async function saveItem() {
         jumlah: $('#inputJumlah').value, 
         kondisi: $('#inputKondisi').value,
         lokasi: $('#inputLokasi').value, 
-        foto: $('#inputFoto').value.trim(),
+        foto: $('#inputFotoBase64').value,
         keterangan: $('#inputKeterangan').value,
         password: "adminbn2"
     };
