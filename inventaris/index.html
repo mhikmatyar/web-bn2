@@ -277,17 +277,24 @@
                         <input type="number" id="inputJumlah" required class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm">
                     </div>
                 </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Kondisi</label>
-                    <select id="inputKondisi" required class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm">
-                        <option value="Baik">Baik</option>
-                        <option value="Rusak Ringan">Rusak Ringan</option>
-                        <option value="Rusak">Rusak</option>
-                    </select>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Kondisi</label>
+                        <select id="inputKondisi" required class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm">
+                            <option value="Baik">Baik</option>
+                            <option value="Rusak Ringan">Rusak Ringan</option>
+                            <option value="Rusak">Rusak</option>
+                        </select>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Tgl Perolehan</label>
+                        <input type="date" id="inputTahun" required class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-[13px] font-medium">
+                    </div>
                 </div>
                 <div class="space-y-1">
                     <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Lokasi</label>
-                    <input type="text" id="inputLokasi" required class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm">
+                    <input type="text" id="inputLokasi" list="lokasiOptions" required placeholder="Pilih atau ketik lokasi baru..." class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm">
+                    <datalist id="lokasiOptions"></datalist>
                 </div>
                 <div class="space-y-2">
                     <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Foto Barang</label>
@@ -346,6 +353,6 @@
         </div>
     </div>
 
-    <script src="/inventaris/app.js?v=3.7"></script>
+    <script src="/inventaris/app.js?v=3.8"></script>
 </body>
 </html>

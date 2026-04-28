@@ -55,6 +55,7 @@ async function fetchData() {
                     jumlah: i.jumlah || i['JUMLAH'],
                     kondisi: i.kondisi || i['KONDISI'],
                     lokasi: i.lokasi || i['LOKASI'],
+                    tahun: i.tahun || i['TAHUN PEROLEHAN'] || i['TAHUN'] || i['Tgl Perolehan'],
                     keterangan: i.keterangan || i['KETERANGAN'],
                     foto: i.dokumentasi || i['DOKUMENTASI'] || i.foto || i['FOTO'], // Read from DOKUMENTASI
                     rowIdx: idx, // Keep track of original order
@@ -222,14 +223,20 @@ function renderAll() {
                 </div>
                 <div class="flex justify-between items-end gap-3">
                     <div class="flex-1 min-w-0">
-                        <p class="text-[11px] font-medium text-slate-400 leading-none">
+                        <p class="text-[11px] font-medium text-slate-400 leading-none mb-2">
                             ${hasCode ? `${item.noInventaris} <span class="mx-1 text-slate-200">·</span>` : ''} 
                             <span class="text-slate-700 font-bold">${item.jumlah}${isNaN(item.jumlah.toString().replace(',', '.')) ? '' : ' Unit'}</span>
                         </p>
-                    </div>
-                    <div class="flex items-center gap-1.5 shrink-0">
-                        <div class="w-1.5 h-1.5 rounded-full bg-slate-200"></div>
-                        <span class="text-[11px] font-bold text-slate-400">${item.lokasi || '-'}</span>
+                        <div class="flex items-center gap-2">
+                             <div class="flex items-center gap-1">
+                                 <i data-lucide="map-pin" class="w-3 h-3 text-slate-300"></i>
+                                 <span class="text-[10px] font-bold text-slate-400 truncate max-w-[80px]">${item.lokasi || '-'}</span>
+                             </div>
+                             <div class="flex items-center gap-1">
+                                 <i data-lucide="calendar" class="w-3 h-3 text-slate-300"></i>
+                                 <span class="text-[10px] font-bold text-slate-400">${item.tahun || '-'}</span>
+                             </div>
+                        </div>
                     </div>
                 </div>
                 ${state.isAdmin ? `
@@ -327,8 +334,9 @@ function showDetail(id) {
             <div class="grid grid-cols-2 gap-4">
                 <div class="p-4 bg-slate-50 rounded-2xl"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Kategori</p><p class="text-[14px] font-bold text-slate-800">${item.kategori}</p></div>
                 <div class="p-4 bg-slate-50 rounded-2xl"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Jumlah</p><p class="text-[14px] font-bold text-slate-800">${item.jumlah} Unit</p></div>
+                <div class="p-4 bg-slate-50 rounded-2xl"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Tgl Perolehan</p><p class="text-[14px] font-bold text-slate-800">${item.tahun || '-'}</p></div>
+                <div class="p-4 bg-slate-50 rounded-2xl"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Lokasi</p><p class="text-[14px] font-bold text-slate-800">${item.lokasi || '-'}</p></div>
             </div>
-            <div class="p-4 bg-slate-50 rounded-2xl"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Lokasi</p><p class="text-[14px] font-bold text-slate-800">${item.lokasi || '-'}</p></div>
             <div class="p-4 bg-[#0D1B2A] rounded-2xl text-white"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">No. Inventaris</p><p class="text-[16px] font-black tracking-widest">${item.noInventaris}</p></div>
             ${item.keterangan ? `<div class="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100"><p class="text-[10px] font-bold text-emerald-600 uppercase mb-1">Keterangan</p><p class="text-[13px] text-slate-600 font-medium">${item.keterangan}</p></div>` : ''}
         </div>
@@ -389,6 +397,7 @@ function showItemForm(id = null) {
         $('#inputKategori').value = item.kategori;
         $('#inputJumlah').value = item.jumlah;
         $('#inputKondisi').value = item.kondisi;
+        $('#inputTahun').value = item.tahun || '';
         $('#inputLokasi').value = item.lokasi;
         
         
@@ -449,6 +458,7 @@ async function saveItem() {
         kategori: $('#inputKategori').value,
         jumlah: $('#inputJumlah').value, 
         kondisi: $('#inputKondisi').value,
+        tahun: $('#inputTahun') ? $('#inputTahun').value : '',
         lokasi: $('#inputLokasi').value, 
         foto: $('#inputFotoBase64') ? $('#inputFotoBase64').value : '',
         keterangan: $('#inputKeterangan').value,
@@ -483,6 +493,13 @@ function populateFilterOptions() {
     const kats = ['Semua', ...new Set(state.items.map(i => i.kategori))];
     const kondisis = ['Semua', 'Baik', 'Rusak Ringan', 'Rusak'];
     const lokasis = ['Semua', ...new Set(state.items.map(i => i.lokasi))];
+    
+    const datalist = $('#lokasiOptions');
+    if (datalist) {
+        const uniqueLokasis = [...new Set(state.items.map(i => i.lokasi).filter(Boolean))];
+        datalist.innerHTML = uniqueLokasis.map(l => `<option value="${l}">`).join('');
+    }
+
     renderChips('filterKategoriChips', kats, 'kategori');
     renderChips('filterKondisiChips', kondisis, 'kondisi');
     renderChips('filterLokasiChips', lokasis, 'lokasi');
