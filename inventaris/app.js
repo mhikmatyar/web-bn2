@@ -184,6 +184,9 @@ function bindEvents() {
     
     const form = $('#itemForm');
     if (form) form.onsubmit = (e) => { e.preventDefault(); saveItem(); };
+
+    const pinjamForm = $('#pinjamForm');
+    if (pinjamForm) pinjamForm.onsubmit = (e) => savePinjam(e);
     
     const fileInput = $('#inputFileFoto');
     if (fileInput) fileInput.onchange = handleFotoUpload;
