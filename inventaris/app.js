@@ -609,24 +609,24 @@ function printAllQR() {
     `;
 
     itemsToPrint.forEach(item => {
-        const qrUrl = \`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=\${encodeURIComponent(item.noInventaris)}\`;
-        html += \`
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(item.noInventaris)}`;
+        html += `
             <div class="label-page">
                 <div class="label-container">
                     <div class="qr-section">
-                        <img src="\${qrUrl}" class="qr-img">
+                        <img src="${qrUrl}" class="qr-img">
                     </div>
                     <div class="info-section">
                         <div class="header">Bumi Neikarta 2</div>
-                        <div class="name">\${item.namaBarang}</div>
-                        <div class="code">\${item.noInventaris}</div>
+                        <div class="name">${item.namaBarang}</div>
+                        <div class="code">${item.noInventaris}</div>
                     </div>
                 </div>
             </div>
-        \`;
+        `;
     });
 
-    html += \`
+    html += `
         <script>
             window.onload = () => {
                 setTimeout(() => {
@@ -637,8 +637,9 @@ function printAllQR() {
         </script>
         </body>
         </html>
-    \`;
+    `;
     
     printWindow.document.write(html);
     printWindow.document.close();
 }
+
