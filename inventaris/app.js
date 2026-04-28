@@ -56,7 +56,7 @@ async function fetchData() {
                     kondisi: i.kondisi || i['KONDISI'],
                     lokasi: i.lokasi || i['LOKASI'],
                     keterangan: i.keterangan || i['KETERANGAN'],
-                    foto: i.foto || i['FOTO'],
+                    foto: i.dokumentasi || i['DOKUMENTASI'] || i.foto || i['FOTO'], // Read from DOKUMENTASI
                     rowIdx: idx, // Keep track of original order
                     createdAt: extractTimestamp(i.noInventaris || i['NO INVENTARIS']) || idx
                 }));
@@ -292,12 +292,30 @@ function closeAllSheets() {
     $('#sheetOverlay').classList.remove('active');
 }
 
+function getDirectImageUrl(url) {
+    if (!url) return '';
+    // Return direct links as-is
+    if (url.includes('lh3.googleusercontent.com') || url.startsWith('data:image') || url.match(/\.(jpeg|jpg|gif|png)$/i)) {
+        return url;
+    }
+    // Convert Google Drive links to direct image links
+    let fileId = null;
+    const fileDMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    const idMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    
+    if (fileDMatch) fileId = fileDMatch[1];
+    else if (idMatch) fileId = idMatch[1];
+    
+    if (fileId) return `https://drive.google.com/uc?export=view&id=${fileId}`;
+    return url;
+}
+
 function showDetail(id) {
     const item = state.items.find(i => i.id === id);
     if (!item) return;
     $('#sheetContent').innerHTML = `
         <div class="space-y-6">
-            ${item.foto ? `<div class="w-full h-48 rounded-3xl overflow-hidden bg-slate-100 border border-slate-100"><img src="${item.foto}" class="w-full h-full object-cover"></div>` : ''}
+            ${item.foto ? `<div class="w-full h-48 rounded-3xl overflow-hidden bg-slate-100 border border-slate-100"><img src="${getDirectImageUrl(item.foto)}" class="w-full h-full object-cover"></div>` : ''}
             <div class="flex items-center gap-4 border-b border-slate-50 pb-6">
                 <div class="w-14 h-14 bg-[#1DA874]/10 rounded-2xl flex items-center justify-center text-[#1DA874] shrink-0"><i data-lucide="package" class="w-8 h-8"></i></div>
                 <div class="min-w-0"><h4 class="text-[12px] font-bold text-slate-400 uppercase tracking-widest mb-1">Nama Barang</h4><p class="text-lg font-black text-slate-800 truncate">${item.namaBarang}</p></div>
