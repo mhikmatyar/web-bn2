@@ -4,8 +4,9 @@
   "description": "Aplikasi manajemen inventaris barang perumahan terhubung Google Sheets",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f8fafc",
-  "theme_color": "#34ab45",
+  "background_color": "#0D1B2A",
+  "theme_color": "#0D1B2A",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "https://cdn-icons-png.flaticon.com/512/2897/2897785.png",

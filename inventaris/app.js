@@ -23,6 +23,15 @@ const $$ = (s) => document.querySelectorAll(s);
 
 // INITIALIZATION
 document.addEventListener('DOMContentLoaded', () => {
+    // PWA Service Worker Registration
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('Service Worker registered:', reg.scope))
+                .catch(err => console.log('Service Worker registration failed:', err));
+        });
+    }
+    
     console.log('App started. Admin status:', localStorage.getItem('bn2-isAdmin'));
     if (localStorage.getItem('bn2-isAdmin') === 'true') {
         state.isAdmin = true;
