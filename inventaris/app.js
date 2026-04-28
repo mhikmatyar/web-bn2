@@ -1,17 +1,21 @@
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQfPsk4L2qxshegLjX6zTdY4mPv0e4xYFqbzYFKgqwHJrMuSXAeDJuIFAhdyK2vi4SwyJ2HXZX4h0un/pub?gid=0&single=true&output=csv';
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbwx9SAlhLZnSM8V43sIJpf84B28-x6ErVQTOInKU1ZGoabTXZKWQOTftjViMuxuM62E/exec';
+const CSV_URL_PEMINJAMAN = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQfPsk4L2qxshegLjX6zTdY4mPv0e4xYFqbzYFKgqwHJrMuSXAeDJuIFAhdyK2vi4SwyJ2HXZX4h0un/pub?gid=413739577&single=true&output=csv';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbw_r_BRp48akKLSOp4-IEXsy9hueej3xQiwiEXXZfxGjEwSrchj_PyPQ49XDn_36fPq/exec';
 const ADMIN_PASS = 'adminbn2';
 
 let state = {
     items: [],
     filteredItems: [],
+    peminjaman: [],
     isAdmin: false,
     searchQuery: '',
+    searchPinjamQuery: '',
     filters: { kategori: [], kondisi: [], lokasi: [] },
     sortBy: 'newest',
     currentPage: 1,
     itemsPerPage: 6,
-    pinInput: ''
+    pinInput: '',
+    currentView: 'barang'
 };
 
 const $ = (s) => document.querySelector(s);
@@ -41,37 +45,88 @@ async function fetchData() {
     $('#inventoryGrid').innerHTML = '<div class="py-20 text-center"><i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4 text-[#1DA874]"></i><p class="font-bold text-slate-400">Memuat data...</p></div>';
     lucide.createIcons();
 
-    Papa.parse(CSV_URL, {
-        download: true,
-        header: true,
-        complete: (results) => {
-            state.items = results.data
-                .filter(i => i.namaBarang || i['NAMA BARANG'])
-                .map((i, idx) => ({
-                    id: i.noInventaris || i['NO INVENTARIS'],
-                    noInventaris: i.noInventaris || i['NO INVENTARIS'],
-                    namaBarang: i.namaBarang || i['NAMA BARANG'],
-                    kategori: i.kategori || i['KATEGORI'],
-                    jumlah: i.jumlah || i['JUMLAH'],
-                    kondisi: i.kondisi || i['KONDISI'],
-                    lokasi: i.lokasi || i['LOKASI'],
-                    tahun: i.tahun || i['TAHUN PEROLEHAN'] || i['TAHUN'] || i['Tgl Perolehan'],
-                    keterangan: i.keterangan || i['KETERANGAN'],
-                    foto: i.dokumentasi || i['DOKUMENTASI'] || i.foto || i['FOTO'], // Read from DOKUMENTASI
-                    rowIdx: idx, // Keep track of original order
-                    createdAt: extractTimestamp(i.noInventaris || i['NO INVENTARIS']) || idx
-                }));
-            populateFilterOptions();
-            applyLogic();
-
-            const urlParams = new URLSearchParams(window.location.search);
-            const itemId = urlParams.get('id');
-            if (itemId) {
-                setTimeout(() => showDetail(itemId), 500);
+    const fetchBarang = new Promise((resolve) => {
+        Papa.parse(CSV_URL, {
+            download: true, header: true,
+            complete: (results) => {
+                state.items = results.data
+                    .filter(i => i.namaBarang || i['NAMA BARANG'])
+                    .map((i, idx) => ({
+                        id: i.noInventaris || i['NO INVENTARIS'],
+                        noInventaris: i.noInventaris || i['NO INVENTARIS'],
+                        namaBarang: i.namaBarang || i['NAMA BARANG'],
+                        kategori: i.kategori || i['KATEGORI'],
+                        jumlah: i.jumlah || i['JUMLAH'],
+                        kondisi: i.kondisi || i['KONDISI'],
+                        lokasi: i.lokasi || i['LOKASI'],
+                        tahun: i.tahun || i['TAHUN PEROLEHAN'] || i['TAHUN'] || i['Tgl Perolehan'],
+                        keterangan: i.keterangan || i['KETERANGAN'],
+                        foto: i.dokumentasi || i['DOKUMENTASI'] || i.foto || i['FOTO'],
+                        rowIdx: idx,
+                        createdAt: extractTimestamp(i.noInventaris || i['NO INVENTARIS']) || idx
+                    }));
+                resolve();
             }
-        }
+        });
     });
+
+    const fetchPinjam = new Promise((resolve) => {
+        Papa.parse(CSV_URL_PEMINJAMAN, {
+            download: true, header: true,
+            complete: (results) => {
+                state.peminjaman = results.data
+                    .filter(i => i['ID Pinjam'])
+                    .map(i => ({
+                        idPinjam: i['ID Pinjam'],
+                        tglPinjam: i['Tanggal Pinjam'],
+                        tglKembali: i['Tanggal Kembali'],
+                        barang: i['Barang'],
+                        jumlah: i['Jumlah'],
+                        peminjam: i['Peminjam'],
+                        status: i['Status'],
+                        keterangan: i['Keterangan']
+                    }));
+                resolve();
+            },
+            error: () => resolve()
+        });
+    });
+
+    await Promise.all([fetchBarang, fetchPinjam]);
+    
+    populateFilterOptions();
+    applyLogic();
+    renderPinjamItems();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const itemId = urlParams.get('id');
+    if (itemId) {
+        setTimeout(() => showDetail(itemId), 500);
+    }
 }
+
+function switchView(view) {
+    state.currentView = view;
+    if (view === 'barang') {
+        $('#viewBarang').classList.remove('hidden');
+        $('#viewPinjam').classList.add('hidden');
+        $('#navBarangBtn').classList.add('bg-white/10', 'text-[#1DA874]');
+        $('#navBarangBtn').classList.remove('text-slate-400', 'hover:bg-white/5');
+        $('#navPinjamBtn').classList.remove('bg-white/10', 'text-[#1DA874]');
+        $('#navPinjamBtn').classList.add('text-slate-400', 'hover:bg-white/5');
+    } else {
+        $('#viewBarang').classList.add('hidden');
+        $('#viewPinjam').classList.remove('hidden');
+        $('#navPinjamBtn').classList.add('bg-white/10', 'text-[#1DA874]');
+        $('#navPinjamBtn').classList.remove('text-slate-400', 'hover:bg-white/5');
+        $('#navBarangBtn').classList.remove('bg-white/10', 'text-[#1DA874]');
+        $('#navBarangBtn').classList.add('text-slate-400', 'hover:bg-white/5');
+        renderPinjamItems();
+    }
+    updateAdminUI();
+    lucide.createIcons();
+}
+window.switchView = switchView;
 
 function handleLokasiChange(select) {
     const textInput = $('#inputLokasiText');
@@ -284,7 +339,16 @@ function updateAdminUI() {
     const navSettingsBtn = $('#navSettingsBtn');
 
     if (state.isAdmin) {
-        if (mobileAddBtn) mobileAddBtn.classList.remove('hidden');
+        if (mobileAddBtn) {
+            mobileAddBtn.classList.remove('hidden');
+            if (state.currentView === 'barang') {
+                mobileAddBtn.innerHTML = `<i data-lucide="plus" class="w-6 h-6"></i><span class="text-base font-black">Tambah Barang</span>`;
+                mobileAddBtn.onclick = () => showItemForm();
+            } else {
+                mobileAddBtn.innerHTML = `<i data-lucide="plus" class="w-6 h-6"></i><span class="text-base font-black">Pinjam Barang</span>`;
+                mobileAddBtn.onclick = () => showPinjamForm();
+            }
+        }
         if (navSettingsBtn) {
             navSettingsBtn.innerHTML = '<i data-lucide="log-out" class="w-5 h-5"></i>';
             navSettingsBtn.classList.add('text-rose-500');
@@ -296,13 +360,141 @@ function updateAdminUI() {
         if (mobileAddBtn) mobileAddBtn.classList.add('hidden');
         if (navSettingsBtn) {
             navSettingsBtn.innerHTML = '<i data-lucide="settings" class="w-5 h-5"></i>';
-            navSettingsBtn.classList.add('text-slate-400');
             navSettingsBtn.classList.remove('text-rose-500');
-            navSettingsBtn.title = 'Login Admin';
+            navSettingsBtn.classList.add('text-slate-400');
+            navSettingsBtn.title = 'Pengaturan Admin';
             navSettingsBtn.onclick = showAuth; // Re-bind
         }
     }
-    if (window.lucide) lucide.createIcons();
+}
+
+// ----------------- PEMINJAMAN LOGIC -----------------
+function renderPinjamItems() {
+    const container = $('#pinjamGrid');
+    const q = $('#searchPinjamInput') ? $('#searchPinjamInput').value.toLowerCase() : '';
+    
+    let items = state.peminjaman.filter(p => p.status === 'Dipinjam');
+    if (q) items = items.filter(p => (p.peminjam||'').toLowerCase().includes(q) || (p.barang||'').toLowerCase().includes(q));
+
+    if (items.length === 0) {
+        container.innerHTML = '<div class="py-10 text-center text-slate-400 font-medium">Tidak ada peminjaman aktif</div>';
+        return;
+    }
+
+    container.innerHTML = items.map(p => {
+        return `
+            <div class="bg-white rounded-[18px] p-5 border border-slate-100 shadow-sm space-y-4">
+                <div class="flex justify-between items-start gap-4">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                            <i data-lucide="user" class="w-5 h-5 text-slate-400"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <h3 class="text-[14px] font-bold text-slate-800 truncate">${p.peminjam}</h3>
+                            <p class="text-[10px] font-bold text-slate-400 mt-0.5">${p.tglPinjam}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                    <p class="text-[12px] font-bold text-slate-700">${p.barang}</p>
+                    <p class="text-[11px] font-medium text-slate-500 mt-1">Jumlah: ${p.jumlah} Unit</p>
+                    ${p.keterangan ? `<p class="text-[11px] text-slate-400 italic mt-1">"${p.keterangan}"</p>` : ''}
+                </div>
+                ${state.isAdmin ? `
+                    <div class="flex justify-end border-t border-slate-50 pt-2">
+                        <button onclick="returnPinjam('${p.idPinjam}')" class="h-10 px-4 rounded-xl bg-[#E1F5EE] text-[#0F6E56] font-bold text-[12px] flex items-center gap-2 hover:bg-[#cbf0e3] transition-all"><i data-lucide="check-circle-2" class="w-4 h-4"></i>Tandai Kembali</button>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }).join('');
+    lucide.createIcons();
+}
+
+function showPinjamForm() {
+    $('#pinjamModal').classList.remove('hidden');
+    $('#pinjamForm').reset();
+    
+    // Populate dropdown with available items
+    const selectBarang = $('#inputPinjamBarang');
+    if (selectBarang) {
+        const availableItems = state.items.filter(i => {
+            const qty = parseFloat(i.jumlah.toString().replace(',','.'));
+            return !isNaN(qty) && qty > 0;
+        });
+        selectBarang.innerHTML = '<option value="">Pilih Barang...</option>' + 
+            availableItems.map(i => `<option value="${i.namaBarang}">${i.namaBarang} (Stok: ${i.jumlah})</option>`).join('');
+    }
+    
+    // Set default date to today
+    const today = new Date().toISOString().split('T')[0];
+    $('#inputPinjamTgl').value = today;
+}
+
+function hidePinjamForm() { $('#pinjamModal').classList.add('hidden'); }
+
+async function savePinjam(e) {
+    e.preventDefault();
+    const btn = $('#pinjamForm button[type="submit"]');
+    btn.innerText = 'Menyimpan...'; btn.disabled = true;
+    
+    const randomHex = Math.floor(Math.random()*16777215).toString(16).toUpperCase().padStart(6, '0');
+    
+    const formData = {
+        action: 'addPinjam',
+        source: 'peminjaman',
+        password: ADMIN_PASS,
+        idPinjam: `PJM-${Date.now().toString().slice(-4)}${randomHex.slice(-2)}`,
+        tglPinjam: $('#inputPinjamTgl').value,
+        barang: $('#inputPinjamBarang').value,
+        jumlah: $('#inputPinjamJumlah').value,
+        peminjam: $('#inputPinjamNama').value.trim(),
+        keterangan: $('#inputPinjamKet').value.trim()
+    };
+
+    try {
+        await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(formData) });
+        hidePinjamForm(); 
+        alert('Peminjaman berhasil dicatat! Silakan refresh halaman.'); 
+        fetchData();
+    } catch (e) { 
+        alert('Gagal mencatat peminjaman!'); 
+    } finally { 
+        btn.innerText = 'Simpan Peminjaman'; btn.disabled = false; 
+    }
+}
+
+async function returnPinjam(idPinjam) {
+    if (!confirm('Tandai barang ini sudah dikembalikan?')) return;
+    
+    const today = new Date().toISOString().split('T')[0];
+    const formData = {
+        action: 'returnPinjam',
+        source: 'peminjaman',
+        password: ADMIN_PASS,
+        idPinjam: idPinjam,
+        tglKembali: today
+    };
+
+    try {
+        await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(formData) });
+        alert('Berhasil! Barang telah ditandai kembali.'); 
+        fetchData();
+    } catch (e) { 
+        alert('Gagal!'); 
+    }
+}
+
+// Bind search logic for peminjaman
+document.addEventListener('DOMContentLoaded', () => {
+    const searchPinjamInput = $('#searchPinjamInput');
+    if (searchPinjamInput) {
+        searchPinjamInput.addEventListener('input', (e) => {
+            renderPinjamItems();
+        });
+    }
+});
+// ----------------------------------------------------    if (window.lucide) lucide.createIcons();
 }
 
 function getBadgeStyle(kondisi) {

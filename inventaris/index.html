@@ -122,43 +122,66 @@
 
             <!-- SEARCH + FILTER AREA -->
             <section class="p-6 -mt-8 relative z-10 space-y-4">
-                <div class="search-input-wrapper bg-white rounded-2xl border border-slate-100 shadow-2xl p-1 flex items-center gap-2">
-                    <div class="flex-1 flex items-center gap-3 px-4">
-                        <i data-lucide="search" class="w-5 h-5 text-slate-400"></i>
-                        <input type="text" id="searchInput" placeholder="Cari nama atau nomor barang..." 
-                            class="flex-1 bg-transparent border-none outline-none font-bold text-slate-700 h-12 placeholder:text-slate-300 text-sm">
+                
+                <!-- VIEW: BARANG -->
+                <div id="viewBarang">
+                    <div class="search-input-wrapper bg-white rounded-2xl border border-slate-100 shadow-2xl p-1 flex items-center gap-2 mb-4">
+                        <div class="flex-1 flex items-center gap-3 px-4">
+                            <i data-lucide="search" class="w-5 h-5 text-slate-400"></i>
+                            <input type="text" id="searchInput" placeholder="Cari nama atau nomor barang..." 
+                                class="flex-1 bg-transparent border-none outline-none font-bold text-slate-700 h-12 placeholder:text-slate-300 text-sm">
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button id="filterBtn" class="flex-1 h-11 rounded-xl border border-slate-200 font-black text-[12px] text-slate-600 flex items-center justify-center gap-2 hover:bg-slate-50 transition-all uppercase tracking-widest">
+                            Filter <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
+                        </button>
+                        <button id="sortBtn" class="flex-1 h-11 rounded-xl border border-slate-200 font-black text-[12px] text-slate-600 flex items-center justify-center gap-2 hover:bg-slate-50 transition-all uppercase tracking-widest">
+                            Urutkan <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
+                        </button>
+                    </div>
+
+                    <!-- FILTER ACTIVE BAR -->
+                    <div id="filterActiveBar" class="hidden h-9 px-4 mt-4 bg-[#1DA874]/10 rounded-lg flex items-center justify-between">
+                        <div class="flex items-center gap-2 overflow-hidden">
+                            <span id="activeFilterText" class="text-[11px] font-bold text-[#1DA874] truncate">Aktif: Semua</span>
+                        </div>
+                        <button id="clearFiltersBtn" class="text-[11px] font-bold text-slate-400 shrink-0 touch-target px-2">Hapus semua</button>
+                    </div>
+
+                    <!-- LIST INVENTARIS -->
+                    <div class="space-y-4 pt-4">
+                        <h2 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Daftar inventaris</h2>
+                        <div id="inventoryGrid" class="space-y-4">
+                            <!-- Cards injected via JS -->
+                        </div>
+
+                        <!-- PAGINATION -->
+                        <div id="paginationContainer" class="flex items-center justify-between gap-4 pt-6 pb-10">
+                            <!-- Buttons injected via JS -->
+                        </div>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2">
-                    <button id="filterBtn" class="flex-1 h-11 rounded-xl border border-slate-200 font-black text-[12px] text-slate-600 flex items-center justify-center gap-2 hover:bg-slate-50 transition-all uppercase tracking-widest">
-                        Filter <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
-                    </button>
-                    <button id="sortBtn" class="flex-1 h-11 rounded-xl border border-slate-200 font-black text-[12px] text-slate-600 flex items-center justify-center gap-2 hover:bg-slate-50 transition-all uppercase tracking-widest">
-                        Urutkan <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
-                    </button>
-                </div>
-
-                <!-- FILTER ACTIVE BAR -->
-                <div id="filterActiveBar" class="hidden h-9 px-4 bg-[#1DA874]/10 rounded-lg flex items-center justify-between">
-                    <div class="flex items-center gap-2 overflow-hidden">
-                        <span id="activeFilterText" class="text-[11px] font-bold text-[#1DA874] truncate">Aktif: Semua</span>
+                <!-- VIEW: PEMINJAMAN -->
+                <div id="viewPinjam" class="hidden">
+                    <div class="search-input-wrapper bg-white rounded-2xl border border-slate-100 shadow-2xl p-1 flex items-center gap-2 mb-4">
+                        <div class="flex-1 flex items-center gap-3 px-4">
+                            <i data-lucide="search" class="w-5 h-5 text-slate-400"></i>
+                            <input type="text" id="searchPinjamInput" placeholder="Cari nama peminjam..." 
+                                class="flex-1 bg-transparent border-none outline-none font-bold text-slate-700 h-12 placeholder:text-slate-300 text-sm">
+                        </div>
                     </div>
-                    <button id="clearFiltersBtn" class="text-[11px] font-bold text-slate-400 shrink-0 touch-target px-2">Hapus semua</button>
-                </div>
-
-                <!-- LIST INVENTARIS -->
-                <div class="space-y-4 pt-4">
-                    <h2 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Daftar inventaris</h2>
-                    <div id="inventoryGrid" class="space-y-4">
-                        <!-- Cards injected via JS -->
-                    </div>
-
-                    <!-- PAGINATION -->
-                    <div id="paginationContainer" class="flex items-center justify-between gap-4 pt-6 pb-10">
-                        <!-- Buttons injected via JS -->
+                    
+                    <div class="space-y-4 pt-2">
+                        <h2 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1">Daftar Peminjaman Aktif</h2>
+                        <div id="pinjamGrid" class="space-y-4 pb-10">
+                            <!-- Cards injected via JS -->
+                        </div>
                     </div>
                 </div>
+
             </section>
         </div>
 
@@ -175,11 +198,11 @@
             <!-- BOTTOM ACTION DOCK -->
             <div class="bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-[2rem] p-2 px-4 flex items-center justify-center gap-2 shadow-2xl w-fit pointer-events-auto">
                 <div class="flex items-center gap-1">
-                    <button class="p-4 text-[#1DA874] hover:bg-white/5 rounded-2xl transition-all" data-page="dashboard" title="Dashboard">
-                        <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                    <button id="navBarangBtn" onclick="switchView('barang')" class="p-4 text-[#1DA874] bg-white/10 rounded-2xl transition-all" title="Data Barang">
+                        <i data-lucide="package" class="w-5 h-5"></i>
                     </button>
-                    <button class="p-4 text-slate-400 hover:bg-white/5 rounded-2xl transition-all" data-page="inventaris" title="Daftar Barang">
-                        <i data-lucide="boxes" class="w-5 h-5"></i>
+                    <button id="navPinjamBtn" onclick="switchView('pinjam')" class="p-4 text-slate-400 hover:bg-white/5 rounded-2xl transition-all" title="Peminjaman">
+                        <i data-lucide="handshake" class="w-5 h-5"></i>
                     </button>
                 </div>
                 <div class="h-8 w-[1px] bg-white/10 mx-1"></div>
@@ -351,6 +374,45 @@
         </div>
     </div>
 
-    <script src="/inventaris/app.js?v=3.10"></script>
+    <!-- PINJAM FORM -->
+    <div id="pinjamModal" class="fixed inset-0 z-[150] flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-sm rounded-[28px] shadow-2xl overflow-hidden">
+            <div class="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                <h3 id="formPinjamTitle" class="text-lg font-black text-slate-800">Pinjam Barang</h3>
+                <button onclick="hidePinjamForm()" class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="pinjamForm" class="p-5 space-y-3.5 max-h-[75vh] overflow-y-auto no-scrollbar">
+                <input type="hidden" id="formPinjamId">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Barang</label>
+                    <select id="inputPinjamBarang" required class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm">
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Jumlah</label>
+                        <input type="number" id="inputPinjamJumlah" required min="1" class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm font-medium">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Tgl Pinjam</label>
+                        <input type="date" id="inputPinjamTgl" required class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-[13px] font-medium">
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Nama Peminjam (No. Kavling)</label>
+                    <input type="text" id="inputPinjamNama" required placeholder="Contoh: Budi (A12)" class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Petugas / Keterangan</label>
+                    <textarea id="inputPinjamKet" rows="2" placeholder="Nama petugas kunci atau catatan..." class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm resize-none"></textarea>
+                </div>
+                
+                <button type="submit" class="w-full bg-[#1DA874] text-white font-bold py-3.5 rounded-xl mt-4 active:scale-95 transition-all text-sm shadow-lg shadow-[#1DA874]/20">Simpan Peminjaman</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/inventaris/app.js?v=4.0"></script>
 </body>
 </html>
