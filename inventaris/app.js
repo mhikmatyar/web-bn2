@@ -56,6 +56,7 @@ async function fetchData() {
                     kondisi: i.kondisi || i['KONDISI'],
                     lokasi: i.lokasi || i['LOKASI'],
                     keterangan: i.keterangan || i['KETERANGAN'],
+                    foto: i.foto || i['FOTO'],
                     rowIdx: idx, // Keep track of original order
                     createdAt: extractTimestamp(i.noInventaris || i['NO INVENTARIS']) || idx
                 }));
@@ -236,6 +237,7 @@ function showDetail(id) {
     if (!item) return;
     $('#sheetContent').innerHTML = `
         <div class="space-y-6">
+            ${item.foto ? `<div class="w-full h-48 rounded-3xl overflow-hidden bg-slate-100 border border-slate-100"><img src="${item.foto}" class="w-full h-full object-cover"></div>` : ''}
             <div class="flex items-center gap-4 border-b border-slate-50 pb-6">
                 <div class="w-14 h-14 bg-[#1DA874]/10 rounded-2xl flex items-center justify-center text-[#1DA874] shrink-0"><i data-lucide="package" class="w-8 h-8"></i></div>
                 <div class="min-w-0"><h4 class="text-[12px] font-bold text-slate-400 uppercase tracking-widest mb-1">Nama Barang</h4><p class="text-lg font-black text-slate-800 truncate">${item.namaBarang}</p></div>
@@ -307,6 +309,7 @@ function showItemForm(id = null) {
         $('#inputJumlah').value = item.jumlah;
         $('#inputKondisi').value = item.kondisi;
         $('#inputLokasi').value = item.lokasi;
+        $('#inputFoto').value = item.foto || '';
         $('#inputKeterangan').value = item.keterangan || '';
     } else {
         $('#formTitle').innerText = 'Tambah Barang';
@@ -336,6 +339,7 @@ async function saveItem() {
         jumlah: $('#inputJumlah').value, 
         kondisi: $('#inputKondisi').value,
         lokasi: $('#inputLokasi').value, 
+        foto: $('#inputFoto').value.trim(),
         keterangan: $('#inputKeterangan').value,
         password: "adminbn2"
     };
