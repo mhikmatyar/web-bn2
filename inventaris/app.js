@@ -314,11 +314,15 @@ function showDetail(id) {
     const item = state.items.find(i => i.id === id);
     if (!item) return;
     $('#sheetContent').innerHTML = `
-        <div class="space-y-6">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-black text-slate-800">Detail Barang</h3>
+            <button onclick="closeAllSheets()" class="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
+        </div>
+        <div class="space-y-6 pb-24">
             ${item.foto ? `<div class="w-full h-48 rounded-3xl overflow-hidden bg-slate-100 border border-slate-100"><img src="${getDirectImageUrl(item.foto)}" class="w-full h-full object-cover"></div>` : ''}
             <div class="flex items-center gap-4 border-b border-slate-50 pb-6">
                 <div class="w-14 h-14 bg-[#1DA874]/10 rounded-2xl flex items-center justify-center text-[#1DA874] shrink-0"><i data-lucide="package" class="w-8 h-8"></i></div>
-                <div class="min-w-0"><h4 class="text-[12px] font-bold text-slate-400 uppercase tracking-widest mb-1">Nama Barang</h4><p class="text-lg font-black text-slate-800 truncate">${item.namaBarang}</p></div>
+                <div class="min-w-0"><h4 class="text-[12px] font-bold text-slate-400 uppercase tracking-widest mb-1">Nama Barang</h4><p class="text-lg font-black text-slate-800 leading-tight">${item.namaBarang}</p></div>
             </div>
             <div class="grid grid-cols-2 gap-4">
                 <div class="p-4 bg-slate-50 rounded-2xl"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Kategori</p><p class="text-[14px] font-bold text-slate-800">${item.kategori}</p></div>
@@ -327,7 +331,6 @@ function showDetail(id) {
             <div class="p-4 bg-slate-50 rounded-2xl"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Lokasi</p><p class="text-[14px] font-bold text-slate-800">${item.lokasi || '-'}</p></div>
             <div class="p-4 bg-[#0D1B2A] rounded-2xl text-white"><p class="text-[10px] font-bold text-slate-500 uppercase mb-1">No. Inventaris</p><p class="text-[16px] font-black tracking-widest">${item.noInventaris}</p></div>
             ${item.keterangan ? `<div class="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100"><p class="text-[10px] font-bold text-emerald-600 uppercase mb-1">Keterangan</p><p class="text-[13px] text-slate-600 font-medium">${item.keterangan}</p></div>` : ''}
-            <button onclick="closeAllSheets()" class="w-full py-4 bg-slate-100 rounded-2xl font-bold text-slate-500 uppercase text-xs">Tutup</button>
         </div>
     `;
     openSheet('detailSheet');
