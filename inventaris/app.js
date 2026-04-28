@@ -99,13 +99,21 @@ function bindEvents() {
         };
     });
 
-    $('#mobileAddBtn').onclick = () => showItemForm();
-    $('#itemForm').onsubmit = (e) => { e.preventDefault(); saveItem(); };
-    $('#inputFileFoto').onchange = handleFotoUpload;
+    const addBtn = $('#mobileAddBtn');
+    if (addBtn) addBtn.onclick = () => showItemForm();
+    
+    const form = $('#itemForm');
+    if (form) form.onsubmit = (e) => { e.preventDefault(); saveItem(); };
+    
+    const fileInput = $('#inputFileFoto');
+    if (fileInput) fileInput.onchange = handleFotoUpload;
 
     // Auth Modal Events
-    $('#confirmAuthBtn').onclick = handleLogin;
-    $('#closeAuthBtn').onclick = hideAuth;
+    const confirmAuthBtn = $('#confirmAuthBtn');
+    if (confirmAuthBtn) confirmAuthBtn.onclick = handleLogin;
+    
+    const closeAuthBtn = $('#closeAuthBtn');
+    if (closeAuthBtn) closeAuthBtn.onclick = hideAuth;
 }
 
 function handleFotoUpload(e) {
@@ -121,7 +129,7 @@ function handleFotoUpload(e) {
             const canvas = document.createElement('canvas');
             let width = img.width;
             let height = img.height;
-            const maxSize = 400; // Resize to max 400px
+            const maxSize = 300; // Resize to max 300px to ensure base64 fits in Google Sheet
 
             if (width > height) {
                 if (width > maxSize) {
@@ -140,12 +148,19 @@ function handleFotoUpload(e) {
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
 
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.6); // Quality 0.6 to keep size small
             
-            $('#inputFotoBase64').value = dataUrl;
-            $('#fotoPreview').src = dataUrl;
-            $('#fotoPreviewContainer').classList.remove('hidden');
-            $('#fotoFileName').innerText = 'Foto Siap';
+            const inputFotoBase64 = $('#inputFotoBase64');
+            if (inputFotoBase64) inputFotoBase64.value = dataUrl;
+            
+            const fotoPreview = $('#fotoPreview');
+            if (fotoPreview) fotoPreview.src = dataUrl;
+            
+            const fotoPreviewContainer = $('#fotoPreviewContainer');
+            if (fotoPreviewContainer) fotoPreviewContainer.classList.remove('hidden');
+            
+            const fotoFileName = $('#fotoFileName');
+            if (fotoFileName) fotoFileName.innerText = 'Foto Siap (' + Math.round(dataUrl.length/1024) + 'kb)';
         };
         img.src = event.target.result;
     };
@@ -355,15 +370,22 @@ function showItemForm(id = null) {
         $('#inputKondisi').value = item.kondisi;
         $('#inputLokasi').value = item.lokasi;
         
-        $('#inputFotoBase64').value = item.foto || '';
-        if (item.foto) {
-            $('#fotoPreview').src = item.foto;
-            $('#fotoPreviewContainer').classList.remove('hidden');
-            $('#fotoFileName').innerText = 'Foto Tersimpan';
-        } else {
-            $('#fotoPreview').src = '';
-            $('#fotoPreviewContainer').classList.add('hidden');
-            $('#fotoFileName').innerText = 'Pilih atau Ambil Foto...';
+        
+        const inputFotoBase64 = $('#inputFotoBase64');
+        if (inputFotoBase64) inputFotoBase64.value = item.foto || '';
+        
+        const fotoPreview = $('#fotoPreview');
+        const fotoPreviewContainer = $('#fotoPreviewContainer');
+        const fotoFileName = $('#fotoFileName');
+        
+        if (item.foto && fotoPreview && fotoPreviewContainer) {
+            fotoPreview.src = item.foto;
+            fotoPreviewContainer.classList.remove('hidden');
+            if (fotoFileName) fotoFileName.innerText = 'Foto Tersimpan';
+        } else if (fotoPreview && fotoPreviewContainer) {
+            fotoPreview.src = '';
+            fotoPreviewContainer.classList.add('hidden');
+            if (fotoFileName) fotoFileName.innerText = 'Pilih atau Ambil Foto...';
         }
 
         $('#inputKeterangan').value = item.keterangan || '';
@@ -372,10 +394,18 @@ function showItemForm(id = null) {
         $('#itemForm').reset();
         $('#formId').value = '';
         $('#formOldNama').value = '';
-        $('#inputFotoBase64').value = '';
-        $('#fotoPreview').src = '';
-        $('#fotoPreviewContainer').classList.add('hidden');
-        $('#fotoFileName').innerText = 'Pilih atau Ambil Foto...';
+        
+        const inputFotoBase64 = $('#inputFotoBase64');
+        if (inputFotoBase64) inputFotoBase64.value = '';
+        
+        const fotoPreview = $('#fotoPreview');
+        if (fotoPreview) fotoPreview.src = '';
+        
+        const fotoPreviewContainer = $('#fotoPreviewContainer');
+        if (fotoPreviewContainer) fotoPreviewContainer.classList.add('hidden');
+        
+        const fotoFileName = $('#fotoFileName');
+        if (fotoFileName) fotoFileName.innerText = 'Pilih atau Ambil Foto...';
     }
 }
 
@@ -399,7 +429,7 @@ async function saveItem() {
         jumlah: $('#inputJumlah').value, 
         kondisi: $('#inputKondisi').value,
         lokasi: $('#inputLokasi').value, 
-        foto: $('#inputFotoBase64').value,
+        foto: $('#inputFotoBase64') ? $('#inputFotoBase64').value : '',
         keterangan: $('#inputKeterangan').value,
         password: "adminbn2"
     };
