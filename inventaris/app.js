@@ -494,8 +494,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
-// ----------------------------------------------------    if (window.lucide) lucide.createIcons();
-}
+// ----------------------------------------------------
 
 function getBadgeStyle(kondisi) {
     if (kondisi === 'Baik') return { bg: 'bg-[#E1F5EE]', text: 'text-[#0F6E56]' };
