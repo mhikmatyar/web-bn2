@@ -759,7 +759,7 @@ function populateFilterOptions() {
     if (selectLok) {
         const uniqueLokasis = [...new Set(state.items.map(i => i.lokasi).filter(Boolean))];
         const optionsHtml = uniqueLokasis.map(l => `<option value="${l}">${l}</option>`).join('');
-        select.innerHTML = optionsHtml + '<option value="__NEW__">+ Tambah Lokasi Baru...</option>';
+        selectLok.innerHTML = optionsHtml + '<option value="__NEW__">+ Tambah Lokasi Baru...</option>';
     }
 
     renderChips('filterKategoriChips', kats, 'kategori');
