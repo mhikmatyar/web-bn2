@@ -293,8 +293,9 @@
                 </div>
                 <div class="space-y-1">
                     <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Lokasi</label>
-                    <input type="text" id="inputLokasi" list="lokasiOptions" required placeholder="Pilih atau ketik lokasi baru..." class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm">
-                    <datalist id="lokasiOptions"></datalist>
+                    <select id="inputLokasiSelect" class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm" onchange="handleLokasiChange(this)">
+                    </select>
+                    <input type="text" id="inputLokasiText" placeholder="Ketik lokasi baru..." class="w-full h-11 px-4 mt-2 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm hidden">
                 </div>
                 <div class="space-y-2">
                     <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Foto Barang</label>
@@ -353,6 +354,6 @@
         </div>
     </div>
 
-    <script src="/inventaris/app.js?v=3.8"></script>
+    <script src="/inventaris/app.js?v=3.9"></script>
 </body>
 </html>

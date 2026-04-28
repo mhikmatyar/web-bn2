@@ -73,6 +73,18 @@ async function fetchData() {
     });
 }
 
+function handleLokasiChange(select) {
+    const textInput = $('#inputLokasiText');
+    if (select.value === '__NEW__') {
+        textInput.classList.remove('hidden');
+        textInput.required = true;
+        textInput.focus();
+    } else {
+        textInput.classList.add('hidden');
+        textInput.required = false;
+    }
+}
+
 function extractTimestamp(code) {
     if (!code) return 0;
     const match = code.match(/BN2-(\d+)/);
@@ -398,7 +410,19 @@ function showItemForm(id = null) {
         $('#inputJumlah').value = item.jumlah;
         $('#inputKondisi').value = item.kondisi;
         $('#inputTahun').value = item.tahun || '';
-        $('#inputLokasi').value = item.lokasi;
+        
+        const select = $('#inputLokasiSelect');
+        const exists = Array.from(select.options).some(o => o.value === item.lokasi);
+        if (exists && item.lokasi) {
+            select.value = item.lokasi;
+            $('#inputLokasiText').classList.add('hidden');
+            $('#inputLokasiText').required = false;
+        } else {
+            select.value = '__NEW__';
+            $('#inputLokasiText').value = item.lokasi || '';
+            $('#inputLokasiText').classList.remove('hidden');
+            $('#inputLokasiText').required = true;
+        }
         
         
         const inputFotoBase64 = $('#inputFotoBase64');
@@ -424,6 +448,12 @@ function showItemForm(id = null) {
         $('#itemForm').reset();
         $('#formId').value = '';
         $('#formOldNama').value = '';
+        
+        const select = $('#inputLokasiSelect');
+        if (select) {
+            select.value = Array.from(select.options)[0]?.value || '__NEW__';
+            handleLokasiChange(select);
+        }
         
         const inputFotoBase64 = $('#inputFotoBase64');
         if (inputFotoBase64) inputFotoBase64.value = '';
@@ -459,7 +489,7 @@ async function saveItem() {
         jumlah: $('#inputJumlah').value, 
         kondisi: $('#inputKondisi').value,
         tahun: $('#inputTahun') ? $('#inputTahun').value : '',
-        lokasi: $('#inputLokasi').value, 
+        lokasi: $('#inputLokasiSelect').value === '__NEW__' ? $('#inputLokasiText').value : $('#inputLokasiSelect').value, 
         foto: $('#inputFotoBase64') ? $('#inputFotoBase64').value : '',
         keterangan: $('#inputKeterangan').value,
         password: "adminbn2"
@@ -494,10 +524,11 @@ function populateFilterOptions() {
     const kondisis = ['Semua', 'Baik', 'Rusak Ringan', 'Rusak'];
     const lokasis = ['Semua', ...new Set(state.items.map(i => i.lokasi))];
     
-    const datalist = $('#lokasiOptions');
-    if (datalist) {
+    const select = $('#inputLokasiSelect');
+    if (select) {
         const uniqueLokasis = [...new Set(state.items.map(i => i.lokasi).filter(Boolean))];
-        datalist.innerHTML = uniqueLokasis.map(l => `<option value="${l}">`).join('');
+        const optionsHtml = uniqueLokasis.map(l => `<option value="${l}">${l}</option>`).join('');
+        select.innerHTML = optionsHtml + '<option value="__NEW__">+ Tambah Lokasi Baru...</option>';
     }
 
     renderChips('filterKategoriChips', kats, 'kategori');
