@@ -543,8 +543,8 @@ function printAllQR() {
             <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&display=swap" rel="stylesheet">
             <style>
                 @page {
-                    size: A4 portrait;
-                    margin: 10mm;
+                    size: 200mm 130mm;
+                    margin: 5mm;
                 }
                 body { 
                     font-family: 'Plus Jakarta Sans', sans-serif; 
