@@ -531,14 +531,20 @@ function printAllQR() {
             <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800&display=swap" rel="stylesheet">
             <style>
                 @page {
-                    size: 64mm 32mm; /* Label 103 Standard Size */
-                    margin: 0;
+                    size: A4 portrait;
+                    margin: 10mm;
                 }
                 body { 
                     font-family: 'Plus Jakarta Sans', sans-serif; 
                     margin: 0;
                     padding: 0;
                     background: white;
+                }
+                .print-wrapper {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 3mm;
+                    justify-content: center;
                 }
                 .label-page {
                     width: 64mm;
@@ -547,10 +553,8 @@ function printAllQR() {
                     align-items: center;
                     justify-content: center;
                     box-sizing: border-box;
-                    page-break-after: always; /* Force each label to a new page */
-                }
-                .label-page:last-child {
-                    page-break-after: auto;
+                    border: 1px dashed #cbd5e1; /* Garis tipis putus-putus untuk panduan potong/tempel */
+                    page-break-inside: avoid;
                 }
                 .label-container {
                     width: 100%;
@@ -606,6 +610,7 @@ function printAllQR() {
             </style>
         </head>
         <body>
+            <div class="print-wrapper">
     `;
 
     itemsToPrint.forEach(item => {
@@ -627,6 +632,7 @@ function printAllQR() {
     });
 
     html += `
+            </div>
         <script>
             window.onload = () => {
                 setTimeout(() => {
