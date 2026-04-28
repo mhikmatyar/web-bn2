@@ -376,34 +376,51 @@ function renderPinjamItems() {
     const container = $('#pinjamGrid');
     const q = $('#searchPinjamInput') ? $('#searchPinjamInput').value.toLowerCase() : '';
     
-    let items = state.peminjaman.filter(p => p.status === 'Dipinjam');
+    // Show all records but sort them: active first, then by date
+    let items = [...state.peminjaman];
+    
     if (q) items = items.filter(p => (p.peminjam||'').toLowerCase().includes(q) || (p.barang||'').toLowerCase().includes(q));
 
+    // Sort: status 'Dipinjam' first, then sort by tglPinjam descending
+    items.sort((a, b) => {
+        if (a.status === 'Dipinjam' && b.status !== 'Dipinjam') return -1;
+        if (a.status !== 'Dipinjam' && b.status === 'Dipinjam') return 1;
+        return new Date(b.tglPinjam) - new Date(a.tglPinjam);
+    });
+
     if (items.length === 0) {
-        container.innerHTML = '<div class="py-10 text-center text-slate-400 font-medium">Tidak ada peminjaman aktif</div>';
+        container.innerHTML = '<div class="py-10 text-center text-slate-400 font-medium">Belum ada data peminjaman</div>';
         return;
     }
 
     container.innerHTML = items.map(p => {
+        const isReturned = p.status === 'Dikembalikan';
+        const badgeClass = isReturned ? 'bg-slate-100 text-slate-500' : 'bg-amber-100 text-amber-700';
+        const statusLabel = isReturned ? 'Sudah Kembali' : 'Sedang Dipinjam';
+        
         return `
-            <div class="bg-white rounded-[18px] p-5 border border-slate-100 shadow-sm space-y-4">
+            <div class="bg-white rounded-[18px] p-5 border border-slate-100 shadow-sm space-y-4 ${isReturned ? 'opacity-75' : ''}">
                 <div class="flex justify-between items-start gap-4">
                     <div class="flex items-center gap-2 min-w-0">
                         <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
-                            <i data-lucide="user" class="w-5 h-5 text-slate-400"></i>
+                            <i data-lucide="${isReturned ? 'history' : 'user'}" class="w-5 h-5 text-slate-400"></i>
                         </div>
                         <div class="min-w-0">
                             <h3 class="text-[14px] font-bold text-slate-800 truncate">${p.peminjam}</h3>
-                            <p class="text-[10px] font-bold text-slate-400 mt-0.5">${p.tglPinjam}</p>
+                            <p class="text-[10px] font-bold text-slate-400 mt-0.5">Pinjam: ${p.tglPinjam}</p>
                         </div>
                     </div>
+                    <span class="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider ${badgeClass}">
+                        ${statusLabel}
+                    </span>
                 </div>
-                <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                <div class="${isReturned ? 'bg-slate-50/50' : 'bg-slate-50'} rounded-xl p-3 border border-slate-100">
                     <p class="text-[12px] font-bold text-slate-700">${p.barang}</p>
                     <p class="text-[11px] font-medium text-slate-500 mt-1">Jumlah: ${p.jumlah} Unit</p>
+                    ${p.tglKembali && isReturned ? `<p class="text-[10px] font-bold text-[#1DA874] mt-2 flex items-center gap-1"><i data-lucide="calendar-check" class="w-3 h-3"></i> Kembali: ${p.tglKembali}</p>` : ''}
                     ${p.keterangan ? `<p class="text-[11px] text-slate-400 italic mt-1">"${p.keterangan}"</p>` : ''}
                 </div>
-                ${state.isAdmin ? `
+                ${state.isAdmin && !isReturned ? `
                     <div class="flex justify-end border-t border-slate-50 pt-2">
                         <button onclick="returnPinjam('${p.idPinjam}')" class="h-10 px-4 rounded-xl bg-[#E1F5EE] text-[#0F6E56] font-bold text-[12px] flex items-center gap-2 hover:bg-[#cbf0e3] transition-all"><i data-lucide="check-circle-2" class="w-4 h-4"></i>Tandai Kembali</button>
                     </div>
