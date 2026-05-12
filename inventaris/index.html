@@ -7,6 +7,7 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0D1B2A">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="InvenBN2">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2897/2897785.png">
@@ -134,7 +135,7 @@
                     <div class="search-input-wrapper bg-white rounded-2xl border border-slate-100 shadow-2xl p-1 flex items-center gap-2 mb-4">
                         <div class="flex-1 flex items-center gap-3 px-4">
                             <i data-lucide="search" class="w-5 h-5 text-slate-400"></i>
-                            <input type="text" id="searchInput" placeholder="Cari nama atau nomor barang..." 
+                            <input type="text" id="searchInput" aria-label="Cari nama atau nomor barang" placeholder="Cari nama atau nomor barang..."
                                 class="flex-1 bg-transparent border-none outline-none font-bold text-slate-700 h-12 placeholder:text-slate-300 text-sm">
                         </div>
                     </div>
@@ -294,7 +295,7 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div class="space-y-1">
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Kategori</label>
-                        <select id="inputKategoriSelect" class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm" onchange="handleKategoriChange(this)">
+                        <select id="inputKategoriSelect" aria-label="Pilih kategori" class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm" onchange="handleKategoriChange(this)">
                         </select>
                         <input type="text" id="inputKategoriText" placeholder="Ketik kategori baru..." class="w-full h-11 px-4 mt-2 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm hidden">
                     </div>
@@ -306,7 +307,7 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div class="space-y-1">
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Kondisi</label>
-                        <select id="inputKondisi" required class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm">
+                        <select id="inputKondisi" aria-label="Pilih kondisi barang" required class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm">
                             <option value="Baik">Baik</option>
                             <option value="Rusak Ringan">Rusak Ringan</option>
                             <option value="Rusak">Rusak</option>
@@ -319,7 +320,7 @@
                 </div>
                 <div class="space-y-1">
                     <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Lokasi</label>
-                    <select id="inputLokasiSelect" class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm" onchange="handleLokasiChange(this)">
+                    <select id="inputLokasiSelect" aria-label="Pilih lokasi" class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm" onchange="handleLokasiChange(this)">
                     </select>
                     <input type="text" id="inputLokasiText" placeholder="Ketik lokasi baru..." class="w-full h-11 px-4 mt-2 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm hidden">
                 </div>
@@ -391,7 +392,7 @@
                 <input type="hidden" id="formPinjamId">
                 <div class="space-y-1">
                     <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Barang</label>
-                    <select id="inputPinjamBarang" required class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm">
+                    <select id="inputPinjamBarang" aria-label="Pilih barang yang dipinjam" required class="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-xl focus:border-[#1DA874] outline-none text-sm">
                         <!-- Populated by JS -->
                     </select>
                 </div>
