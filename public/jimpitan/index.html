@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jimpitan BN2 - Dashboard</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#059669">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="tailwind.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js" defer></script>
+    <script src="https://unpkg.com/lucide@0.456.0" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js" defer></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* SPLASH SCREEN */
+        #splashScreen {
+            position: fixed; inset: 0; z-index: 9999;
+            background: linear-gradient(135deg, #065f46 0%, #059669 50%, #34d399 100%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
+        #splashScreen.fade-out { opacity: 0; visibility: hidden; pointer-events: none; }
+        .splash-logo {
+            width: 80px; height: 80px; background: rgba(255,255,255,0.2);
+            border-radius: 1rem; display: flex; align-items: center; justify-content: center;
+            margin-bottom: 20px; animation: splashPulse 1.5s ease-in-out infinite;
+        }
+        @keyframes splashPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0.3); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 16px rgba(255,255,255,0); }
+        }
+        .splash-dots { display: flex; gap: 8px; margin-top: 32px; }
+        .splash-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.5); animation: dotBounce 1.2s ease-in-out infinite; }
+        .splash-dot:nth-child(2) { animation-delay: 0.2s; }
+        .splash-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes dotBounce { 0%, 80%, 100% { transform: translateY(0); opacity: 0.5; } 40% { transform: translateY(-8px); opacity: 1; } }
+
+        #toastContainer { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10000; display: flex; flex-direction: column-reverse; gap: 8px; pointer-events: none; width: 100%; max-width: 320px; }
+        .toast { background: white; border-radius: 12px; padding: 12px 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 10px; animation: toastIn 0.3s ease-out; pointer-events: auto; }
+        @keyframes toastIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+
+    <div class="max-w-md mx-auto min-h-screen bg-white shadow-xl relative pb-44">
+        
+        <!-- HEADER -->
+        <header class="bg-emerald-700 text-white p-6 rounded-b-[2rem] shadow-lg">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <div class="flex items-center gap-3 mb-1">
+                        <a href="../" class="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all" title="Kembali ke Portal"><i data-lucide="home" class="w-4 h-4"></i></a>
+                        <h1 class="text-xl font-extrabold tracking-tight">Jimpitan BN2</h1>
+                        <div id="adminBadge" class="bg-amber-400 text-amber-900 text-[10px] px-2 py-0.5 rounded-full font-black hidden uppercase">ADMIN</div>
+                    </div>
+                    <p class="text-xs text-emerald-100 opacity-80">Bumi Neikarta 2 • Smart Tracker</p>
+                </div>
+                <div class="flex gap-1">
+                    <!-- Header now only contains simple portal link -->
+                </div>
+            </div>
+
+            <!-- STATS CARD -->
+            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/10">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-emerald-200 mb-1">Saldo Kas Bulan Ini</p>
+                <div class="flex items-baseline gap-3 mb-4">
+                    <h2 id="totalSaldo" class="text-3xl font-black">Rp 0</h2>
+                    <div id="balanceTrend" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black hidden">
+                        <i id="trendIcon" data-lucide="trending-up" class="w-4 h-4 text-white"></i>
+                        <span id="trendValue">0%</span>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-2 pt-4 border-t border-white/10">
+                    <div>
+                        <p class="text-[10px] font-bold text-emerald-200 uppercase mb-1 leading-tight">Masuk (Tahun Ini)</p>
+                        <p id="statMasukTahun" class="text-sm font-bold">Rp 0</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-emerald-200 uppercase mb-1">Hari Isi</p>
+                        <p id="statIsi" class="text-sm font-bold">0 Hari</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-rose-200 uppercase mb-1">Hari Kosong</p>
+                        <p id="statKosong" class="text-sm font-black text-rose-100">0 Hari</p>
+                    </div>
+                </div>
+
+                <!-- CHART AREA WITH FILTER -->
+                <div class="mt-6 pt-6 border-t border-white/10">
+                    <div class="flex justify-between items-center mb-4">
+                        <p class="text-[10px] font-black text-emerald-200 uppercase tracking-widest">Statistik Jimpitan</p>
+                        <div class="flex bg-white/10 rounded-xl p-1 gap-1">
+                            <button onclick="window.setChartScale('day')" class="chart-scale-btn px-3 py-1.5 text-xs font-black rounded-lg transition-all text-white/50 hover:text-white" data-scale="day">Hari</button>
+                            <button onclick="window.setChartScale('week')" class="chart-scale-btn active px-3 py-1.5 text-xs font-black rounded-lg transition-all bg-emerald-500 text-white" data-scale="week">Minggu</button>
+                            <button onclick="window.setChartScale('month')" class="chart-scale-btn px-3 py-1.5 text-xs font-black rounded-lg transition-all text-white/50 hover:text-white" data-scale="month">Bulan</button>
+                            <button onclick="window.setChartScale('year')" class="chart-scale-btn px-3 py-1.5 text-xs font-black rounded-lg transition-all text-white/50 hover:text-white" data-scale="year">Tahun</button>
+                        </div>
+                    </div>
+                    <div class="h-48">
+                        <canvas id="jimpitanChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- FILTERS -->
+        <div class="px-6 -mt-8 pb-4 relative z-10">
+            <div class="bg-white rounded-[2rem] shadow-2xl p-2 flex gap-1 border border-slate-100">
+                <button class="tab-btn active flex-1 py-4 rounded-2xl text-sm font-black transition-all bg-emerald-700 text-white" data-tab="jimpitan">Jimpitan</button>
+                <button class="tab-btn flex-1 py-4 rounded-2xl text-sm font-black transition-all text-slate-500" data-tab="pengeluaran">Pengeluaran</button>
+            </div>
+        </div>
+
+        <div class="p-6 space-y-4">
+            <div class="flex gap-2">
+                <select id="monthSelect" class="flex-1 bg-slate-100 border-none rounded-xl px-4 py-3 text-xs font-bold outline-none"></select>
+                <select id="yearSelect" class="w-24 bg-slate-100 border-none rounded-xl px-4 py-3 text-xs font-bold outline-none"></select>
+            </div>
+
+            <!-- REKAP LIST -->
+            <div id="rekapContainer" class="space-y-4 min-h-[300px]">
+                <!-- Dynamic Content -->
+            </div>
+        </div>
+
+        <!-- BOTTOM FLOATING CONTROLS -->
+        <div class="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-md px-6 z-50 flex flex-col gap-4 items-center pointer-events-none">
+            <!-- TAMBAH DATA BUTTON (Above Dock) -->
+            <button id="addDataBtn" class="bg-emerald-700 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 active:scale-95 transition-all hidden pointer-events-auto">
+                <i data-lucide="plus" class="w-6 h-6"></i>
+                <span class="text-base font-black">Tambah Data</span>
+            </button>
+
+            <!-- BOTTOM ACTION DOCK -->
+            <div class="bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-[2rem] p-2 px-4 flex items-center justify-center gap-2 shadow-2xl w-fit pointer-events-auto">
+                <div class="flex items-center gap-1">
+                    <button id="adminBtn" class="p-4 text-white hover:bg-white/10 rounded-2xl transition-all" title="Login Admin"><i data-lucide="lock" class="w-5 h-5"></i></button>
+                    <button id="settingsBtn" class="p-4 text-white hover:bg-white/10 rounded-2xl transition-all hidden" title="Pengaturan"><i data-lucide="settings" class="w-5 h-5"></i></button>
+                    <button id="refreshBtn" class="p-4 text-white hover:bg-white/10 rounded-2xl transition-all hidden" title="Refresh Data"><i data-lucide="rotate-cw" class="w-5 h-5"></i></button>
+                </div>
+                <div class="h-8 w-[1px] bg-white/10 mx-1"></div>
+                <div class="flex items-center gap-1">
+                    <button id="shareBtn" class="p-4 text-white hover:bg-white/10 rounded-2xl transition-all" title="Bagikan Laporan"><i data-lucide="share-2" class="w-5 h-5"></i></button>
+                    <button id="exportBtn" class="p-4 text-white hover:bg-white/10 rounded-2xl transition-all" title="Export CSV"><i data-lucide="download" class="w-5 h-5"></i></button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MODAL: SHARE OPTIONS -->
+    <div id="shareModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[300] flex items-end justify-center hidden">
+        <div class="bg-white w-full max-w-md rounded-t-[2.5rem] shadow-2xl p-8 transform translate-y-0 transition-transform duration-300">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h3 class="text-lg font-extrabold">Bagikan Laporan</h3>
+                    <p class="text-xs text-slate-500">Pilih jenis laporan WhatsApp</p>
+                </div>
+                <button id="closeShareModal" class="p-2 bg-slate-100 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="space-y-4 pb-8">
+                <button id="shareWeekBtn" class="w-full flex items-center gap-4 p-4 bg-emerald-50 rounded-2xl hover:bg-emerald-100 transition-all text-left">
+                    <div class="w-12 h-12 bg-emerald-700 rounded-xl flex items-center justify-center text-white"><i data-lucide="calendar-days" class="w-6 h-6"></i></div>
+                    <div>
+                        <div class="text-sm font-bold text-emerald-900">Share Minggu Ini</div>
+                        <div class="text-[10px] text-emerald-600 font-medium">Rekap detail transaksi minggu yang terlihat</div>
+                    </div>
+                </button>
+                <button id="shareMonthBtn" class="w-full flex items-center gap-4 p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all text-left">
+                    <div class="w-12 h-12 bg-slate-700 rounded-xl flex items-center justify-center text-white"><i data-lucide="bar-chart-3" class="w-6 h-6"></i></div>
+                    <div>
+                        <div class="text-sm font-bold text-slate-800">Share Bulan Ini</div>
+                        <div class="text-[10px] text-slate-500 font-medium">Ringkasan total pemasukan & pengeluaran</div>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: SETTINGS -->
+    <div id="settingsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[300] flex items-center justify-center hidden p-6">
+        <div class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl p-8">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-base font-extrabold">Konfigurasi Sistem</h3>
+                <button id="closeSettingsModal" class="p-2 bg-slate-100 rounded-full"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Google Sheet CSV URL</label>
+                    <input type="text" id="sheetUrl" class="w-full bg-slate-50 rounded-xl px-4 py-3 text-[10px] font-mono outline-none border border-slate-100 focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Apps Script URL</label>
+                    <input type="text" id="scriptUrl" class="w-full bg-slate-50 rounded-xl px-4 py-3 text-[10px] font-mono outline-none border border-slate-100 focus:border-emerald-500">
+                </div>
+                <button id="saveConfigBtn" class="w-full bg-emerald-700 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-emerald-800 transition-all">Simpan Konfigurasi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ENTRY FORM -->
+    <div id="entryModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[300] flex items-end justify-center hidden">
+        <div class="bg-white w-full max-w-sm rounded-t-[2.5rem] shadow-2xl p-6 animate-slide-up">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h3 id="entryTitle" class="text-xl font-extrabold">Tambah Data Baru</h3>
+                    <p class="text-xs text-slate-500">Input Jimpitan atau Pengeluaran</p>
+                </div>
+                <button id="closeEntryModal" class="p-2 bg-slate-100 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="entryForm" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Tanggal</label>
+                        <input type="date" id="entryDate" required class="w-full bg-slate-50 rounded-xl px-4 py-3 text-xs font-bold outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Tipe</label>
+                        <select id="entryType" required class="w-full bg-slate-50 rounded-xl px-4 py-3 text-xs font-bold outline-none">
+                            <option value="JIMPITAN">JIMPITAN</option>
+                            <option value="PENGELUARAN">PENGELUARAN</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Nominal (Rp)</label>
+                    <input type="number" id="entryNominal" required class="w-full bg-slate-50 rounded-xl px-4 py-3 text-base font-black outline-none border-b-2 border-slate-100 focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Keterangan</label>
+                    <input type="text" id="entryKeterangan" placeholder="Contoh: Jimpitan Warga" class="w-full bg-slate-50 rounded-xl px-4 py-3 text-xs font-bold outline-none">
+                </div>
+                <button type="submit" class="w-full bg-emerald-700 text-white font-bold py-4 rounded-xl shadow-xl hover:bg-emerald-800 transition-all mt-4">Simpan Ke Google Sheets</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: DETAIL -->
+    <div id="detailModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-6 hidden">
+        <div class="bg-white w-full max-w-sm rounded-[2.5rem] shadow-2xl overflow-hidden">
+            <div class="p-8 text-center">
+                <div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="receipt" class="w-8 h-8 text-emerald-700"></i>
+                </div>
+                <div id="detailContent" class="text-left space-y-4 mb-6">
+                    <!-- Dynamic Detail Content -->
+                </div>
+                <button id="closeDetailModal" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: AUTH -->
+    <div id="authModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[400] flex items-center justify-center p-6 hidden">
+        <div class="bg-white w-full max-w-xs rounded-3xl p-8 shadow-2xl scale-95 transition-all duration-300">
+            <div class="text-center mb-6">
+                <div class="bg-emerald-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="lock" class="w-8 h-8 text-emerald-700"></i>
+                </div>
+                <h3 class="text-lg font-extrabold">Akses Pengurus</h3>
+                <p class="text-xs text-slate-500 mt-1">Masukkan password admin untuk masuk ke mode pengelolaan</p>
+            </div>
+            <input type="password" id="adminPass" class="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 text-center text-xl outline-none focus:ring-2 focus:ring-emerald-500/20 mb-6" placeholder="••••••">
+            <div class="flex flex-col gap-3">
+                <button id="confirmAuthBtn" class="w-full bg-emerald-700 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-emerald-800 transition-all">Masuk Mode Admin</button>
+                <button id="closeAuthBtn" class="w-full text-slate-400 text-xs font-bold py-2">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: LOGOUT (NEW) -->
+    <div id="logoutModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[400] flex items-center justify-center p-6 hidden">
+        <div class="bg-white w-full max-w-xs rounded-3xl p-8 shadow-2xl text-center">
+            <div class="bg-rose-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="log-out" class="w-8 h-8 text-rose-500"></i>
+            </div>
+            <h3 class="text-lg font-extrabold">Keluar Admin?</h3>
+            <p class="text-xs text-slate-500 mt-1 mb-6">Anda akan keluar dari mode pengelolaan data jimpitan.</p>
+            <div class="flex flex-col gap-3">
+                <button id="confirmLogoutBtn" class="w-full bg-rose-500 text-white font-bold py-4 rounded-xl shadow-lg">Ya, Keluar</button>
+                <button id="closeLogoutModal" class="w-full text-slate-400 text-xs font-bold py-2">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SYNC OVERLAY -->
+    <div id="syncOverlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] z-[500] flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl flex flex-col items-center gap-4">
+            <div class="w-12 h-12 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin"></div>
+            <p class="text-sm font-bold text-slate-700">Sedang Sinkronisasi...</p>
+        </div>
+    </div>
+
+    <!-- TOASTS -->
+    <div id="toastContainer"></div>
+
+    <!-- SPLASH SCREEN -->
+    <div id="splashScreen">
+        <div class="splash-logo">
+            <i data-lucide="clock" class="w-10 h-10 text-white"></i>
+        </div>
+        <h1 class="text-white text-2xl font-black">Jimpitan BN2</h1>
+        <p class="text-emerald-100 text-[10px] font-bold uppercase tracking-widest mt-2 opacity-70">Smart Neighborhood Tracker</p>
+        <div class="splash-dots">
+            <div class="splash-dot"></div>
+            <div class="splash-dot"></div>
+            <div class="splash-dot"></div>
+        </div>
+    </div>
+
+    <script src="/jimpitan/app.js?v=1.8"></script>
+</body>
+</html>
