@@ -1,5 +1,25 @@
 {
-  "public": true,
+  "buildCommand": "npm run build:css",
+  "outputDirectory": ".",
+  "public": false,
+  "rewrites": [
+    {
+      "source": "/jimpitan",
+      "destination": "/jimpitan/index.html"
+    },
+    {
+      "source": "/jimpitan/(.*)",
+      "destination": "/jimpitan/index.html"
+    },
+    {
+      "source": "/inventaris",
+      "destination": "/inventaris/index.html"
+    },
+    {
+      "source": "/inventaris/(.*)",
+      "destination": "/inventaris/index.html"
+    }
+  ],
   "headers": [
     {
       "source": "/jimpitan/(.*)",
