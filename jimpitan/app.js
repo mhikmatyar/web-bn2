@@ -28,6 +28,13 @@
     // Helper functions
     const $ = (selector) => document.querySelector(selector);
     const $$ = (selector) => document.querySelectorAll(selector);
+    const ADMIN_PASS = 'adminbn2';
+
+    let renderTimeout;
+    const debouncedRender = (delay = 150) => {
+        clearTimeout(renderTimeout);
+        renderTimeout = setTimeout(() => renderAll(), delay);
+    };
 
     // =================== INITIALIZATION ===================
     document.addEventListener('DOMContentLoaded', init);
@@ -48,6 +55,11 @@
             if (localStorage.getItem('bn2-isAdmin') === 'true') {
                 state.isAdmin = true;
                 updateAdminUI();
+            }
+
+            // Register Service Worker
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js').catch(err => console.error('SW registration failed:', err));
             }
         } catch (e) {
             console.error('Init Error:', e);
@@ -91,7 +103,12 @@
             adminBtn.innerHTML = '<i data-lucide="lock" class="w-5 h-5"></i>';
             adminBtn.title = 'Login Admin';
         }
-        if (window.lucide) lucide.createIcons();
+        if (window.lucide) lucide.createIcons({ nodes: [adminBtn] });
+    }
+
+    function updateSyncLabel(text) {
+        const el = $('#lastSyncTime');
+        if (el) { el.textContent = text; el.classList.remove('hidden'); }
     }
 
     // =================== DATA FETCHING ===================
@@ -101,11 +118,7 @@
             const url = `${state.sheetUrl}&t=${Date.now()}`;
             const response = await fetch(url);
             const csvText = await response.text();
-            const lastSyncTime = $('#lastSyncTime');
-            if (lastSyncTime) {
-                lastSyncTime.textContent = `| ${new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`;
-                lastSyncTime.classList.remove('hidden');
-            }
+            updateSyncLabel(`| ${new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`);
             parseCSVData(csvText);
             localStorage.setItem('bn2-jimpitanCache', csvText);
         } catch (error) {
@@ -210,7 +223,7 @@
             tipe: tipe,
             nominal: nominal,
             keterangan: keterangan,
-            password: 'adminbn2',
+            password: ADMIN_PASS,
             source: 'jimpitan'
         };
 
@@ -248,12 +261,7 @@
                 state.data.unshift(newItem);
             }
 
-            const lastSyncTime = $('#lastSyncTime');
-            if (lastSyncTime) {
-                lastSyncTime.textContent = `| Terupdate`;
-                lastSyncTime.classList.remove('hidden');
-            }
-
+            updateSyncLabel('| Terupdate');
             $('#entryModal').classList.add('hidden');
             $('#entryForm').reset();
             state.editingIdx = null;
@@ -272,7 +280,7 @@
             tanggal: item.tanggal,
             tipe: item.tipe,
             nominal: item.nominal,
-            password: 'adminbn2',
+            password: ADMIN_PASS,
             source: 'jimpitan'
         };
 
@@ -280,13 +288,8 @@
         if (success) {
             state.data = state.data.filter(d => d.idx !== idx);
             if ($('#detailModal')) $('#detailModal').classList.add('hidden');
-            
-            const lastSyncTime = $('#lastSyncTime');
-            if (lastSyncTime) {
-                lastSyncTime.textContent = `| Terupdate`;
-                lastSyncTime.classList.remove('hidden');
-            }
-            
+
+            updateSyncLabel('| Terupdate');
             renderAll();
         }
     }
@@ -303,14 +306,29 @@
 
         const currentTabItems = state.filteredData.filter(d => d.tipe === typeFilter);
         
-        // Header stats
-        const totalMasuk = state.filteredData.filter(d => d.tipe === 'Pemasukan').reduce((s, i) => s + i.nominal, 0);
-        const totalKeluar = state.filteredData.filter(d => d.tipe === 'Pengeluaran').reduce((s, i) => s + i.nominal, 0);
+        // Header stats (Monthly)
+        const totalMasukBulan = state.filteredData.filter(d => d.tipe === 'Pemasukan').reduce((s, i) => s + i.nominal, 0);
+        const totalKeluarBulan = state.filteredData.filter(d => d.tipe === 'Pengeluaran').reduce((s, i) => s + i.nominal, 0);
         
-        $('#totalSaldo').textContent = formatRp(totalMasuk - totalKeluar);
-        $('#statMasuk').textContent = formatRp(totalMasuk);
-        $('#statKeluar').textContent = formatRp(totalKeluar);
-        $('#entriDataCount').textContent = `${currentTabItems.length} Hari`;
+        // Yearly stats
+        const totalMasukTahun = state.data.filter(d => d.dateObj.getFullYear() === state.selectedYear && d.tipe === 'Pemasukan').reduce((s, i) => s + i.nominal, 0);
+
+        // Isi & Kosong (Monthly)
+        const hariIsi = state.filteredData.filter(d => d.tipe === 'Pemasukan' && d.nominal > 0).length;
+        const hariKosong = state.filteredData.filter(d => d.tipe === 'Pemasukan' && d.nominal === 0).length;
+
+        // DOM Updates safely
+        const elSaldo = $('#totalSaldo');
+        if (elSaldo) elSaldo.textContent = formatRp(totalMasukBulan - totalKeluarBulan);
+        
+        const elMasukTahun = $('#statMasukTahun');
+        if (elMasukTahun) elMasukTahun.textContent = formatRp(totalMasukTahun);
+        
+        const elIsi = $('#statIsi');
+        if (elIsi) elIsi.textContent = `${hariIsi} Hari`;
+        
+        const elKosong = $('#statKosong');
+        if (elKosong) elKosong.textContent = `${hariKosong} Hari`;
 
         // Trend calculation (Compare with previous month)
         const prevMonth = state.selectedMonth === 1 ? 12 : state.selectedMonth - 1;
@@ -320,16 +338,20 @@
         
         const trendDiv = $('#balanceTrend');
         if (prevMasuk > 0 && trendDiv) {
-            const diff = ((totalMasuk - prevMasuk) / prevMasuk) * 100;
+            const diff = ((totalMasukBulan - prevMasuk) / prevMasuk) * 100;
             trendDiv.classList.remove('hidden');
             if (diff >= 0) {
                 trendDiv.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-white/20 text-white';
-                $('#trendIcon').setAttribute('data-lucide', 'trending-up');
-                $('#trendValue').textContent = `+${diff.toFixed(1)}%`;
+                const trendIcon = $('#trendIcon');
+                if (trendIcon) trendIcon.setAttribute('data-lucide', 'trending-up');
+                const trendVal = $('#trendValue');
+                if (trendVal) trendVal.textContent = `+${diff.toFixed(1)}%`;
             } else {
                 trendDiv.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-rose-500/50 text-white';
-                $('#trendIcon').setAttribute('data-lucide', 'trending-down');
-                $('#trendValue').textContent = `${diff.toFixed(1)}%`;
+                const trendIcon = $('#trendIcon');
+                if (trendIcon) trendIcon.setAttribute('data-lucide', 'trending-down');
+                const trendVal = $('#trendValue');
+                if (trendVal) trendVal.textContent = `${diff.toFixed(1)}%`;
             }
         } else if (trendDiv) {
             trendDiv.classList.add('hidden');
@@ -337,7 +359,22 @@
 
         renderList(currentTabItems);
         updateCharts();
-        if (window.lucide) lucide.createIcons();
+        const nodesToUpdate = [];
+        const rekapContainer = $('#rekapContainer');
+        if (rekapContainer) nodesToUpdate.push(rekapContainer);
+        const balanceTrend = $('#balanceTrend');
+        if (balanceTrend) nodesToUpdate.push(balanceTrend);
+        if (window.lucide && nodesToUpdate.length > 0) lucide.createIcons({ nodes: nodesToUpdate });
+    }
+
+    function groupByWeek(items) {
+        const weeks = {};
+        items.forEach(item => {
+            const w = getWeekOfMonth(item.dateObj);
+            if (!weeks[w]) weeks[w] = [];
+            weeks[w].push(item);
+        });
+        return weeks;
     }
 
     function renderList(items) {
@@ -352,13 +389,7 @@
         // Sort ALL items descending first
         items.sort((a, b) => b.dateObj - a.dateObj);
 
-        // Group by week
-        const weeks = {};
-        items.forEach(item => {
-            const weekNum = getWeekOfMonth(item.dateObj);
-            if (!weeks[weekNum]) weeks[weekNum] = [];
-            weeks[weekNum].push(item);
-        });
+        const weeks = groupByWeek(items);
 
         const sortedWeeks = Object.keys(weeks).map(Number).sort((a, b) => b - a);
         
@@ -422,13 +453,8 @@
     window.changeWeek = (direction) => {
         const typeFilter = state.activeTab === 'jimpitan' ? 'Pemasukan' : 'Pengeluaran';
         const currentTabItems = state.filteredData.filter(d => d.tipe === typeFilter);
-        
-        const weeks = {};
-        currentTabItems.forEach(item => {
-            const weekNum = getWeekOfMonth(item.dateObj);
-            if (!weeks[weekNum]) weeks[weekNum] = [];
-            weeks[weekNum].push(item);
-        });
+
+        const weeks = groupByWeek(currentTabItems);
 
         const sortedWeeks = Object.keys(weeks).map(Number).sort((a, b) => b - a);
         const currentIndex = sortedWeeks.indexOf(state.currentWeek);
@@ -480,9 +506,9 @@
                 </div>
             </div>
         `;
-        
+
         modal.classList.remove('hidden');
-        if (window.lucide) lucide.createIcons();
+        if (window.lucide) lucide.createIcons({ nodes: [modal] });
     };
 
     window.handleEdit = (idx) => {
@@ -549,7 +575,7 @@
             <span class="text-xs font-bold text-slate-700">${msg}</span>
         `;
         container.appendChild(toast);
-        if (window.lucide) lucide.createIcons();
+        if (window.lucide) lucide.createIcons({ nodes: [toast] });
         setTimeout(() => toast.remove(), 3000);
     }
 
@@ -570,12 +596,7 @@
 
         if (type === 'week') {
             const currentTabItems = state.filteredData.filter(d => d.tipe === (state.activeTab === 'jimpitan' ? 'Pemasukan' : 'Pengeluaran'));
-            const weeks = {};
-            currentTabItems.forEach(item => {
-                const weekNum = getWeekOfMonth(item.dateObj);
-                if (!weeks[weekNum]) weeks[weekNum] = [];
-                weeks[weekNum].push(item);
-            });
+            const weeks = groupByWeek(currentTabItems);
             
             const items = (weeks[state.currentWeek] || []).sort((a, b) => a.dateObj - b.dateObj);
             const total = items.reduce((s, i) => s + i.nominal, 0);
@@ -692,11 +713,11 @@
 
         mSelect.addEventListener('change', (e) => {
             state.selectedMonth = parseInt(e.target.value);
-            renderAll();
+            debouncedRender();
         });
         ySelect.addEventListener('change', (e) => {
             state.selectedYear = parseInt(e.target.value);
-            renderAll();
+            debouncedRender();
         });
     }
 
@@ -715,8 +736,7 @@
         
         $('#confirmAuthBtn').addEventListener('click', () => {
             const pass = $('#adminPass').value;
-            // Password disamarkan sedikit (adminbn2)
-            if (pass === 'adminbn2') {
+            if (pass === ADMIN_PASS) {
                 state.isAdmin = true;
                 localStorage.setItem('bn2-isAdmin', 'true');
                 $('#authModal').classList.add('hidden');
@@ -848,42 +868,47 @@
             fullLabels = labels.map(y => `Tahun ${y}`);
         }
 
-        if (state.chart) state.chart.destroy();
-
-        state.chart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Jimpitan',
-                    data: dataValues,
-                    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-                    borderColor: 'rgba(255, 255, 255, 0.8)',
-                    borderWidth: 1,
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { 
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            title: (items) => fullLabels[items[0].dataIndex],
-                            label: (context) => `Total: ${formatRp(context.raw)}`
+        if (state.chart) {
+            state.chart.data.labels = labels;
+            state.chart.data.datasets[0].data = dataValues;
+            state.chart.update('none');
+        } else {
+            state.chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Jimpitan',
+                        data: dataValues,
+                        backgroundColor: 'rgba(255, 255, 255, 0.4)',
+                        borderColor: 'rgba(255, 255, 255, 0.8)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: (items) => fullLabels[items[0].dataIndex],
+                                label: (context) => `Total: ${formatRp(context.raw)}`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { display: false },
+                        x: {
+                            ticks: { color: 'rgba(255,255,255,0.7)', font: { size: 10, weight: 'bold' } },
+                            grid: { display: false }
                         }
                     }
-                },
-                scales: {
-                    y: { display: false },
-                    x: {
-                        ticks: { color: 'rgba(255,255,255,0.7)', font: { size: 10, weight: 'bold' } },
-                        grid: { display: false }
-                    }
                 }
-            }
-        });
+            });
+        }
+        state.chart.options.plugins.tooltip.callbacks.title = (items) => fullLabels[items[0].dataIndex];
     }
 
 })();

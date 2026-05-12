@@ -8,11 +8,12 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#059669">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="tailwind.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js" defer></script>
+    <script src="https://unpkg.com/lucide@0.456.0" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js" defer></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
@@ -81,16 +82,16 @@
                 
                 <div class="grid grid-cols-3 gap-2 pt-4 border-t border-white/10">
                     <div>
-                        <p class="text-[10px] font-bold text-emerald-200 uppercase mb-1">Masuk</p>
-                        <p id="statMasuk" class="text-sm font-bold">Rp 0</p>
+                        <p class="text-[10px] font-bold text-emerald-200 uppercase mb-1 leading-tight">Masuk (Tahun Ini)</p>
+                        <p id="statMasukTahun" class="text-sm font-bold">Rp 0</p>
                     </div>
                     <div>
-                        <p class="text-[10px] font-bold text-emerald-200 uppercase mb-1">Keluar</p>
-                        <p id="statKeluar" class="text-sm font-bold">Rp 0</p>
+                        <p class="text-[10px] font-bold text-emerald-200 uppercase mb-1">Hari Isi</p>
+                        <p id="statIsi" class="text-sm font-bold">0 Hari</p>
                     </div>
                     <div>
-                        <p class="text-[10px] font-bold text-emerald-200 uppercase mb-1">Data</p>
-                        <p id="entriDataCount" class="text-sm font-bold">0 Hari</p>
+                        <p class="text-[10px] font-bold text-rose-200 uppercase mb-1">Hari Kosong</p>
+                        <p id="statKosong" class="text-sm font-black text-rose-100">0 Hari</p>
                     </div>
                 </div>
 
@@ -317,6 +318,6 @@
         </div>
     </div>
 
-    <script src="/jimpitan/app.js?v=1.7"></script>
+    <script src="/jimpitan/app.js?v=1.8"></script>
 </body>
 </html>
