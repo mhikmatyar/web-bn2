@@ -4,7 +4,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build:css": "tailwindcss -i ./src/input.css -o ./jimpitan/tailwind.css --minify && tailwindcss -i ./src/input.css -o ./inventaris/tailwind.css --minify"
+    "build:css": "tailwindcss -i ./src/input.css -o ./jimpitan/tailwind.css --minify && tailwindcss -i ./src/input.css -o ./inventaris/tailwind.css --minify",
+    "test:automation": "node tests/run-tests.js"
   },
   "repository": {
     "type": "git",
@@ -20,6 +21,7 @@
   "description": "",
   "devDependencies": {
     "@tailwindcss/cli": "^4.3.0",
-    "tailwindcss": "^4.3.0"
+    "tailwindcss": "^4.3.0",
+    "playwright": "^1.38.0"
   }
 }
