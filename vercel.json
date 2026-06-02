@@ -1,0 +1,36 @@
+{
+  "buildCommand": "npm run build:css",
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/jimpitan/index.html"
+    },
+    {
+      "source": "/jimpitan",
+      "destination": "/jimpitan/index.html"
+    },
+    {
+      "source": "/jimpitan/(.*)",
+      "destination": "/jimpitan/index.html"
+    },
+    {
+      "source": "/inventaris",
+      "destination": "/inventaris/index.html"
+    },
+    {
+      "source": "/inventaris/(.*)",
+      "destination": "/inventaris/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/jimpitan/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, s-maxage=86400"
+        }
+      ]
+    }
+  ]
+}

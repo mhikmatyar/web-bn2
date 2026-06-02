@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#047857">
+    <title>Jimpitan BN2</title>
+    
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+        }
+        
+        /* Splash Screen */
+        #splashScreen {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #059669, #047857, #065f46);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+        }
+        
+        #splashScreen.fade-out {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        
+        .splash-content {
+            text-align: center;
+        }
+        
+        .splash-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .splash-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 8px;
+        }
+        
+        .splash-text {
+            color: rgba(255,255,255,0.8);
+            font-size: 14px;
+        }
+        
+        /* Container */
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            box-shadow: 0 0 40px rgba(0,0,0,0.1);
+        }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #059669, #047857, #065f46);
+            color: white;
+            padding: 24px 24px 32px;
+            border-radius: 0 0 32px 32px;
+            box-shadow: 0 10px 30px rgba(5,150,105,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+        
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            position: relative;
+        }
+        
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .header-title h1 {
+            font-size: 20px;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+        
+        .header-subtitle {
+            font-size: 11px;
+            opacity: 0.8;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .btn-icon:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .badge-admin {
+            display: none;
+            padding: 6px 12px;
+            background: rgba(5,150,105,0.3);
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* Balance Card */
+        .balance-card {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+            position: relative;
+        }
+        
+        .balance-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.8;
+            margin-bottom: 12px;
+        }
+        
+        .balance-amount {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+        
+        .balance-filters {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+        
+        .balance-filters select {
+            background: white;
+            border: 2px solid #e2e8f0;
+            color: #1e293b;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 10px 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .balance-filters select:hover {
+            border-color: #059669;
+        }
+        
+        .balance-filters select:focus {
+            outline: none;
+            border-color: #059669;
+            box-shadow: 0 0 0 3px rgba(5,150,105,0.1);
+        }
+        
+        .balance-filters select option {
+            background: white;
+            color: #1e293b;
+        }
+        
+        .balance-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .stat-item {
+            text-align: left;
+        }
+        
+        .stat-label {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            opacity: 0.7;
+            margin-bottom: 4px;
+        }
+        
+        .stat-value {
+            font-size: 13px;
+            font-weight: 800;
+        }
+        
+        /* Chart */
+        .chart-container {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(8px);
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid rgba(255,255,255,0.2);
+            margin-top: 16px;
+            position: relative;
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .chart-title {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.8;
+        }
+        
+        .chart-scale-buttons {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .chart-scale-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 700;
+            background: transparent;
+            color: rgba(255,255,255,0.5);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .chart-scale-btn.active {
+            background: #059669;
+            color: white;
+        }
+        
+        .chart-canvas {
+            height: 120px;
+        }
+        
+        /* Tabs */
+        .tabs-container {
+            padding: 24px 24px 0;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 8px;
+            background: #f1f5f9;
+            padding: 6px;
+            border-radius: 16px;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            background: transparent;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .tab-btn.active {
+            background: #047857;
+            color: white;
+        }
+        
+        /* Add Button */
+        .add-btn-container {
+            padding: 16px 24px 0;
+        }
+        
+        .btn-add {
+            display: none;
+            width: 100%;
+            background: linear-gradient(135deg, #059669, #047857);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(5,150,105,0.3);
+            transition: transform 0.2s;
+        }
+        
+        .btn-add:active {
+            transform: scale(0.98);
+        }
+        
+        /* List Container */
+        .list-container {
+            padding: 24px 24px 100px;
+        }
+        
+        .week-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f8fafc;
+            padding: 8px;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 16px;
+        }
+        
+        .week-nav button {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: white;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+        }
+        
+        .week-nav button:disabled {
+            opacity: 0.2;
+            cursor: not-allowed;
+        }
+        
+        .week-info {
+            text-align: center;
+        }
+        
+        .week-label {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: #94a3b8;
+            letter-spacing: 1.5px;
+        }
+        
+        .week-total {
+            font-size: 12px;
+            font-weight: 700;
+            color: #059669;
+        }
+        
+        /* Data Card */
+        .data-card {
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+        
+        .data-card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+        
+        .data-card:active {
+            transform: scale(0.98);
+        }
+        
+        .data-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .data-icon.income {
+            background: #d1fae5;
+            color: #059669;
+        }
+        
+        .data-icon.expense {
+            background: #ffe4e6;
+            color: #e11d48;
+        }
+        
+        .data-info {
+            flex: 1;
+        }
+        
+        .data-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+        
+        .data-date {
+            font-size: 10px;
+            font-weight: 700;
+            color: #94a3b8;
+        }
+        
+        .data-amount {
+            text-align: right;
+        }
+        
+        .data-amount-value {
+            font-size: 14px;
+            font-weight: 800;
+        }
+        
+        .data-amount-value.income {
+            color: #059669;
+        }
+        
+        .data-amount-value.expense {
+            color: #e11d48;
+        }
+        
+        .data-actions {
+            display: flex;
+            gap: 4px;
+            margin-top: 4px;
+            justify-content: flex-end;
+        }
+        
+        .data-actions button {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            transition: all 0.2s;
+        }
+        
+        .data-actions button:hover {
+            background: #f1f5f9;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 24px;
+            padding: 24px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: #1e293b;
+        }
+        
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: #f1f5f9;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: #475569;
+            margin-bottom: 8px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #059669;
+        }
+        
+        .btn-submit {
+            width: 100%;
+            padding: 12px;
+            background: #059669;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-submit:hover {
+            background: #047857;
+        }
+        
+        /* Bottom Bar */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            z-index: 100;
+        }
+        
+        .bottom-bar-content {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-around;
+        }
+        
+        .bottom-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            background: none;
+            border: none;
+            color: #64748b;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        
+        .bottom-btn:hover {
+            color: #059669;
+        }
+        
+        .bottom-btn-text {
+            font-size: 10px;
+            font-weight: 700;
+        }
+        
+        /* Utilities */
+        .hidden { display: none !important; }
+        .text-center { text-align: center; }
+        .empty-state {
+            padding: 40px 20px;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 12px;
+            font-style: italic;
+        }
+        
+        /* Sync Overlay */
+        #syncOverlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        
+        #syncOverlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .sync-box {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .sync-spinner {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #d1fae5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 4px solid #059669;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .sync-text-title {
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+        
+        .sync-text-sub {
+            font-size: 12px;
+            color: #64748b;
+        }
+        
+        /* Toast */
+        #toastContainer {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+        }
+        
+        .toast {
+            background: white;
+            border-left: 4px solid;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 280px;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .toast.success { border-color: #059669; }
+        .toast.error { border-color: #e11d48; }
+        .toast.info { border-color: #3b82f6; }
+        
+        .toast-icon {
+            font-size: 20px;
+        }
+        
+        .toast.success .toast-icon { color: #059669; }
+        .toast.error .toast-icon { color: #e11d48; }
+        .toast.info .toast-icon { color: #3b82f6; }
+        
+        .toast-text {
+            font-size: 12px;
+            font-weight: 700;
+            color: #475569;
+        }
+    </style>
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div id="splashScreen">
+        <div class="splash-content">
+            <div class="splash-icon">
+                <i data-lucide="wallet" style="width: 48px; height: 48px; color: white;"></i>
+            </div>
+            <h1 class="splash-title">Jimpitan BN2</h1>
+            <p class="splash-text">Loading...</p>
+        </div>
+    </div>
+
+    <!-- Sync Overlay -->
+    <div id="syncOverlay">
+        <div class="sync-box">
+            <div class="sync-spinner">
+                <div class="spinner"></div>
+            </div>
+            <div>
+                <div class="sync-text-title">Menyimpan...</div>
+                <div class="sync-text-sub">Sinkronisasi ke Google Sheets</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-top">
+                <div class="header-logo">
+                    <div class="logo-icon">
+                        <i data-lucide="home" style="width: 24px; height: 24px;"></i>
+                    </div>
+                    <div class="header-title">
+                        <h1>Jimpitan BN2</h1>
+                        <p class="header-subtitle">Bumi Neikarta 2</p>
+                    </div>
+                </div>
+                
+                <div class="header-actions">
+                    <div id="adminBadge" class="badge-admin">Admin</div>
+                    <button id="refreshBtn" class="btn-icon hidden" title="Refresh Data">
+                        <i data-lucide="refresh-cw" style="width: 20px; height: 20px;"></i>
+                    </button>
+                    <button id="settingsBtn" class="btn-icon hidden" title="Settings">
+                        <i data-lucide="settings" style="width: 20px; height: 20px;"></i>
+                    </button>
+                    <button id="adminBtn" class="btn-icon" title="Admin">
+                        <i data-lucide="lock" style="width: 20px; height: 20px;"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Balance Card -->
+            <div class="balance-card">
+                <div class="balance-label">Saldo Bulan Ini</div>
+                <div class="balance-amount" id="totalSaldo">Rp 0</div>
+
+                <div class="balance-stats">
+                    <div class="stat-item">
+                        <div class="stat-label">Masuk (Tahun)</div>
+                        <div class="stat-value" id="statMasukTahun">Rp 0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Hari Isi</div>
+                        <div class="stat-value" id="statIsi">0 Hari</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Hari Kosong</div>
+                        <div class="stat-value" id="statKosong">0 Hari</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <span class="chart-title">Statistik Minggu Ini</span>
+                    <div class="chart-scale-buttons">
+                        <button class="chart-scale-btn" data-scale="day" onclick="window.setChartScale('day')">D</button>
+                        <button class="chart-scale-btn active" data-scale="week" onclick="window.setChartScale('week')">W</button>
+                        <button class="chart-scale-btn" data-scale="month" onclick="window.setChartScale('month')">M</button>
+                        <button class="chart-scale-btn" data-scale="year" onclick="window.setChartScale('year')">Y</button>
+                    </div>
+                </div>
+                <div class="chart-canvas">
+                    <canvas id="jimpitanChart"></canvas>
+                </div>
+            </div>
+        </header>
+
+        <!-- Filter Period -->
+        <div style="padding: 16px 24px 8px;">
+            <div style="display: flex; gap: 8px;">
+                <select id="monthSelect" style="flex: 1; background: white; border: 2px solid #e2e8f0; color: #1e293b; font-size: 14px; font-weight: 700; padding: 12px 16px; border-radius: 12px; cursor: pointer;"></select>
+                <select id="yearSelect" style="flex: 1; background: white; border: 2px solid #e2e8f0; color: #1e293b; font-size: 14px; font-weight: 700; padding: 12px 16px; border-radius: 12px; cursor: pointer;"></select>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs-container" style="padding-top: 8px;">
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="jimpitan">
+                    <i data-lucide="wallet" style="width: 16px; height: 16px;"></i>
+                    Jimpitan
+                </button>
+                <button class="tab-btn" data-tab="pengeluaran">
+                    <i data-lucide="receipt" style="width: 16px; height: 16px;"></i>
+                    Pengeluaran
+                </button>
+            </div>
+        </div>
+
+        <!-- Add Button -->
+        <div class="add-btn-container">
+            <button id="addDataBtn" class="btn-add">
+                <i data-lucide="plus-circle" style="width: 20px; height: 20px; display: inline; vertical-align: middle; margin-right: 8px;"></i>
+                Tambah Data Baru
+            </button>
+        </div>
+
+        <!-- Data List -->
+        <div class="list-container">
+            <div id="rekapContainer">
+                <div class="empty-state">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Bar -->
+    <div class="bottom-bar">
+        <div class="bottom-bar-content">
+            <button id="shareBtn" class="bottom-btn">
+                <i data-lucide="share-2" style="width: 24px; height: 24px;"></i>
+                <span class="bottom-btn-text">Share</span>
+            </button>
+            <button id="exportBtn" class="bottom-btn">
+                <i data-lucide="download" style="width: 24px; height: 24px;"></i>
+                <span class="bottom-btn-text">Export</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal: Admin Login -->
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Login Admin</h3>
+                <button id="closeAuthBtn" class="modal-close">
+                    <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+                </button>
+            </div>
+            <p style="font-size: 12px; color: #64748b; margin-bottom: 16px;">Masukkan password admin untuk mengakses fitur edit data</p>
+            <input type="password" id="adminPass" placeholder="Password Admin" class="form-control" style="margin-bottom: 16px;">
+            <button id="confirmAuthBtn" class="btn-submit">Login</button>
+        </div>
+    </div>
+
+    <!-- Modal: Logout Confirmation -->
+    <div id="logoutModal" class="modal">
+        <div class="modal-content">
+            <h3 class="modal-title" style="margin-bottom: 8px;">Logout Admin?</h3>
+            <p style="font-size: 14px; color: #64748b; margin-bottom: 24px;">Anda akan keluar dari mode admin. Fitur edit data akan dinonaktifkan.</p>
+            <div style="display: flex; gap: 12px;">
+                <button id="closeLogoutModal" class="btn-submit" style="background: #f1f5f9; color: #475569; flex: 1;">Batal</button>
+                <button id="confirmLogoutBtn" class="btn-submit" style="background: #e11d48; flex: 1;">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Entry Form -->
+    <div id="entryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="entryTitle" class="modal-title">Tambah Data Baru</h3>
+                <button id="closeEntryModal" class="modal-close">
+                    <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+                </button>
+            </div>
+            <form id="entryForm">
+                <div class="form-group">
+                    <label class="form-label">Tanggal</label>
+                    <input type="date" id="entryDate" required class="form-control">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tipe</label>
+                    <select id="entryType" required class="form-control">
+                        <option value="JIMPITAN">Pemasukan (Jimpitan)</option>
+                        <option value="PENGELUARAN">Pengeluaran</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nominal</label>
+                    <input type="number" id="entryNominal" required placeholder="25000" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Keterangan (Opsional)</label>
+                    <input type="text" id="entryKeterangan" placeholder="Jimpitan warga" class="form-control">
+                </div>
+                <button type="submit" class="btn-submit">Simpan</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Detail -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Detail Transaksi</h3>
+                <button id="closeDetailModal" class="modal-close">
+                    <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+                </button>
+            </div>
+            <div id="detailContent"></div>
+        </div>
+    </div>
+
+    <!-- Modal: Share -->
+    <div id="shareModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Share Laporan</h3>
+                <button id="closeShareModal" class="modal-close">
+                    <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+                </button>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <button id="shareWeekBtn" class="btn-submit">
+                    <i data-lucide="share-2" style="width: 20px; height: 20px; display: inline; vertical-align: middle; margin-right: 8px;"></i>
+                    Share Minggu Ini
+                </button>
+                <button id="shareMonthBtn" class="btn-submit">
+                    <i data-lucide="calendar" style="width: 20px; height: 20px; display: inline; vertical-align: middle; margin-right: 8px;"></i>
+                    Share Bulan Ini
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Settings -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3 class="modal-title">Settings</h3>
+                <button id="closeSettingsModal" class="modal-close">
+                    <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+                </button>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div class="form-group">
+                    <label class="form-label">Google Sheets URL (CSV)</label>
+                    <input type="url" id="sheetUrl" placeholder="https://docs.google.com/..." class="form-control">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Apps Script URL</label>
+                    <input type="url" id="scriptUrl" placeholder="https://script.google.com/..." class="form-control">
+                </div>
+                <button id="saveConfigBtn" class="btn-submit">Simpan Konfigurasi</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
+
+    <!-- Load App.js -->
+    <script src="app.js"></script>
+    <script>
+        if (window.lucide) { lucide.createIcons(); }
+    </script>
+</body>
+</html>

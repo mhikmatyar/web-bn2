@@ -1,0 +1,14 @@
+/* 
+   CSS Overwritten by Tailwind in index.html 
+   File kept for compatibility but mostly empty.
+*/
+body {
+    -webkit-tap-highlight-color: transparent;
+}
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
